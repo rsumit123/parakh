@@ -5,6 +5,12 @@ from app.services.scan import ScanService, ProductNotFound
 
 HEALTHY = {"energy_kj": 300, "sugars_g": 2, "sat_fat_g": 0.5, "salt_g": 0.1,
            "fibre_g": 5, "protein_g": 9, "fruit_veg_nuts_pct": 0}
+# Scores poorly via the real scorer (high sugar/sat-fat/salt) — used to make a
+# scanned product genuinely worse than a seeded healthy alternative.
+JUNK = {"energy_kj": 2200, "sugars_g": 40, "sat_fat_g": 12, "salt_g": 1.5,
+        "fibre_g": 0.5, "protein_g": 1, "fruit_veg_nuts_pct": 0}
+EMPTY_NUTRITION = {"energy_kj": 0, "sugars_g": 0, "sat_fat_g": 0, "salt_g": 0,
+                   "fibre_g": 0, "protein_g": 0, "fruit_veg_nuts_pct": 0}
 
 
 class FakeOFF:
@@ -114,9 +120,9 @@ def test_scan_returns_healthier_alternatives_in_same_category(repo):
     repo.save(barcode="good", name="Oat Biscuit", brand="B", category="biscuits",
               ingredients=[], nutrition=HEALTHY,
               score={"overall": 85, "grade": "A", "breakdown": {}}, source="off")
-    # now scan a worse biscuit (via OFF) in the same category
+    # now scan a genuinely worse biscuit (via OFF) in the same category
     off = FakeOFF({"name": "Cream Biscuit", "brand": "X", "category": "biscuits",
-                   "ingredients": ["sugar"], "nutrition": HEALTHY})
+                   "ingredients": ["sugar"], "nutrition": JUNK})
     svc = ScanService(repo, off, FakeExtractor(None))
     res = svc.scan_barcode("worse")
     # the worse one scores via real scorer; the seeded 85 should appear as an alternative
