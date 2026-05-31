@@ -26,7 +26,7 @@ class ProductRepository:
             p.nutrition = nutrition
             p.score_overall = score["overall"]
             p.score_grade = score["grade"]
-            p.score_breakdown = score.get("breakdown", {})
+            p.score_json = score  # persist the complete scorer output
             p.source = source
             s.commit()
 
@@ -35,7 +35,6 @@ class ProductRepository:
         return {
             "barcode": p.barcode, "name": p.name, "brand": p.brand,
             "ingredients": p.ingredients, "nutrition": p.nutrition,
-            "score": {"overall": p.score_overall, "grade": p.score_grade,
-                      "breakdown": p.score_breakdown},
+            "score": p.score_json,
             "source": p.source,
         }

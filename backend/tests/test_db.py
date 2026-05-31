@@ -11,7 +11,7 @@ def test_can_create_tables_and_roundtrip_product():
         s.add(Product(barcode="123", name="Test", brand="B",
                       ingredients=["a"], nutrition={"sugars_g": 1.0},
                       score_overall=80, score_grade="A",
-                      score_breakdown={}, source="db"))
+                      score_json={}, source="db"))
         s.commit()
     with Session() as s:
         p = s.scalar(select(Product).where(Product.barcode == "123"))
