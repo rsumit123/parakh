@@ -1,0 +1,21 @@
+.screen { min-height: 100%; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #0e1311 0%, #10211a 100%); color: #fff; }
+.bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 6px; }
+.logo { font-weight: 800; font-size: 17px; }
+.logo b { color: var(--lime); }
+.pill { font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.1); color: var(--lime); }
+.viewfinder { flex: 1; margin: 14px 20px; border-radius: 28px; overflow: hidden; position: relative;
+  background: #16201b; display: flex; align-items: center; justify-content: center; min-height: 260px; }
+.viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+.frame { position: absolute; width: 190px; height: 130px; border: 3px solid var(--lime); border-radius: 18px; opacity: 0.9; }
+.hint { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; color: rgba(255,255,255,0.7); }
+.actions { padding: 6px 20px 18px; display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; gap: 8px; }
+.input { flex: 1; border-radius: 14px; padding: 13px; font-size: 14px; font-family: inherit; border: 0; }
+.btn { border-radius: 14px; padding: 13px 16px; font-weight: 700; font-size: 14px; }
+.btn.lime { background: var(--lime); color: #10211a; }
+.btn.ghost { background: rgba(255,255,255,0.1); color: #fff; }
+.photoPrompt { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; text-align: center; font-size: 13px; }
+.err { color: #ffd2cd; font-size: 13px; text-align: center; font-weight: 600; }
+.busy { text-align: center; font-size: 13px; color: rgba(255,255,255,0.8); }
+.hidden { display: none; }

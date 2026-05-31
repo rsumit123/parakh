@@ -1,0 +1,17 @@
+.screen { min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end;
+  background: linear-gradient(180deg, #10211a 0%, #0e1311 100%); color: #fff; }
+.top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+.mark { width: 72px; height: 72px; border-radius: 22px; background: var(--lime); color: #10211a;
+  display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 800; margin-bottom: 22px; }
+.top h1 { font-size: 25px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
+.top p { color: #9aa89c; font-size: 13.5px; max-width: 240px; line-height: 1.6; }
+.sheet { background: var(--card); color: var(--ink); border-radius: 30px 30px 0 0; padding: 24px 22px 26px;
+  display: flex; flex-direction: column; gap: 10px; }
+.input { border: 1px solid var(--line); border-radius: 15px; padding: 14px; font-size: 14px; font-family: inherit; }
+.btn { border-radius: 15px; padding: 14px; font-weight: 700; font-size: 14px; }
+.btn.dark { background: var(--ink); color: #fff; }
+.btn.lime { background: var(--lime); color: #10211a; }
+.guest { background: transparent; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 8px; }
+.guest b { color: var(--green); }
+.note { font-size: 10.5px; text-align: center; color: #a9b3a8; margin-top: 2px; }
+.err { font-size: 12px; color: var(--red); text-align: center; font-weight: 600; }
