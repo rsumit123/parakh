@@ -112,7 +112,9 @@ def test_photo_persists_category_from_extractor(repo):
                                "ingredients": ["potato"], "nutrition": HEALTHY})
     svc = ScanService(repo, FakeOFF(None), extractor)
     res = svc.scan_photo("c1", b"img")
-    assert res["product"]["category"] == "potato chips"
+    # "potato chips" is normalized into the fixed taxonomy bucket so it can be
+    # compared against peers (otherwise it would land in a category of one).
+    assert res["product"]["category"] == "namkeen"
 
 
 def test_scan_returns_healthier_alternatives_in_same_category(repo):

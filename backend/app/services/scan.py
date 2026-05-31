@@ -1,4 +1,5 @@
 from app.scoring.scorer import score as score_fn
+from app.categories import normalize_category
 
 # Nutrition keys that indicate the product actually carries usable label data.
 _NUTRITION_SIGNALS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
@@ -54,10 +55,14 @@ class ScanService:
         return {"source": source, "product": product, "alternatives": alternatives}
 
     def _score_and_cache(self, barcode: str, data: dict, source: str) -> dict:
-        scored = score_fn(data["ingredients"], data["nutrition"], data.get("category", ""))
+        # Normalize the free-text category into a fixed bucket so this product can
+        # be compared against peers (otherwise it lands in a category of one and
+        # never gets "healthier alternatives").
+        category = normalize_category(data.get("category", ""), data.get("name", ""))
+        scored = score_fn(data["ingredients"], data["nutrition"], category)
         self._repo.save(
             barcode=barcode, name=data["name"], brand=data["brand"],
-            category=data.get("category", ""),
+            category=category,
             ingredients=data["ingredients"], nutrition=data["nutrition"],
             score=scored, source=source,
         )
