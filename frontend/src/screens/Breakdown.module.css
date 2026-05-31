@@ -1,0 +1,21 @@
+.section { margin-bottom: 20px; }
+.secT {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin: 0 0 10px;
+}
+.nut { margin-bottom: 12px; }
+.nl { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+.nl .val { color: var(--muted); font-weight: 500; }
+.bar { height: 7px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 99px; }
+.flag {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fcefee; border: 1px solid #f6d7d3; border-radius: 13px;
+  padding: 11px 13px; margin-bottom: 9px;
+}
+.flag .ic {
+  width: 22px; height: 22px; border-radius: 7px; background: var(--red); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
+}
+.flag h4 { font-size: 12.5px; font-weight: 700; color: #9e2a22; }
+.flag p { font-size: 10.5px; font-weight: 500; color: #b85047; margin-top: 1px; }
