@@ -27,6 +27,8 @@ export function useScan({
 }: Options) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Surfaced as a flag (not a red string) so screens can show a friendly modal.
+  const [limitReached, setLimitReached] = useState(false);
 
   const handleError = useCallback((e: unknown): void => {
     if (e instanceof AuthExpiredError) {
@@ -35,7 +37,7 @@ export function useScan({
       setError(null);
       onNeedsPhoto?.();
     } else if (e instanceof RateLimitError) {
-      setError("You've hit your daily scan limit. Sign in or come back tomorrow.");
+      setLimitReached(true);
     } else if (e instanceof UnreadableLabelError) {
       setError("We couldn't read that label. Try a clearer photo of the nutrition panel.");
     } else {
