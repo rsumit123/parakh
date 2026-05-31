@@ -14,9 +14,15 @@ _INDIA_PENALTIES = [
     ("maida", 8, "Refined flour (maida)", "Refined wheat flour, low fibre"),
     ("refined wheat flour", 8, "Refined flour (maida)", "Refined wheat flour, low fibre"),
 ]
-# Additive markers each add a smaller penalty (capped).
-_ADDITIVE_MARKERS = ["flavour enhancer", "flavor enhancer", "e621", "e635",
-                     "monosodium glutamate", "msg", "artificial colour", "artificial color"]
+# Additive markers grouped by synonym so a single additive declared multiple ways
+# isn't counted twice (e.g. "monosodium glutamate (MSG, E621)" is one additive).
+# Each distinct group present adds a small penalty; the total is capped.
+_ADDITIVE_GROUPS = [
+    ("monosodium glutamate", "msg", "e621"),
+    ("flavour enhancer", "flavor enhancer"),
+    ("e635",),
+    ("artificial colour", "artificial color"),
+]
 _ADDITIVE_POINTS = 3
 _ADDITIVE_CAP = 9
 
@@ -66,8 +72,8 @@ def _india_flags(ingredients: list[str]) -> tuple[int, list[dict]]:
             seen_labels.add(label)
             flags.append({"label": label, "note": note})
     additive_penalty = 0
-    for marker in _ADDITIVE_MARKERS:
-        if marker in text:
+    for group in _ADDITIVE_GROUPS:
+        if any(marker in text for marker in group):
             additive_penalty = min(_ADDITIVE_CAP, additive_penalty + _ADDITIVE_POINTS)
     if additive_penalty:
         penalty += additive_penalty
@@ -94,6 +100,8 @@ def score(ingredients: list[str], nutrition: dict) -> dict:
     base = _base_0_100(nutrition)
     penalty, india_flags = _india_flags(ingredients)
     overall = max(0, min(100, base - penalty))
+    # The final grade is derived from the penalized 0-100 score, NOT the canonical
+    # Nutri-Score A-E bands, so India penalties can move the letter grade.
     grade = grade_from_score(overall)
 
     bars = _nutrient_bars(nutrition)

@@ -41,3 +41,16 @@ def test_breakdown_contains_nutrient_bars():
 def test_overall_clamped_0_100():
     r = score(["palm oil", "maida"], JUNK)
     assert 0 <= r["overall"] <= 100
+
+def test_msg_synonyms_counted_as_one_additive():
+    # "monosodium glutamate" and "msg" are the same additive -> counted once,
+    # so the penalty matches a single distinct marker.
+    both = score(["monosodium glutamate", "msg"], HEALTHY)["overall"]
+    one = score(["msg"], HEALTHY)["overall"]
+    assert both == one
+
+def test_empty_input_is_scored_without_error():
+    r = score([], {})
+    assert 0 <= r["overall"] <= 100
+    assert r["grade"] in ("A", "B", "C", "D", "E")
+    assert r["breakdown"]["india_flags"] == []
