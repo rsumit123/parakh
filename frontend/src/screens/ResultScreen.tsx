@@ -53,6 +53,22 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
     }
   };
 
+  // Build ONE keyed list of reason cards (negatives, then NOVA, then positives) so
+  // React keeps each card's expand state isolated. Mixing several .map() arrays with
+  // a standalone element as siblings makes React reconcile positionally and leak
+  // state between cards.
+  const reasonCards = [
+    ...score.negatives.map((n) => ({
+      key: `n-${n}`, reason: n, kind: "neg" as const, exp: explanationForReason(n),
+    })),
+    ...(nova && nova.group === 4
+      ? [{ key: "nova-4", reason: "Ultra-processed (NOVA 4)", kind: "neg" as const, exp: explanationForNova(4) }]
+      : []),
+    ...score.positives.map((p) => ({
+      key: `p-${p}`, reason: p, kind: "pos" as const, exp: null,
+    })),
+  ];
+
   return (
     <div className={styles.screen}>
       <div className={`${styles.hero} ${styles[tone]}`}>
@@ -76,15 +92,9 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
       <div className={styles.section}>
         <div className={styles.sectionTitle}>What this means for you</div>
         <div className={styles.cards}>
-          {score.negatives.map((n) => (
-            <ReasonCard key={`n-${n}`} reason={n} kind="neg" exp={explanationForReason(n)} />
+          {reasonCards.map((c) => (
+            <ReasonCard key={c.key} reason={c.reason} kind={c.kind} exp={c.exp} />
           ))}
-          {score.positives.map((p) => (
-            <ReasonCard key={`p-${p}`} reason={p} kind="pos" exp={null} />
-          ))}
-          {nova && nova.group === 4 && (
-            <ReasonCard reason="Ultra-processed (NOVA 4)" kind="neg" exp={explanationForNova(4)} />
-          )}
           {!hasReasons && (
             <div className={styles.clean}>
               <span className={styles.cleanEmoji}>🌿</span>
