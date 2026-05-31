@@ -15,8 +15,10 @@ const RESULT: ScanResult = {
 function setup(overrides = {}) {
   const props = {
     token: "tok",
+    isGuest: true,
     onResult: vi.fn(),
     onBack: vi.fn(),
+    onSignIn: vi.fn(),
     scanByBarcode: vi.fn().mockResolvedValue(RESULT),
     scanByPhoto: vi.fn().mockResolvedValue(RESULT),
     ...overrides,

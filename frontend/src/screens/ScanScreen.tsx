@@ -3,13 +3,16 @@ import type { ScanResult } from "../api/types";
 import { useScan } from "../scan/useScan";
 import { useBarcodeScanner } from "../scan/useBarcodeScanner";
 import { LoadingOverlay } from "../components/LoadingOverlay";
+import { LimitModal } from "../components/LimitModal";
 import styles from "./ScanScreen.module.css";
 
 interface Props {
   token: string;
   remaining?: number;
+  isGuest: boolean;
   onResult: (r: ScanResult) => void;
   onBack: () => void;
+  onSignIn: () => void;
   onAuthError?: () => void;
   // injectable for tests
   scanByBarcode?: (barcode: string, token: string) => Promise<ScanResult>;
@@ -17,22 +20,22 @@ interface Props {
 }
 
 export function ScanScreen({
-  token, remaining, onResult, onBack, onAuthError, scanByBarcode, scanByPhoto,
+  token, remaining, isGuest, onResult, onBack, onSignIn, onAuthError, scanByBarcode, scanByPhoto,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Set when a scanned barcode isn't in any database — we ask for a label photo
   // and pause the live scanner so it doesn't keep re-reading the same code.
   const [needsPhoto, setNeedsPhoto] = useState(false);
 
-  const { busy, error, runBarcode, runPhoto } = useScan({
+  const { busy, error, limitReached, runBarcode, runPhoto, clearLimit } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
     onNeedsPhoto: () => setNeedsPhoto(true),
   });
 
-  // Camera off while processing (busy) or once we've fallen back to the photo flow.
+  // Camera off while processing, in the photo fallback, or when out of scans.
   const { error: cameraError } = useBarcodeScanner({
     videoRef,
-    enabled: !busy && !needsPhoto,
+    enabled: !busy && !needsPhoto && !limitReached,
     onScan: (code) => void runBarcode(code),
   });
 
@@ -92,6 +95,13 @@ export function ScanScreen({
           />
         </label>
       </div>
+
+      <LimitModal
+        open={limitReached}
+        isGuest={isGuest}
+        onClose={clearLimit}
+        onSignIn={onSignIn}
+      />
     </div>
   );
 }

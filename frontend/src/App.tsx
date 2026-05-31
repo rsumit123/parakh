@@ -73,8 +73,10 @@ function Shell() {
       <ScanScreen
         token={token}
         remaining={remaining}
+        isGuest={isGuest}
         onResult={handleResult}
         onBack={() => setView("home")}
+        onSignIn={signOut}
         onAuthError={signOut}
       />
     );
@@ -86,8 +88,13 @@ function Shell() {
       <HomeScreen
         token={token}
         remaining={remaining}
+        isGuest={isGuest}
+        history={history}
         onResult={handleResult}
         onOpenCamera={() => setView("scan")}
+        onOpenProduct={showProduct}
+        onSeeHistory={() => { setResult(null); setView("history"); }}
+        onSignIn={signOut}
         onAuthError={signOut}
       />
     </div>
