@@ -54,7 +54,7 @@ class ScanService:
         return {"source": source, "product": product, "alternatives": alternatives}
 
     def _score_and_cache(self, barcode: str, data: dict, source: str) -> dict:
-        scored = score_fn(data["ingredients"], data["nutrition"])
+        scored = score_fn(data["ingredients"], data["nutrition"], data.get("category", ""))
         self._repo.save(
             barcode=barcode, name=data["name"], brand=data["brand"],
             category=data.get("category", ""),

@@ -123,10 +123,45 @@ def _nutrient_bars(nutrition: dict) -> list[dict]:
     return bars
 
 
-def score(ingredients: list[str], nutrition: dict) -> dict:
+def _is_drink(category: str, ingredients: list[str]) -> bool:
+    """True if the product is a beverage. Detected by category OR soda ingredients,
+    so it works for seeded items (category set) and messy real scans alike."""
+    if "drink" in (category or "").lower():
+        return True
+    text = " ".join(i.lower() for i in ingredients)
+    return "carbonated water" in text or "soft drink" in text
+
+
+def _beverage_sugar_penalty(sugars_g: float) -> int:
+    """Extra penalty for sugar in DRINKS only. The base score uses the food sugar
+    scale, on which a sugary soda still scores deceptively well; beverages need a
+    far harsher sugar response (real Nutri-Score uses a separate beverage scale).
+    Calibrated so a full-sugar cola (~11g/100ml) lands D, a reduced-sugar drink
+    (~7g) lands C, and a zero-sugar drink stays B."""
+    s = sugars_g
+    if s <= 0:
+        return 0
+    if s <= 2:
+        return 5
+    if s <= 5:
+        return 15
+    if s <= 8:
+        return 25
+    return 40
+
+
+def score(ingredients: list[str], nutrition: dict, category: str = "") -> dict:
     base = _base_0_100(nutrition)
     penalty, india_flags = _india_flags(ingredients)
-    overall = max(0, min(100, base - penalty))
+    overall = base - penalty
+
+    drink_sugar_penalty = 0
+    if _is_drink(category, ingredients):
+        drink_sugar_penalty = _beverage_sugar_penalty(
+            float(nutrition.get("sugars_g", 0) or 0))
+        overall -= drink_sugar_penalty
+    overall = max(0, min(100, overall))
+
     # The final grade is derived from the penalized 0-100 score, NOT the canonical
     # Nutri-Score A-E bands, so India penalties can move the letter grade.
     grade = grade_from_score(overall)
@@ -136,6 +171,8 @@ def score(ingredients: list[str], nutrition: dict) -> dict:
                  for b in bars if (not b["high_is_bad"]) and b["level"] != "low"]
     negatives = [f"High {b['label'].lower()}"
                  for b in bars if b["high_is_bad"] and b["level"] == "high"]
+    if drink_sugar_penalty > 0 and "High sugar" not in negatives:
+        negatives.append("High sugar")  # surfaced even if the food-scale bar wasn't "high"
     negatives += [f["label"] for f in india_flags]
 
     return {

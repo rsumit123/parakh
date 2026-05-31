@@ -236,7 +236,7 @@ PRODUCTS = [
 
 def seed(repo: ProductRepository, products: list[dict]) -> None:
     for i, p in enumerate(products):
-        scored = score_fn(p["ingredients"], p["nutrition"])
+        scored = score_fn(p["ingredients"], p["nutrition"], p["category"])
         # Barcode-less products get a stable synthetic key derived from the name so
         # re-running upserts the same row instead of duplicating.
         barcode = p["barcode"] or ("seed:" + p["name"].lower().replace(" ", "-"))
