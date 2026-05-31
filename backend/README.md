@@ -1,4 +1,4 @@
-# NutriScan Backend
+# Parakh Backend
 
 FastAPI service that scans a packaged-food barcode (or label photo) and returns a
 single 0–100 health score (Nutri-Score + India-specific penalties). Unknown
@@ -11,7 +11,7 @@ label photo, and cached in SQLite so future scans are instant.
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env   # then set NUTRISCAN_OPENROUTER_API_KEY for the photo path
+cp .env.example .env   # then set PARAKH_OPENROUTER_API_KEY for the photo path
 ```
 
 ## Run

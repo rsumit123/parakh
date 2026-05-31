@@ -32,7 +32,7 @@ class OpenFoodFactsClient:
     def fetch(self, barcode: str) -> dict | None:
         try:
             resp = httpx.get(_BASE.format(barcode=barcode), timeout=self._timeout,
-                             headers={"User-Agent": "NutriScan/0.1"})
+                             headers={"User-Agent": "Parakh/0.1"})
         except httpx.HTTPError:
             return None
         if resp.status_code != 200:
