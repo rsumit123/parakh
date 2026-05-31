@@ -18,7 +18,7 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
                guest_limit, free_limit, today=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
-    app = FastAPI(title="NutriScan API")
+    app = FastAPI(title="Parakh API")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                        allow_headers=["*"])
 
