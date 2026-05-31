@@ -1,11 +1,11 @@
-# NutriScan — Design Spec
+# Parakh — Design Spec
 
 **Date:** 2026-05-31
 **Status:** Approved (design), pending implementation plan
 
 ## 1. Summary
 
-NutriScan is a mobile-first Progressive Web App that lets a user scan a packaged
+Parakh is a mobile-first Progressive Web App that lets a user scan a packaged
 food product and instantly see a single, clear "good for you / bad for you"
 verdict. The user scans the product barcode; if the product is known, they get an
 instant cached score. If it is unknown, the user photographs the nutrition/
