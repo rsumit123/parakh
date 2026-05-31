@@ -1,8 +1,8 @@
-# NutriScan Backend Implementation Plan
+# Parakh Backend Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the NutriScan FastAPI backend — a barcode/label scan pipeline that returns a single 0–100 health score (Nutri-Score + India penalties), backed by SQLite, with guest/free rate-limiting.
+**Goal:** Build the Parakh FastAPI backend — a barcode/label scan pipeline that returns a single 0–100 health score (Nutri-Score + India penalties), backed by SQLite, with guest/free rate-limiting.
 
 **Architecture:** A long-running FastAPI server. A scan request flows through: auth + rate-limit → our SQLite product cache → OpenFoodFacts fallback → label-photo vision extraction (via OpenRouter). Scoring is a pure, deterministic function. Every newly-resolved product is written back to SQLite so future scans are instant lookups.
 
@@ -89,7 +89,7 @@ These shapes are used across tasks. Defined concretely in the tasks noted.
 
 ```toml
 [project]
-name = "nutriscan-backend"
+name = "parakh-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
@@ -113,12 +113,12 @@ asyncio_mode = "auto"
 - [ ] **Step 2: Create `backend/.env.example`**
 
 ```bash
-NUTRISCAN_GUEST_DAILY_LIMIT=3
-NUTRISCAN_FREE_DAILY_LIMIT=10
-NUTRISCAN_DB_URL=sqlite:///./nutriscan.db
-NUTRISCAN_OPENROUTER_API_KEY=sk-or-changeme
-NUTRISCAN_VISION_MODEL=google/gemini-flash-1.5
-NUTRISCAN_OPENROUTER_URL=https://openrouter.ai/api/v1/chat/completions
+PARAKH_GUEST_DAILY_LIMIT=3
+PARAKH_FREE_DAILY_LIMIT=10
+PARAKH_DB_URL=sqlite:///./parakh.db
+PARAKH_OPENROUTER_API_KEY=sk-or-changeme
+PARAKH_VISION_MODEL=google/gemini-flash-1.5
+PARAKH_OPENROUTER_URL=https://openrouter.ai/api/v1/chat/completions
 ```
 
 - [ ] **Step 3: Create empty `backend/app/__init__.py` and `backend/tests/__init__.py`**
@@ -137,7 +137,7 @@ def test_defaults_apply_when_env_absent():
     assert s.vision_model  # non-empty default
 
 def test_env_overrides(monkeypatch):
-    monkeypatch.setenv("NUTRISCAN_GUEST_DAILY_LIMIT", "5")
+    monkeypatch.setenv("PARAKH_GUEST_DAILY_LIMIT", "5")
     s = Settings(_env_file=None)
     assert s.guest_daily_limit == 5
 ```
@@ -154,11 +154,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="NUTRISCAN_", env_file=".env")
+    model_config = SettingsConfigDict(env_prefix="PARAKH_", env_file=".env")
 
     guest_daily_limit: int = 3
     free_daily_limit: int = 10
-    db_url: str = "sqlite:///./nutriscan.db"
+    db_url: str = "sqlite:///./parakh.db"
     openrouter_api_key: str = "changeme"
     vision_model: str = "google/gemini-flash-1.5"
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
@@ -816,7 +816,7 @@ class OpenFoodFactsClient:
     def fetch(self, barcode: str) -> dict | None:
         try:
             resp = httpx.get(_BASE.format(barcode=barcode), timeout=self._timeout,
-                             headers={"User-Agent": "NutriScan/0.1"})
+                             headers={"User-Agent": "Parakh/0.1"})
         except httpx.HTTPError:
             return None
         if resp.status_code != 200:
@@ -1517,7 +1517,7 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
                guest_limit, free_limit, today=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
-    app = FastAPI(title="NutriScan API")
+    app = FastAPI(title="Parakh API")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                        allow_headers=["*"])
 
@@ -1638,14 +1638,14 @@ git commit -m "feat: FastAPI app — auth, barcode/photo scan, rate-limit wiring
 - [ ] **Step 1: Write `backend/README.md`**
 
 ````markdown
-# NutriScan Backend
+# Parakh Backend
 
 ## Setup
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env   # then set NUTRISCAN_OPENROUTER_API_KEY
+cp .env.example .env   # then set PARAKH_OPENROUTER_API_KEY
 ```
 
 ## Run
