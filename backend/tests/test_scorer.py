@@ -68,3 +68,43 @@ def test_nova_unknown_when_no_ingredients():
     r = score([], HEALTHY)
     assert r["breakdown"]["nova"]["group"] == 0
     assert r["breakdown"]["nova"]["label"] == "Unknown"
+
+
+# --- Beverage sugar penalty (drinks only) ---
+
+COLA = {"energy_kj": 180, "sugars_g": 10.9, "sat_fat_g": 0, "salt_g": 0.01,
+        "fibre_g": 0, "protein_g": 0, "fruit_veg_nuts_pct": 0}
+ZERO_SODA = {"energy_kj": 0, "sugars_g": 0, "sat_fat_g": 0, "salt_g": 0.02,
+             "fibre_g": 0, "protein_g": 0, "fruit_veg_nuts_pct": 0}
+MID_SODA = {"energy_kj": 117, "sugars_g": 6.8, "sat_fat_g": 0, "salt_g": 0.02,
+            "fibre_g": 0, "protein_g": 0, "fruit_veg_nuts_pct": 0}
+
+
+def test_full_sugar_cola_grades_D_for_drinks():
+    r = score(["carbonated water", "sugar"], COLA, category="drinks")
+    assert r["grade"] == "D", r["overall"]
+    assert "High sugar" in r["negatives"]
+
+
+def test_zero_sugar_soda_stays_B():
+    r = score(["carbonated water", "sweeteners"], ZERO_SODA, category="drinks")
+    assert r["grade"] == "B", r["overall"]
+
+
+def test_reduced_sugar_drink_lands_between():
+    r = score(["carbonated water", "sweeteners"], MID_SODA, category="drinks")
+    assert r["grade"] == "C", r["overall"]
+
+
+def test_beverage_penalty_only_applies_to_drinks():
+    # The SAME sugar in a non-drink (no category, no soda ingredients) must NOT get
+    # the harsh beverage penalty.
+    as_food = score(["wheat flour"], COLA)
+    as_drink = score(["carbonated water"], COLA, category="drinks")
+    assert as_food["overall"] > as_drink["overall"]
+
+
+def test_drink_detected_by_ingredients_when_category_missing():
+    # No category, but carbonated water in ingredients -> still treated as a drink.
+    r = score(["carbonated water", "sugar"], COLA)
+    assert r["grade"] == "D"
