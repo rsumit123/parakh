@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     db_url: str = "sqlite:///./parakh.db"
     secret_key: str = "dev-secret"  # signs auth tokens; set PARAKH_SECRET_KEY in prod
     openrouter_api_key: str = "changeme"
-    vision_model: str = "google/gemini-flash-1.5"
+    vision_model: str = "google/gemini-2.0-flash-001"
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
 
 
