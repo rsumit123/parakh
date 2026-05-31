@@ -94,9 +94,11 @@ export function ScanScreen({
         {error && <div className={styles.err}>{error}</div>}
 
         {needsPhoto ? (
-          <div className={styles.photoPrompt}>
-            We don't know this product yet — photograph the nutrition label and we'll read it.
-            <label className={`${styles.btn} ${styles.lime}`} style={{ display: "block", marginTop: 10 }}>
+          <>
+            <div className={styles.photoPrompt}>
+              We don't know this product yet — photograph the nutrition label and we'll read it.
+            </div>
+            <label className={`${styles.btn} ${styles.lime}`} style={{ display: "block", textAlign: "center" }}>
               📷 Take a photo of the label
               <input
                 data-testid="photo-input"
@@ -107,7 +109,7 @@ export function ScanScreen({
                 onChange={(e) => onPhotoPicked(e.target.files?.[0])}
               />
             </label>
-          </div>
+          </>
         ) : (
           <>
             <div className={styles.row}>
