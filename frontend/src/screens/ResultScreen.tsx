@@ -75,7 +75,7 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
         <div className={styles.scoreLabel}>NUTRI-SCORE</div>
         <ScoreRing grade={score.grade} overall={score.overall} />
         <div className={styles.verdict}>{score.verdict}</div>
-        {nova && nova.group > 0 && (
+        {nova && nova.group >= 3 && (
           <div className={styles.novaPill}>NOVA {nova.group} · {nova.label}</div>
         )}
       </div>

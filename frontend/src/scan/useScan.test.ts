@@ -39,10 +39,11 @@ describe("useScan", () => {
     expect(hook.result.current.error).toBeNull();
   });
 
-  it("shows a message on rate limit", async () => {
+  it("flags the rate limit (for a modal) instead of a red error string", async () => {
     const { hook } = setup({ scanByBarcode: vi.fn().mockRejectedValue(new RateLimitError()) });
     await act(async () => { await hook.result.current.runBarcode("1"); });
-    expect(hook.result.current.error).toMatch(/daily scan limit/i);
+    expect(hook.result.current.limitReached).toBe(true);
+    expect(hook.result.current.error).toBeNull();
   });
 
   it("calls onAuthError on 401", async () => {
