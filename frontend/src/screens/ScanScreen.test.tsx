@@ -74,4 +74,33 @@ describe("ScanScreen", () => {
     setup({ remaining: 2 });
     expect(screen.getByText(/2 scans left today/i)).toBeInTheDocument();
   });
+
+  it("uploads a label photo from the gallery without needing a barcode", async () => {
+    const props = setup();
+    const file = new File([new Uint8Array([1, 2, 3])], "label.jpg", { type: "image/jpeg" });
+    await userEvent.upload(screen.getByTestId("photo-upload-bypass"), file);
+    expect(props.scanByPhoto).toHaveBeenCalledOnce();
+    // no barcode entered -> a non-empty synthetic key is sent (never the literal "unknown")
+    const sentBarcode = props.scanByPhoto.mock.calls[0][0];
+    expect(sentBarcode).toBeTruthy();
+    expect(sentBarcode).not.toBe("unknown");
+    expect(props.onResult).toHaveBeenCalledWith(RESULT);
+  });
+
+  it("offers a gallery upload (no forced camera) in the needs-photo state", async () => {
+    setup({ scanByBarcode: vi.fn().mockRejectedValue(new NeedsPhotoError()) });
+    await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "999");
+    await userEvent.click(screen.getByRole("button", { name: /^look up$/i }));
+    const upload = await screen.findByTestId("photo-upload-needs-photo");
+    // gallery picker = a file input WITHOUT the capture attribute
+    expect(upload).not.toHaveAttribute("capture");
+  });
+
+  it("uses the entered barcode as the key when uploading a label photo", async () => {
+    const props = setup();
+    await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "8901058000177");
+    const file = new File([new Uint8Array([1, 2, 3])], "label.jpg", { type: "image/jpeg" });
+    await userEvent.upload(screen.getByTestId("photo-upload-bypass"), file);
+    expect(props.scanByPhoto).toHaveBeenCalledWith("8901058000177", expect.any(File), "tok");
+  });
 });

@@ -18,4 +18,6 @@
 .photoPrompt { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; text-align: center; font-size: 13px; }
 .err { color: #ffd2cd; font-size: 13px; text-align: center; font-weight: 600; }
 .busy { text-align: center; font-size: 13px; color: rgba(255,255,255,0.8); }
+.divider { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45); margin: 4px 0 2px; }
 .hidden { display: none; }
