@@ -26,6 +26,33 @@ _ADDITIVE_GROUPS = [
 _ADDITIVE_POINTS = 3
 _ADDITIVE_CAP = 9
 
+# NOVA ultra-processing markers: cosmetic/industrial ingredients whose presence
+# marks a product as NOVA group 4 (ultra-processed). Substring match, lowercase.
+_NOVA4_MARKERS = [
+    "flavour", "flavor", "artificial colour", "artificial color", "colour (",
+    "color (", "emulsifier", "stabiliser", "stabilizer", "maltodextrin",
+    "monosodium glutamate", "msg", "hydrogenated", "invert syrup", "glucose syrup",
+    "high fructose", "corn syrup", "acidity regulator", "raising agent",
+    "anti-caking", "preservative", "sweetener", "modified starch", "dextrose",
+    "protein isolate", "whey protein", "e621", "e635", "e150", "e160",
+]
+
+
+def _nova(ingredients: list[str]) -> dict:
+    """Estimate the NOVA processing group (1-4) from the ingredient list.
+    This is informational (it does not change the score). Group 4 (ultra-processed)
+    is detected by cosmetic/industrial markers; otherwise we estimate from how many
+    ingredients are listed."""
+    text = " ".join(i.lower() for i in ingredients)
+    if any(m in text for m in _NOVA4_MARKERS):
+        return {"group": 4, "label": "Ultra-processed"}
+    count = len([i for i in ingredients if i.strip()])
+    if count == 0:
+        return {"group": 0, "label": "Unknown"}
+    if count >= 5:
+        return {"group": 3, "label": "Processed"}
+    return {"group": 1, "label": "Minimally processed"}
+
 
 def grade_from_score(overall: int) -> str:
     if overall >= 80:
@@ -117,5 +144,9 @@ def score(ingredients: list[str], nutrition: dict) -> dict:
         "verdict": _VERDICTS[grade],
         "positives": positives,
         "negatives": negatives,
-        "breakdown": {"nutrients": bars, "india_flags": india_flags},
+        "breakdown": {
+            "nutrients": bars,
+            "india_flags": india_flags,
+            "nova": _nova(ingredients),
+        },
     }

@@ -54,3 +54,17 @@ def test_empty_input_is_scored_without_error():
     assert 0 <= r["overall"] <= 100
     assert r["grade"] in ("A", "B", "C", "D", "E")
     assert r["breakdown"]["india_flags"] == []
+
+def test_nova_ultra_processed_when_additives_present():
+    r = score(["corn meal", "palmolein", "flavour", "colour (160c)", "maltodextrin"], JUNK)
+    assert r["breakdown"]["nova"]["group"] == 4
+    assert r["breakdown"]["nova"]["label"] == "Ultra-processed"
+
+def test_nova_minimally_processed_for_whole_food():
+    r = score(["roasted chana"], HEALTHY)
+    assert r["breakdown"]["nova"]["group"] == 1
+
+def test_nova_unknown_when_no_ingredients():
+    r = score([], HEALTHY)
+    assert r["breakdown"]["nova"]["group"] == 0
+    assert r["breakdown"]["nova"]["label"] == "Unknown"
