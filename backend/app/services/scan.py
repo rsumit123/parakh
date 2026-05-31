@@ -1,13 +1,26 @@
 from app.scoring.scorer import score as score_fn
 
+# Nutrition keys that indicate the product actually carries usable label data.
+_NUTRITION_SIGNALS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
+
+
+def _has_usable_nutrition(nutrition: dict) -> bool:
+    """True if at least one core nutrition value is present and non-zero.
+    Products with all-zero nutrition (e.g. an OpenFoodFacts entry that has a name but
+    no nutrition facts) produce a meaningless score, so we don't present/keep them."""
+    return any(float(nutrition.get(k, 0) or 0) > 0 for k in _NUTRITION_SIGNALS)
+
 
 class ProductNotFound(Exception):
-    """Raised when a barcode is in neither our DB nor OpenFoodFacts (needs a photo)."""
+    """Raised when a barcode is in neither our DB nor OpenFoodFacts with usable data
+    (the caller should then ask the user to photograph the label)."""
 
 
 class ScanService:
     """Orchestrates the scan pipeline: our DB -> OpenFoodFacts -> (caller) photo.
-    Newly resolved products are scored and written back so future scans are DB hits."""
+    Newly resolved products are scored and written back so future scans are DB hits.
+    A cached or OpenFoodFacts record with no usable nutrition is treated as a miss so
+    the user is asked for a label photo (this also self-heals old empty cache rows)."""
 
     def __init__(self, product_repo, off_client, label_extractor):
         self._repo = product_repo
@@ -16,11 +29,11 @@ class ScanService:
 
     def scan_barcode(self, barcode: str) -> dict:
         cached = self._repo.get(barcode)
-        if cached is not None:
+        if cached is not None and _has_usable_nutrition(cached.get("nutrition", {})):
             return {"source": "db", "product": cached}
 
         off_data = self._off.fetch(barcode)
-        if off_data is not None:
+        if off_data is not None and _has_usable_nutrition(off_data["nutrition"]):
             product = self._score_and_cache(barcode, off_data, source="off")
             return {"source": "off", "product": product}
 

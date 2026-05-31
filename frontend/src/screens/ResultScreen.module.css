@@ -1,4 +1,4 @@
-.screen { min-height: 100%; display: flex; flex-direction: column; padding-bottom: 24px; background: var(--paper); }
+.screen { min-height: 100dvh; display: flex; flex-direction: column; padding-bottom: 24px; background: var(--paper); }
 .hero { padding: 18px 22px 28px; border-radius: 0 0 32px 32px; text-align: center; color: #fff; }
 .hero.good { background: linear-gradient(160deg, #1fa463, #0b3d2c); }
 .hero.ok { background: linear-gradient(160deg, #f0a23b, #9a6212); }
@@ -30,6 +30,8 @@
 .novaLabel { font-size: 13px; font-weight: 700; color: var(--ink); }
 
 .flags { padding: 16px 18px 4px; display: flex; flex-direction: column; gap: 9px; }
+.noflags { font-size: 13px; color: var(--muted); text-align: center; padding: 10px 8px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 13px; }
 .reasonWrap { background: var(--card); border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
 .reason {
   width: 100%; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;

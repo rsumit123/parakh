@@ -80,6 +80,11 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
       <div className={styles.flags}>
         {score.positives.map((p) => <ReasonChip key={`p-${p}`} reason={p} kind="pos" />)}
         {score.negatives.map((n) => <ReasonChip key={`n-${n}`} reason={n} kind="neg" />)}
+        {score.positives.length === 0 && score.negatives.length === 0 && (
+          <div className={styles.noflags}>
+            No standout nutrients to flag. Open the breakdown for the full picture.
+          </div>
+        )}
       </div>
 
       <button className={styles.seebreak} onClick={() => setOpen((v) => !v)}>
