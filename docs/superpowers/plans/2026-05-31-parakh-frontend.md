@@ -2346,7 +2346,7 @@ git commit -m "docs(frontend): README with setup, run, build"
 
 **Backend pairing:** consumes only the endpoints/shapes the merged backend exposes; `apiUrl` + Vite proxy handle CORS/base-url; the score object includes `verdict/positives/negatives` (the fields fixed in the backend before merge).
 
-**Placeholder scan:** none. One deliberate inline note in Task 12 Step 3 warns the implementer to delete the stray `</css-keep>` marker — that is an explicit instruction, not a placeholder.
+**Placeholder scan:** none.
 
 **Type consistency:** `ScanResult`/`Product`/`Score`/`NutrientBar` (Task 3) are used unchanged across client, scanApi, and every component. `scanBarcode(barcode, token)` / `scanPhoto(barcode, image, token)` signatures match between Task 8 and Task 15. `gradeTone`/`barColor` (Task 9) are used as defined in Tasks 11 and 12. Error classes `NeedsPhotoError`/`RateLimitError`/`UnreadableLabelError` are defined once (Task 8) and consumed in Task 15.
 
