@@ -231,6 +231,94 @@ PRODUCTS = [
                       "salt_g": 0.0075, "fibre_g": 0.0, "protein_g": 0.0,
                       "fruit_veg_nuts_pct": 0.0},
     },
+
+    # --- Chocolate (per-100g) ---
+    {
+        "barcode": "8000500411469",
+        "name": "Ferrero Rocher Moments",
+        "brand": "Ferrero Rocher",
+        "category": "chocolate",
+        "ingredients": [
+            "sugar", "skimmed milk powder", "hazelnuts", "palmolein",
+            "refined wheat flour (maida)", "refined salseed fat", "low fat cocoa powder",
+            "palm oil", "wheat starch", "sunflowerseed oil", "whey protein concentrate",
+            "emulsifier (lecithin ins 322)", "powdered barley malt extract",
+            "raising agents (ins 503ii, ins 500ii)",
+            "nature-identical flavouring substances", "iodized salt",
+        ],
+        "nutrition": {"energy_kj": 2201.0, "sugars_g": 45.5, "sat_fat_g": 11.6,
+                      "salt_g": 0.18, "fibre_g": 1.6, "protein_g": 7.9,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8901030005905",
+        "name": "Nestle KitKat",
+        "brand": "Nestle",
+        "category": "chocolate",
+        "ingredients": [
+            "sugar", "cocoa solids", "cocoa butter", "fractionated vegetable fat",
+            "emulsifier (soya lecithin)", "artificial flavouring substances",
+            "iodised salt", "wafer (refined wheat flour (maida))",
+            "hydrogenated vegetable fats", "milk solids", "yeast",
+            "raising agent (500ii)", "flour treatment agent (516)",
+        ],
+        "nutrition": {"energy_kj": 1937.0, "sugars_g": 41.5, "sat_fat_g": 24.1,
+                      "salt_g": 0.067, "fibre_g": 4.3, "protein_g": 3.9,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "7622202342196",
+        "name": "Cadbury Dairy Milk Silk",
+        "brand": "Cadbury",
+        "category": "chocolate",
+        "ingredients": [
+            "sugar", "milk solids", "cocoa butter", "cocoa solids",
+            "emulsifiers (442, 476)",
+            "flavours (natural, nature identical and artificial vanilla)",
+        ],
+        "nutrition": {"energy_kj": 2272.0, "sugars_g": 55.3, "sat_fat_g": 21.5,
+                      "salt_g": 0.31, "fibre_g": 0.0, "protein_g": 7.6,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8901262070676",
+        "name": "Amul Dark Chocolate",
+        "brand": "Amul",
+        "category": "chocolate",
+        "ingredients": [
+            "sugar", "cocoa solids", "cocoa butter",
+            "permitted emulsifiers (e322, e476)",
+            "added flavours (artificial flavouring substances - cocoa & vanilla)",
+        ],
+        "nutrition": {"energy_kj": 2330.0, "sugars_g": 43.0, "sat_fat_g": 20.4,
+                      "salt_g": 0.0, "fibre_g": 0.0, "protein_g": 6.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8901262071864",
+        "name": "Amul 99% Cacao Dark Chocolate",
+        "brand": "Amul",
+        "category": "chocolate",
+        "ingredients": ["cocoa solids", "permitted emulsifiers (e322, e476)"],
+        "nutrition": {"energy_kj": 2456.0, "sugars_g": 0.0, "sat_fat_g": 25.7,
+                      "salt_g": 0.0, "fibre_g": 0.0, "protein_g": 15.1,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+
+    # --- Healthy dairy drinks (kept in 'drinks' so they surface vs sugary sodas) ---
+    {
+        "barcode": "8901262200233",
+        "name": "Amul Masti Buttermilk (Chaas)",
+        "brand": "Amul",
+        "category": "drinks",
+        "ingredients": [
+            "milk solids", "iodised salt", "spices & condiments", "stabilizer (460i)",
+        ],
+        # Per 100ml.
+        "nutrition": {"energy_kj": 121.0, "sugars_g": 1.8, "sat_fat_g": 1.0,
+                      "salt_g": 0.625, "fibre_g": 0.0, "protein_g": 1.5,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
 ]
 
 
