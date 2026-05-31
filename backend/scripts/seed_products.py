@@ -163,6 +163,74 @@ PRODUCTS = [
                       "salt_g": 1.9, "fibre_g": 9.1, "protein_g": 17.1,
                       "fruit_veg_nuts_pct": 0.0},
     },
+
+    # --- Drinks / soft drinks (per-100ml, treated as per-100g; sugar dominates) ---
+    {
+        "barcode": "8901764112935",
+        "name": "Coca-Cola Zero Sugar",
+        "brand": "Coca-Cola",
+        "category": "drinks",
+        "ingredients": [
+            "carbonated water", "acidity regulators (338, 331iii)",
+            "sweeteners (955, 950)", "preservative (211)", "caffeine",
+            "colour (150d)", "flavours (natural flavouring substances)",
+        ],
+        "nutrition": {"energy_kj": 0.0, "sugars_g": 0.0, "sat_fat_g": 0.0,
+                      "salt_g": 0.019, "fibre_g": 0.0, "protein_g": 0.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8902080000333",
+        "name": "Pepsi Black Zero Sugar",
+        "brand": "Pepsi",
+        "category": "drinks",
+        "ingredients": [
+            "carbonated water", "sweeteners (sucralose, acesulfame potassium)",
+        ],
+        "nutrition": {"energy_kj": 0.0, "sugars_g": 0.0, "sat_fat_g": 0.0,
+                      "salt_g": 0.015, "fibre_g": 0.0, "protein_g": 0.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8902080120433",
+        "name": "Mirinda (Reduced Sugar)",
+        "brand": "Mirinda",
+        "category": "drinks",
+        "ingredients": [
+            "carbonated water", "natural flavouring substances",
+            "sweeteners (955, 960)", "preservative (211)", "stabilizer (444)",
+            "colour (110)",
+        ],
+        "nutrition": {"energy_kj": 117.0, "sugars_g": 6.8, "sat_fat_g": 0.0,
+                      "salt_g": 0.0175, "fibre_g": 0.0, "protein_g": 0.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "",  # no barcode captured
+        "name": "Coca-Cola (Original Taste)",
+        "brand": "Coca-Cola",
+        "category": "drinks",
+        "ingredients": [
+            "carbonated water", "sugar", "acidity regulator (338)", "caffeine",
+            "colour (150d)", "flavours (natural flavouring substances)",
+        ],
+        "nutrition": {"energy_kj": 184.0, "sugars_g": 10.6, "sat_fat_g": 0.0,
+                      "salt_g": 0.021, "fibre_g": 0.0, "protein_g": 0.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
+    {
+        "barcode": "8902080104055",
+        "name": "Pepsi (Original)",
+        "brand": "Pepsi",
+        "category": "drinks",
+        "ingredients": [
+            "carbonated water", "sugar", "colour (150d)", "acidity regulator (338)",
+            "caffeine", "flavour (natural flavouring substances)", "stabilizer (436)",
+        ],
+        "nutrition": {"energy_kj": 180.0, "sugars_g": 10.9, "sat_fat_g": 0.0,
+                      "salt_g": 0.0075, "fibre_g": 0.0, "protein_g": 0.0,
+                      "fruit_veg_nuts_pct": 0.0},
+    },
 ]
 
 
