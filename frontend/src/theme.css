@@ -1,1 +1,26 @@
-:root { color-scheme: light; }
+:root {
+  color-scheme: light;
+  --ink: #0f1512;
+  --paper: #f6f5ef;
+  --card: #ffffff;
+  --muted: #7a8579;
+  --line: #ecebe3;
+  --lime: #c7f94c;
+  --green: #1fa463;
+  --green-deep: #0b3d2c;
+  --red: #e2574c;
+  --amber: #f0a23b;
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+button { font-family: inherit; cursor: pointer; border: 0; }
