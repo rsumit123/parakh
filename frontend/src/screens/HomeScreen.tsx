@@ -34,12 +34,12 @@ export function HomeScreen({
       <div className={styles.top}>
         <div className={styles.brandRow}>
           <div className={styles.logo}>Par<b>akh</b></div>
-          {remaining !== undefined && (
-            <div className={styles.pill}>{remaining} scans left today</div>
-          )}
         </div>
         <h1 className={styles.headline}>What are you eating?</h1>
-        <p className={styles.tagline}>Scan a barcode or a label — we'll grade it for you.</p>
+        <p className={styles.tagline}>
+          Scan a barcode or a label — we'll grade it for you.
+          {remaining !== undefined && <> · <b className={styles.left}>{remaining} scans left today</b></>}
+        </p>
       </div>
 
       <div className={styles.actions}>

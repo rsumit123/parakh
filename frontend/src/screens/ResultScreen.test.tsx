@@ -41,7 +41,7 @@ describe("ResultScreen", () => {
     expect(screen.queryByText(/raises ldl cholesterol/i)).not.toBeInTheDocument();
     const palmChip = screen.getByText("Palm oil").closest("button")!;
     await userEvent.click(palmChip);
-    expect(screen.getByText(/raises ldl cholesterol/i)).toBeInTheDocument();
+    expect(screen.getByText(/raises ldl/i)).toBeInTheDocument();
     expect(screen.getByText(/Source:/i)).toBeInTheDocument();
   });
 

@@ -1,0 +1,38 @@
+.wrap { position: relative; }
+
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--green-deep));
+  color: #fff; font-size: 14px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+.avatar.dark { border-color: rgba(0, 0, 0, 0.08); }
+
+.menu {
+  position: absolute;
+  top: 46px; right: 0;
+  width: 220px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 18px 44px -16px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--line);
+  padding: 8px;
+  z-index: 30;
+}
+
+.who { padding: 10px 12px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.whoLabel { font-size: 14px; font-weight: 700; word-break: break-all; }
+.whoSub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.item {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 10px; background: transparent; border: 0;
+  font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink);
+  text-align: left;
+}
+.item:hover { background: #f2f4ee; }
+.itemIcon { width: 20px; text-align: center; }
+.danger { color: var(--red); }
+.danger:hover { background: #fceeec; }
