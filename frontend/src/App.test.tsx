@@ -12,10 +12,20 @@ describe("App", () => {
     expect(screen.getByText(/in your food/i)).toBeInTheDocument();
   });
 
-  it("after guest login, shows the scan screen", async () => {
+  it("after guest login, lands on the Home screen (camera off, no video element)", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ token: "g" }) }));
     render(<App />);
     await userEvent.click(screen.getByRole("button", { name: /guest/i }));
-    expect(await screen.findByPlaceholderText(/enter barcode/i)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /scan barcode/i })).toBeInTheDocument();
+    // critical: no camera auto-start on the landing page
+    expect(document.querySelector("video")).toBeNull();
+  });
+
+  it("opens the camera scan screen only after tapping Scan barcode", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ token: "g" }) }));
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: /guest/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /scan barcode/i }));
+    expect(await screen.findByText(/line up the barcode/i)).toBeInTheDocument();
   });
 });

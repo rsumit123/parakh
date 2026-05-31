@@ -30,13 +30,18 @@ export interface IndiaFlag {
   note: string;
 }
 
+export interface Nova {
+  group: number; // 0 unknown, 1 minimally processed, 3 processed, 4 ultra-processed
+  label: string;
+}
+
 export interface Score {
   overall: number;
   grade: Grade;
   verdict: string;
   positives: string[];
   negatives: string[];
-  breakdown: { nutrients: NutrientBar[]; india_flags: IndiaFlag[] };
+  breakdown: { nutrients: NutrientBar[]; india_flags: IndiaFlag[]; nova?: Nova };
 }
 
 export interface Product {
