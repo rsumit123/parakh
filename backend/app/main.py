@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, Depends, Header, HTTPException, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,7 +29,6 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
     def _today() -> str:
         if today is not None:
             return today
-        from datetime import datetime, timezone
         return datetime.now(timezone.utc).date().isoformat()
 
     def current_identity(authorization: str = Header(default="")) -> dict:
@@ -99,20 +100,28 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
 
 
 def app_from_settings() -> FastAPI:
+    """Build the production app. DB initialization is deferred to a startup event so
+    that merely importing this module never touches the filesystem (no DB file is
+    created at import time)."""
     settings = get_settings()
     engine = make_engine(settings.db_url)
-    init_db(engine)
     sf = make_session_factory(engine)
-    return create_app(
+    app = create_app(
         session_factory=sf,
         off_client=OpenFoodFactsClient(),
         label_extractor=LabelExtractor(
             api_key=settings.openrouter_api_key, model=settings.vision_model,
             url=settings.openrouter_url),
-        secret=settings.openrouter_api_key or "dev-secret",
+        secret=settings.secret_key,
         guest_limit=settings.guest_daily_limit,
         free_limit=settings.free_daily_limit,
     )
+
+    @app.on_event("startup")
+    def _init_db_on_startup():
+        init_db(engine)
+
+    return app
 
 
 app = app_from_settings()
