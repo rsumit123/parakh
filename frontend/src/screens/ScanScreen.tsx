@@ -66,14 +66,48 @@ export function ScanScreen({
     setBusy(true);
     setError(null);
     try {
-      // falsy check (not ??) so an empty manual entry falls through to "unknown"
-      onResult(await scanByPhoto(pendingBarcode || manual || "unknown", file, token));
+      // Key the cached product by the barcode if we have one; otherwise this is a
+      // label-only upload, so mint a unique key so each upload is its own record
+      // (rather than every barcode-less scan overwriting a shared "unknown" entry).
+      const barcodeForPhoto =
+        pendingBarcode || manual || `label-${crypto.randomUUID?.() ?? Date.now()}`;
+      onResult(await scanByPhoto(barcodeForPhoto, file, token));
     } catch (e) {
       handleError(e);
     } finally {
       setBusy(false);
     }
   };
+
+  // Renders the two ways to add a label photo: live camera (capture) and gallery
+  // upload (no capture, so the OS file picker can offer existing images).
+  const photoButtons = (idSuffix: string) => (
+    <>
+      <label className={`${styles.btn} ${styles.lime}`} style={{ display: "block", textAlign: "center" }}>
+        📷 Take a photo
+        <input
+          data-testid={`photo-input-${idSuffix}`}
+          className={styles.hidden}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          disabled={busy}
+          onChange={(e) => onPhotoPicked(e.target.files?.[0])}
+        />
+      </label>
+      <label className={`${styles.btn} ${styles.ghost}`} style={{ display: "block", textAlign: "center" }}>
+        🖼 Upload from gallery
+        <input
+          data-testid={`photo-upload-${idSuffix}`}
+          className={styles.hidden}
+          type="file"
+          accept="image/*"
+          disabled={busy}
+          onChange={(e) => onPhotoPicked(e.target.files?.[0])}
+        />
+      </label>
+    </>
+  );
 
   const onScan = useCallback((code: string) => void runBarcode(code), [runBarcode]);
 
@@ -104,19 +138,10 @@ export function ScanScreen({
         {needsPhoto ? (
           <>
             <div className={styles.photoPrompt}>
-              We don't know this product yet — photograph the nutrition label and we'll read it.
+              We don't know this product yet — add a photo of the nutrition label
+              (take one or upload from your gallery) and we'll read it.
             </div>
-            <label className={`${styles.btn} ${styles.lime}`} style={{ display: "block", textAlign: "center" }}>
-              📷 Take a photo of the label
-              <input
-                data-testid="photo-input-needs-photo"
-                className={styles.hidden}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => onPhotoPicked(e.target.files?.[0])}
-              />
-            </label>
+            {photoButtons("needs-photo")}
           </>
         ) : (
           <>
@@ -132,17 +157,8 @@ export function ScanScreen({
                 Look up
               </button>
             </div>
-            <label className={`${styles.btn} ${styles.ghost}`} style={{ textAlign: "center" }}>
-              📷 Photograph the label instead
-              <input
-                data-testid="photo-input-bypass"
-                className={styles.hidden}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => onPhotoPicked(e.target.files?.[0])}
-              />
-            </label>
+            <div className={styles.divider}>or add a label photo</div>
+            {photoButtons("bypass")}
           </>
         )}
       </div>
