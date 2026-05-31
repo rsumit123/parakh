@@ -1,0 +1,12 @@
+services:
+  parakh-backend:
+    build: .
+    container_name: parakh-backend
+    image: parakh-backend
+    ports:
+      - "8003:8000"
+    env_file: .env
+    volumes:
+      # Persist the SQLite product cache + users across container rebuilds.
+      - ./data:/data
+    restart: unless-stopped
