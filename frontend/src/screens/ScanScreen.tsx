@@ -32,8 +32,10 @@ export function ScanScreen({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const handleError = (e: unknown) => {
-    if (e instanceof NeedsPhotoError) {
+  const handleError = useCallback((e: unknown) => {
+    if (e instanceof AuthExpiredError) {
+      onAuthError?.();
+    } else if (e instanceof NeedsPhotoError) {
       setNeedsPhoto(true);
       setError(null);
     } else if (e instanceof RateLimitError) {
@@ -43,9 +45,9 @@ export function ScanScreen({
     } else {
       setError("Something went wrong. Please try again.");
     }
-  };
+  }, [onAuthError]);
 
-  const runBarcode = async (barcode: string) => {
+  const runBarcode = useCallback(async (barcode: string) => {
     if (!barcode || busy) return;
     setBusy(true);
     setError(null);
@@ -57,14 +59,15 @@ export function ScanScreen({
     } finally {
       setBusy(false);
     }
-  };
+  }, [busy, onResult, scanByBarcode, token, handleError]);
 
   const onPhotoPicked = async (file: File | undefined) => {
     if (!file || busy) return;
     setBusy(true);
     setError(null);
     try {
-      onResult(await scanByPhoto(pendingBarcode ?? manual ?? "unknown", file, token));
+      // falsy check (not ??) so an empty manual entry falls through to "unknown"
+      onResult(await scanByPhoto(pendingBarcode || manual || "unknown", file, token));
     } catch (e) {
       handleError(e);
     } finally {
@@ -72,10 +75,12 @@ export function ScanScreen({
     }
   };
 
-  useBarcodeScanner({
+  const onScan = useCallback((code: string) => void runBarcode(code), [runBarcode]);
+
+  const { error: cameraError } = useBarcodeScanner({
     videoRef,
     enabled: !needsPhoto,
-    onScan: (code) => void runBarcode(code),
+    onScan,
   });
 
   return (
@@ -94,6 +99,7 @@ export function ScanScreen({
       <div className={styles.actions}>
         {busy && <div className={styles.busy}>Scanning…</div>}
         {error && <div className={styles.err}>{error}</div>}
+        {cameraError && !error && <div className={styles.err}>{cameraError}</div>}
 
         {needsPhoto ? (
           <>
@@ -103,7 +109,7 @@ export function ScanScreen({
             <label className={`${styles.btn} ${styles.lime}`} style={{ display: "block", textAlign: "center" }}>
               📷 Take a photo of the label
               <input
-                data-testid="photo-input"
+                data-testid="photo-input-needs-photo"
                 className={styles.hidden}
                 type="file"
                 accept="image/*"
@@ -129,7 +135,7 @@ export function ScanScreen({
             <label className={`${styles.btn} ${styles.ghost}`} style={{ textAlign: "center" }}>
               📷 Photograph the label instead
               <input
-                data-testid="photo-input"
+                data-testid="photo-input-bypass"
                 className={styles.hidden}
                 type="file"
                 accept="image/*"
