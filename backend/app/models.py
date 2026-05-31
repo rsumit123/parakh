@@ -15,9 +15,9 @@ class Product(Base):
     brand: Mapped[str] = mapped_column(String, default="")
     ingredients: Mapped[list] = mapped_column(JSON, default=list)
     nutrition: Mapped[dict] = mapped_column(JSON, default=dict)
-    score_overall: Mapped[int] = mapped_column(Integer, default=0)
-    score_grade: Mapped[str] = mapped_column(String, default="E")
-    score_breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
+    score_overall: Mapped[int] = mapped_column(Integer, default=0)   # denormalized for queries
+    score_grade: Mapped[str] = mapped_column(String, default="E")    # denormalized for queries
+    score_json: Mapped[dict] = mapped_column(JSON, default=dict)     # full scorer output
     source: Mapped[str] = mapped_column(String, default="db")  # db|off|photo
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
