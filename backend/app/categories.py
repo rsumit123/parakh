@@ -7,14 +7,22 @@ never get "healthier alternatives". This maps those strings onto sensible
 mid-level buckets — broad enough that related products cluster, narrow enough that
 the comparison still makes sense (we don't suggest a biscuit as an alt for a soda).
 
+Matching uses a LEADING WORD BOUNDARY (keyword must start at the beginning of a
+word), so e.g. "cola" does NOT match inside "chocolate" but does match "coca-cola".
+
 normalize_category() is deterministic and idempotent (a bucket maps to itself).
 """
+import re
 
-# (bucket, keywords). ORDER MATTERS: the first bucket with a substring hit wins,
-# so more specific groups are listed before broader ones that share a word
-# (e.g. drinks before dairy so "flavoured milk"/"buttermilk" -> drinks, not dairy;
-#  spreads before chocolate so "chocolate hazelnut spread" -> spreads).
+# (bucket, keywords). ORDER MATTERS: the first bucket with a hit wins, so more
+# specific groups precede broader ones that could share a word (spreads before
+# chocolate so "chocolate hazelnut spread" -> spreads; drinks before dairy so a
+# milk-based *drink* stays a drink).
 _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
+    ("spreads & sauces", (
+        "peanut butter", "spread", "jam", "ketchup", "sauce", "honey",
+        "mayonnaise", "mayo",
+    )),
     ("drinks", (
         "buttermilk", "chaas", "lassi", "flavoured milk", "flavored milk",
         "milkshake", "milk shake", "soft drink", "cola", "soda", "juice",
@@ -32,10 +40,6 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
         "snack",
     )),
     ("biscuits", ("biscuit", "cookie", "cracker", "rusk")),
-    ("spreads & sauces", (
-        "peanut butter", "spread", "jam", "ketchup", "sauce", "honey",
-        "mayonnaise", "mayo",
-    )),
     ("chocolate", ("chocolate", "cocoa", "cacao")),
     ("condiments & spices", (
         "masala", "spice", "asafoetida", "hing", "pickle", "achaar", "chutney",
@@ -45,6 +49,22 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
     ("dairy", ("milk", "curd", "dahi", "yogurt", "yoghurt", "paneer", "cheese",
                "ghee", "butter", "dairy")),
 ]
+
+# Precompile one leading-boundary pattern per keyword. `(?<![a-z])` = not preceded
+# by a letter, so the keyword must begin a word ("cola" matches "coca-cola" and
+# " cola" but not "chocolate"). No trailing boundary, so "potato chip" still
+# matches "potato chips".
+_COMPILED: list[tuple[str, tuple[re.Pattern, ...]]] = [
+    (bucket, tuple(re.compile(r"(?<![a-z])" + re.escape(kw)) for kw in kws))
+    for bucket, kws in _BUCKETS
+]
+
+
+def _match(text: str) -> str | None:
+    for bucket, patterns in _COMPILED:
+        if any(p.search(text) for p in patterns):
+            return bucket
+    return None
 
 
 def normalize_category(raw: str, name: str = "") -> str:
@@ -59,17 +79,9 @@ def normalize_category(raw: str, name: str = "") -> str:
         bucket = _match(cat)
         if bucket:
             return bucket
-    # Fallback: try to infer from the product name (best-effort).
     nm = (name or "").strip().lower()
     if nm:
         bucket = _match(nm)
         if bucket:
             return bucket
     return cat  # unknown but consistent (identical raws still cluster together)
-
-
-def _match(text: str) -> str | None:
-    for bucket, keywords in _BUCKETS:
-        if any(kw in text for kw in keywords):
-            return bucket
-    return None
