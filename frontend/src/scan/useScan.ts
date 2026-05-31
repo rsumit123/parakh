@@ -73,6 +73,7 @@ export function useScan({
   }, [busy, onResult, scanByPhoto, token, handleError]);
 
   const clearError = useCallback(() => setError(null), []);
+  const clearLimit = useCallback(() => setLimitReached(false), []);
 
-  return { busy, error, runBarcode, runPhoto, clearError };
+  return { busy, error, limitReached, runBarcode, runPhoto, clearError, clearLimit };
 }

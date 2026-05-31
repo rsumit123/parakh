@@ -1,14 +1,22 @@
 import { useRef, useState } from "react";
-import type { ScanResult } from "../api/types";
+import type { Product, ScanResult } from "../api/types";
 import { useScan } from "../scan/useScan";
 import { LoadingOverlay } from "../components/LoadingOverlay";
+import { LimitModal } from "../components/LimitModal";
+import { RecentScans } from "../components/RecentScans";
+import type { HistoryEntry } from "../session/history";
 import styles from "./HomeScreen.module.css";
 
 interface Props {
   token: string;
   remaining?: number;
+  isGuest: boolean;
+  history: HistoryEntry[];
   onResult: (r: ScanResult) => void;
   onOpenCamera: () => void;
+  onOpenProduct: (p: Product) => void;
+  onSeeHistory: () => void;
+  onSignIn: () => void;
   onAuthError?: () => void;
   // injectable for tests
   scanByBarcode?: (barcode: string, token: string) => Promise<ScanResult>;
@@ -16,16 +24,26 @@ interface Props {
 }
 
 export function HomeScreen({
-  token, remaining, onResult, onOpenCamera, onAuthError,
-  scanByBarcode, scanByPhoto,
+  token, remaining, isGuest, history, onResult, onOpenCamera, onOpenProduct,
+  onSeeHistory, onSignIn, onAuthError, scanByBarcode, scanByPhoto,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showManual, setShowManual] = useState(false);
   const [manual, setManual] = useState("");
 
-  const { busy, error, runBarcode, runPhoto } = useScan({
+  const { busy, error, limitReached, runBarcode, runPhoto, clearLimit } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
   });
+
+  const atLimit = remaining === 0;
+  // Out of scans? show the modal instead of starting the camera / file picker.
+  const [showLimit, setShowLimit] = useState(false);
+  const limitOpen = limitReached || showLimit;
+
+  const guard = (action: () => void) => {
+    if (atLimit) { setShowLimit(true); return; }
+    action();
+  };
 
   if (busy) return <LoadingOverlay />;
 
@@ -45,7 +63,7 @@ export function HomeScreen({
       <div className={styles.actions}>
         {error && <div className={styles.err}>{error}</div>}
 
-        <button className={`${styles.card} ${styles.primary}`} onClick={onOpenCamera}>
+        <button className={`${styles.card} ${styles.primary}`} onClick={() => guard(onOpenCamera)}>
           <span className={styles.icon}>📷</span>
           <span className={styles.cardText}>
             <span className={styles.cardTitle}>Scan barcode</span>
@@ -53,7 +71,7 @@ export function HomeScreen({
           </span>
         </button>
 
-        <button className={styles.card} onClick={() => fileRef.current?.click()}>
+        <button className={styles.card} onClick={() => guard(() => fileRef.current?.click())}>
           <span className={styles.icon}>🖼</span>
           <span className={styles.cardText}>
             <span className={styles.cardTitle}>Upload label photo</span>
@@ -78,9 +96,9 @@ export function HomeScreen({
               inputMode="numeric"
               autoFocus
               onChange={(e) => setManual(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") runBarcode(manual); }}
+              onKeyDown={(e) => { if (e.key === "Enter") guard(() => runBarcode(manual)); }}
             />
-            <button className={styles.go} onClick={() => runBarcode(manual)}>Go</button>
+            <button className={styles.go} onClick={() => guard(() => runBarcode(manual))}>Go</button>
           </div>
         ) : (
           <button className={styles.card} onClick={() => setShowManual(true)}>
@@ -92,6 +110,15 @@ export function HomeScreen({
           </button>
         )}
       </div>
+
+      <RecentScans entries={history} onOpen={onOpenProduct} onSeeAll={onSeeHistory} />
+
+      <LimitModal
+        open={limitOpen}
+        isGuest={isGuest}
+        onClose={() => { clearLimit(); setShowLimit(false); }}
+        onSignIn={onSignIn}
+      />
     </div>
   );
 }
