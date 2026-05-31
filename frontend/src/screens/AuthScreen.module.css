@@ -1,4 +1,4 @@
-.screen { min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end;
+.screen { min-height: 100dvh; display: flex; flex-direction: column; justify-content: flex-end;
   background: linear-gradient(180deg, #10211a 0%, #0e1311 100%); color: #fff; }
 .top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
 .mark { width: 72px; height: 72px; border-radius: 22px; background: var(--lime); color: #10211a;

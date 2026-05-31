@@ -65,3 +65,37 @@ def test_photo_path_extracts_scores_and_caches(repo):
     assert res["source"] == "photo"
     assert res["product"]["name"] == "Chips"
     assert repo.get("444") is not None
+
+
+def test_off_with_no_nutrition_is_treated_as_needs_photo(repo):
+    # OFF knows the product name but has no nutrition facts -> don't present a
+    # meaningless all-zero score; ask for a label photo instead.
+    off = FakeOFF({"name": "Mystery Spread", "brand": "X", "ingredients": [],
+                   "nutrition": EMPTY_NUTRITION})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    with pytest.raises(ProductNotFound):
+        svc.scan_barcode("555")
+
+
+def test_empty_cached_record_is_skipped_and_rescored_from_off(repo):
+    # A poisoned/old cache row with no usable nutrition must NOT be served; the
+    # pipeline falls through to OFF, re-scores, and overwrites it (self-healing).
+    repo.save(barcode="666", name="Old Empty", brand="B", ingredients=[],
+              nutrition=EMPTY_NUTRITION,
+              score={"overall": 73, "grade": "B", "breakdown": {}}, source="off")
+    off = FakeOFF({"name": "Real Product", "brand": "B", "ingredients": ["palm oil"],
+                   "nutrition": HEALTHY})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    res = svc.scan_barcode("666")
+    assert res["source"] == "off"               # cache skipped
+    assert res["product"]["name"] == "Real Product"  # overwritten
+    assert off.calls == 1
+
+
+def test_empty_cache_and_no_off_data_needs_photo(repo):
+    repo.save(barcode="777", name="Old Empty", brand="B", ingredients=[],
+              nutrition=EMPTY_NUTRITION,
+              score={"overall": 73, "grade": "B", "breakdown": {}}, source="off")
+    svc = ScanService(repo, FakeOFF(None), FakeExtractor(None))
+    with pytest.raises(ProductNotFound):
+        svc.scan_barcode("777")

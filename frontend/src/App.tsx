@@ -47,7 +47,7 @@ function Shell() {
 
   if (result) {
     return (
-      <div style={{ position: "relative", minHeight: "100%" }}>
+      <div style={{ position: "relative", minHeight: "100dvh" }}>
         {profile("dark")}
         <ResultScreen
           product={result.product}
@@ -81,7 +81,7 @@ function Shell() {
   }
 
   return (
-    <div style={{ position: "relative", minHeight: "100%" }}>
+    <div style={{ position: "relative", minHeight: "100dvh" }}>
       {profile("light")}
       <HomeScreen
         token={token}

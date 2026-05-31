@@ -1,4 +1,4 @@
-.screen { min-height: 100%; background: var(--paper); color: var(--ink); }
+.screen { min-height: 100dvh; background: var(--paper); color: var(--ink); }
 .bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 10px; }
 .back { width: 34px; height: 34px; border-radius: 11px; background: var(--card); border: 1px solid var(--line);
   font-size: 18px; display: flex; align-items: center; justify-content: center; }
