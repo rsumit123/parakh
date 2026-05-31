@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { scanBarcode, scanPhoto, NeedsPhotoError, RateLimitError } from "./scanApi";
+import { scanBarcode, scanPhoto, NeedsPhotoError, RateLimitError, AuthExpiredError } from "./scanApi";
 import { ApiError } from "../api/client";
 
 afterEach(() => vi.restoreAllMocks());
@@ -28,8 +28,13 @@ describe("scanBarcode", () => {
     await expect(scanBarcode("1", "tok")).rejects.toBeInstanceOf(RateLimitError);
   });
 
+  it("maps 401 to AuthExpiredError", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ detail: "bad token" }) }));
+    await expect(scanBarcode("1", "tok")).rejects.toBeInstanceOf(AuthExpiredError);
+  });
+
   it("rethrows other ApiErrors", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ detail: "nope" }) }));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500, json: async () => ({ detail: "boom" }) }));
     await expect(scanBarcode("1", "tok")).rejects.toBeInstanceOf(ApiError);
   });
 });

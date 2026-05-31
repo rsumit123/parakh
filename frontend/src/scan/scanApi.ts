@@ -22,10 +22,18 @@ export class UnreadableLabelError extends Error {
   }
 }
 
+export class AuthExpiredError extends Error {
+  constructor() {
+    super("session expired");
+    this.name = "AuthExpiredError";
+  }
+}
+
 export async function scanBarcode(barcode: string, token: string): Promise<ScanResult> {
   try {
     return await fetchJson<ScanResult>("/scan/barcode", { method: "POST", token, json: { barcode } });
   } catch (e) {
+    if (e instanceof ApiError && e.status === 401) throw new AuthExpiredError();
     if (e instanceof ApiError && e.status === 404) throw new NeedsPhotoError();
     if (e instanceof ApiError && e.status === 429) throw new RateLimitError();
     throw e;
@@ -39,6 +47,7 @@ export async function scanPhoto(barcode: string, image: Blob, token: string): Pr
   try {
     return await fetchJson<ScanResult>("/scan/photo", { method: "POST", token, body: form });
   } catch (e) {
+    if (e instanceof ApiError && e.status === 401) throw new AuthExpiredError();
     if (e instanceof ApiError && e.status === 422) throw new UnreadableLabelError();
     if (e instanceof ApiError && e.status === 429) throw new RateLimitError();
     throw e;

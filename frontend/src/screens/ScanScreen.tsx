@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ScanResult } from "../api/types";
 import {
   scanBarcode as defaultScanBarcode,
@@ -6,6 +6,7 @@ import {
   NeedsPhotoError,
   RateLimitError,
   UnreadableLabelError,
+  AuthExpiredError,
 } from "../scan/scanApi";
 import { useBarcodeScanner } from "../scan/useBarcodeScanner";
 import styles from "./ScanScreen.module.css";
@@ -14,12 +15,13 @@ interface Props {
   token: string;
   remaining?: number;
   onResult: (r: ScanResult) => void;
+  onAuthError?: () => void;
   scanByBarcode?: (barcode: string, token: string) => Promise<ScanResult>;
   scanByPhoto?: (barcode: string, image: Blob, token: string) => Promise<ScanResult>;
 }
 
 export function ScanScreen({
-  token, remaining, onResult,
+  token, remaining, onResult, onAuthError,
   scanByBarcode = defaultScanBarcode,
   scanByPhoto = defaultScanPhoto,
 }: Props) {
