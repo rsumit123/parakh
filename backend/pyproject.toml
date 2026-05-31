@@ -1,5 +1,5 @@
 [project]
-name = "nutriscan-backend"
+name = "parakh-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
