@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir \
 
 # Copy application source. Tests, venv, db, env are excluded via .dockerignore.
 COPY app ./app
+# Maintenance scripts (e.g. seed_products) so they can run inside the container.
+COPY scripts ./scripts
 
 # The SQLite database lives on a mounted volume at /data (see docker-compose.yml)
 # so it survives container rebuilds.
