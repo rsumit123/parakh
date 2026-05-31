@@ -77,3 +77,49 @@ def test_missing_auth_returns_401():
     client = build_client()
     r = client.post("/scan/barcode", json={"barcode": "222"})
     assert r.status_code == 401
+
+
+def test_not_found_does_not_consume_quota():
+    # An unknown product returns 404 needs_photo and must NOT burn the daily quota,
+    # otherwise the user couldn't afford the follow-up photo. Guest limit is 3, so
+    # five 404s in a row prove no quota was consumed (never a 429).
+    client = build_client(off_result=None)
+    headers = _guest_headers(client)
+    for _ in range(5):
+        r = client.post("/scan/barcode", json={"barcode": "999"}, headers=headers)
+        assert r.status_code == 404
+
+
+def test_failed_photo_extraction_does_not_consume_quota():
+    from app.clients.label_extractor import ExtractionError
+
+    class RaisingExtractor:
+        def extract(self, image_bytes):
+            raise ExtractionError("unreadable")
+
+    engine = make_engine("sqlite://")
+    init_db(engine)
+    sf = make_session_factory(engine)
+    app = create_app(session_factory=sf, off_client=FakeOFF(None),
+                     label_extractor=RaisingExtractor(), secret="test",
+                     guest_limit=3, free_limit=10, today="2026-05-31")
+    client = TestClient(app)
+    headers = _guest_headers(client)
+    for _ in range(5):
+        files = {"image": ("l.jpg", io.BytesIO(b"img"), "image/jpeg")}
+        r = client.post("/scan/photo", data={"barcode": "444"}, files=files, headers=headers)
+        assert r.status_code == 422
+
+
+def test_unknown_then_photo_costs_one_scan():
+    # The core flow: barcode unknown (404, free) -> photo succeeds (charged once).
+    client = build_client(off_result=None,
+                          extractor_result={"name": "Chips", "brand": "Lays",
+                                            "ingredients": ["potato"], "nutrition": HEALTHY})
+    headers = _guest_headers(client)
+    assert client.post("/scan/barcode", json={"barcode": "444"},
+                       headers=headers).status_code == 404
+    files = {"image": ("l.jpg", io.BytesIO(b"img"), "image/jpeg")}
+    r = client.post("/scan/photo", data={"barcode": "444"}, files=files, headers=headers)
+    assert r.status_code == 200
+    assert r.json()["remaining"] == 2

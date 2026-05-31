@@ -38,12 +38,18 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
         except AuthError as e:
             raise HTTPException(status_code=401, detail=str(e))
 
-    def _consume(identity: dict) -> int:
-        res = limiter.check_and_consume(identity["id"], identity["tier"], day=_today())
-        if not res["allowed"]:
+    def _ensure_quota(identity: dict) -> None:
+        # Read-only check up front so an over-quota user is blocked before any work,
+        # but quota is only *consumed* on a successful scan (see _consume). This keeps
+        # the unknown-product flow fair: a 404 needs-photo or a 422 unreadable label
+        # does not burn the user's daily scan allowance.
+        if limiter.remaining(identity["id"], identity["tier"], day=_today()) <= 0:
             raise HTTPException(status_code=429,
-                                detail={"error": "daily scan limit reached",
-                                        "limit": res["limit"]})
+                                detail={"error": "daily scan limit reached"})
+
+    def _consume(identity: dict) -> int:
+        # Called only after a scan resolves successfully.
+        res = limiter.check_and_consume(identity["id"], identity["tier"], day=_today())
         return res["remaining"]
 
     @app.post("/auth/guest", response_model=TokenResponse)
@@ -62,25 +68,27 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
 
     @app.post("/scan/barcode")
     def scan_barcode(req: BarcodeRequest, identity: dict = Depends(current_identity)):
-        remaining = _consume(identity)
+        _ensure_quota(identity)
         try:
             result = scanner.scan_barcode(req.barcode)
         except ProductNotFound:
             raise HTTPException(status_code=404,
                                 detail={"error": "product not found",
                                         "needs_photo": True})
+        remaining = _consume(identity)
         return {**result, "remaining": remaining}
 
     @app.post("/scan/photo")
     async def scan_photo(barcode: str = Form(...), image: UploadFile = File(...),
                          identity: dict = Depends(current_identity)):
-        remaining = _consume(identity)
+        _ensure_quota(identity)
         image_bytes = await image.read()
         try:
             result = scanner.scan_photo(barcode, image_bytes)
         except ExtractionError:
             raise HTTPException(status_code=422,
                                 detail={"error": "could not read label, retake photo"})
+        remaining = _consume(identity)
         return {**result, "remaining": remaining}
 
     @app.get("/health")
