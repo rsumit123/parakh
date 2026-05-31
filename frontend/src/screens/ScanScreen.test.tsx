@@ -37,7 +37,7 @@ describe("ScanScreen", () => {
     const props = setup({ scanByBarcode: vi.fn().mockRejectedValue(new NeedsPhotoError()) });
     await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "999");
     await userEvent.click(screen.getByRole("button", { name: /^look up$/i }));
-    expect(await screen.findByText(/take a photo of the label/i)).toBeInTheDocument();
+    expect(await screen.findByText(/we don't know this product yet/i)).toBeInTheDocument();
     expect(props.onResult).not.toHaveBeenCalled();
   });
 
