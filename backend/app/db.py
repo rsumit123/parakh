@@ -45,3 +45,4 @@ def make_session_factory(engine):
 def init_db(engine):
     from app import models  # noqa: F401  ensure models are registered
     Base.metadata.create_all(engine)
+    _apply_lightweight_migrations(engine)
