@@ -56,6 +56,25 @@
 .ingredients { margin-top: 16px; }
 .ingredients p { font-size: 12.5px; line-height: 1.6; color: #44504a; }
 
+.alts { display: flex; flex-direction: column; gap: 9px; }
+.alt {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 13px;
+}
+.altGrade {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: #fff;
+}
+.altGrade.good { background: var(--green); }
+.altGrade.ok { background: var(--amber); }
+.altGrade.bad { background: var(--red); }
+.altInfo { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.altName { font-size: 13.5px; font-weight: 700; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.altMeta { font-size: 11px; color: var(--muted); }
+.altChev { color: var(--muted); font-size: 20px; }
+
 .actions { display: flex; gap: 10px; margin: 22px 18px 0; }
 .share { flex: 1; padding: 15px; border-radius: 16px; background: var(--card);
   border: 1.5px solid var(--green-deep); color: var(--green-deep); font-weight: 800; font-size: 14px; }

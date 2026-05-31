@@ -13,7 +13,7 @@ interface Options {
   token: string;
   onResult: (r: ScanResult) => void;
   onAuthError?: () => void;
-  onNeedsPhoto?: () => void;
+  onNeedsPhoto?: (barcode: string) => void;
   scanByBarcode?: (barcode: string, token: string) => Promise<ScanResult>;
   scanByPhoto?: (barcode: string, image: Blob, token: string) => Promise<ScanResult>;
 }
@@ -30,12 +30,15 @@ export function useScan({
   // Surfaced as a flag (not a red string) so screens can show a friendly modal.
   const [limitReached, setLimitReached] = useState(false);
 
-  const handleError = useCallback((e: unknown): void => {
+  // `barcode` is the code being scanned, forwarded to onNeedsPhoto so the photo
+  // fallback can reuse it as the cache key (making photo-scanned products
+  // barcode-searchable next time).
+  const handleError = useCallback((e: unknown, barcode?: string): void => {
     if (e instanceof AuthExpiredError) {
       onAuthError?.();
     } else if (e instanceof NeedsPhotoError) {
       setError(null);
-      onNeedsPhoto?.();
+      onNeedsPhoto?.(barcode ?? "");
     } else if (e instanceof RateLimitError) {
       setLimitReached(true);
     } else if (e instanceof UnreadableLabelError) {
@@ -52,7 +55,7 @@ export function useScan({
     try {
       onResult(await scanByBarcode(barcode, token));
     } catch (e) {
-      handleError(e);
+      handleError(e, barcode);
     } finally {
       setBusy(false);
     }

@@ -35,7 +35,8 @@ describe("useScan", () => {
       scanByBarcode: vi.fn().mockRejectedValue(new NeedsPhotoError()),
     });
     await act(async () => { await hook.result.current.runBarcode("999"); });
-    expect(onNeedsPhoto).toHaveBeenCalledOnce();
+    // forwards the scanned barcode so the photo fallback can reuse it as the key
+    expect(onNeedsPhoto).toHaveBeenCalledWith("999");
     expect(hook.result.current.error).toBeNull();
   });
 

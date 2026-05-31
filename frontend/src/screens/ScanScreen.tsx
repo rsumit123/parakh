@@ -26,10 +26,13 @@ export function ScanScreen({
   // Set when a scanned barcode isn't in any database — we ask for a label photo
   // and pause the live scanner so it doesn't keep re-reading the same code.
   const [needsPhoto, setNeedsPhoto] = useState(false);
+  // The barcode that triggered needs-photo, reused as the photo's cache key so the
+  // product becomes barcode-searchable after the label is read.
+  const [pendingBarcode, setPendingBarcode] = useState<string | undefined>();
 
   const { busy, error, limitReached, runBarcode, runPhoto, clearLimit } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
-    onNeedsPhoto: () => setNeedsPhoto(true),
+    onNeedsPhoto: (barcode) => { setPendingBarcode(barcode || undefined); setNeedsPhoto(true); },
   });
 
   // Camera off while processing, in the photo fallback, or when out of scans.
@@ -80,7 +83,7 @@ export function ScanScreen({
             className={styles.hidden}
             type="file"
             accept="image/*"
-            onChange={(e) => runPhoto(e.target.files?.[0])}
+            onChange={(e) => runPhoto(e.target.files?.[0], pendingBarcode)}
           />
         </label>
         <label className={`${styles.btn} ${styles.ghost}`}>
@@ -91,7 +94,7 @@ export function ScanScreen({
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={(e) => runPhoto(e.target.files?.[0])}
+            onChange={(e) => runPhoto(e.target.files?.[0], pendingBarcode)}
           />
         </label>
       </div>

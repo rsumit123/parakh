@@ -48,6 +48,7 @@ export interface Product {
   barcode: string;
   name: string;
   brand: string;
+  category?: string;
   ingredients: string[];
   nutrition: Nutrition;
   source: Source;
@@ -58,4 +59,5 @@ export interface ScanResult {
   source: Source;
   remaining: number;
   product: Product;
+  alternatives?: Product[];
 }
