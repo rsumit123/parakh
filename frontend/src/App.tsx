@@ -6,8 +6,14 @@ import { ResultScreen } from "./screens/ResultScreen";
 import type { ScanResult } from "./api/types";
 
 function Shell() {
-  const { token, guest, login } = useSession();
+  const { token, guest, login, signOut } = useSession();
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [remaining, setRemaining] = useState<number | undefined>(undefined);
+
+  const handleResult = (r: ScanResult) => {
+    setRemaining(r.remaining);
+    setResult(r);
+  };
 
   if (!token) {
     return <AuthScreen onGuest={guest} onEmailLogin={login} />;
@@ -20,8 +26,9 @@ function Shell() {
   return (
     <ScanScreen
       token={token}
-      remaining={result ? (result as ScanResult).remaining : undefined}
-      onResult={setResult}
+      remaining={remaining}
+      onResult={handleResult}
+      onAuthError={signOut}
     />
   );
 }
