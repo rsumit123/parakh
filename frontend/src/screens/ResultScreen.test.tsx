@@ -2,7 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ResultScreen } from "./ResultScreen";
+import { shareResult } from "../scan/shareCard";
 import type { Product } from "../api/types";
+
+// Share uses canvas + Web Share API which jsdom lacks; mock the share module so the
+// test verifies the button wiring, not the canvas rendering (covered conceptually).
+vi.mock("../scan/shareCard", () => ({
+  shareResult: vi.fn().mockResolvedValue("shared"),
+}));
 
 const product: Product = {
   barcode: "1", name: "Kurkure", brand: "PepsiCo", ingredients: ["corn meal", "palmolein"],
@@ -12,7 +19,10 @@ const product: Product = {
     overall: 21, grade: "D", verdict: "Best limited",
     positives: ["Protein (6.4g)"], negatives: ["High saturated fat", "Palm oil"],
     breakdown: {
-      nutrients: [{ key: "sat_fat", label: "Saturated fat", value_g: 15.2, pct: 100, level: "high", high_is_bad: true }],
+      nutrients: [
+        { key: "sat_fat", label: "Saturated fat", value_g: 15.2, pct: 100, level: "high", high_is_bad: true },
+        { key: "salt", label: "Salt", value_g: 1.7, pct: 57, level: "ok", high_is_bad: true },
+      ],
       india_flags: [{ label: "Palm oil", note: "Flagged for India market" }],
       nova: { group: 4, label: "Ultra-processed" },
     },
@@ -29,27 +39,38 @@ describe("ResultScreen", () => {
     expect(screen.getByText("Kurkure")).toBeInTheDocument();
   });
 
-  it("shows the NOVA badge with its group and label", () => {
+  it("shows the NOVA pill in the hero", () => {
     render(<ResultScreen product={product} onScanAgain={() => {}} />);
-    expect(screen.getByText("NOVA 4")).toBeInTheDocument();
-    expect(screen.getByText("Ultra-processed")).toBeInTheDocument();
+    expect(screen.getByText(/NOVA 4 · Ultra-processed/i)).toBeInTheDocument();
+  });
+
+  it("shows the always-visible at-a-glance nutrient strip (no tap needed)", () => {
+    render(<ResultScreen product={product} onScanAgain={() => {}} />);
+    expect(screen.getByText(/at a glance/i)).toBeInTheDocument();
+    // nutrient labels appear without opening the breakdown
+    expect(screen.getAllByText("Saturated fat").length).toBeGreaterThan(0);
+  });
+
+  it("shows an actionable tip on each warning without tapping", () => {
+    render(<ResultScreen product={product} onScanAgain={() => {}} />);
+    // sat-fat tip text
+    expect(screen.getByText(/balance it with a meal rich in fibre/i)).toBeInTheDocument();
   });
 
   it("expands a cited explanation when a warning's 'Why?' is tapped", async () => {
     render(<ResultScreen product={product} onScanAgain={() => {}} />);
-    // not visible until tapped
-    expect(screen.queryByText(/raises ldl cholesterol/i)).not.toBeInTheDocument();
-    const palmChip = screen.getByText("Palm oil").closest("button")!;
-    await userEvent.click(palmChip);
-    expect(screen.getByText(/raises ldl/i)).toBeInTheDocument();
+    expect(screen.queryByText(/raises ldl/i)).not.toBeInTheDocument();
+    const whyButtons = screen.getAllByRole("button", { name: /why\?/i });
+    await userEvent.click(whyButtons[0]);
     expect(screen.getByText(/Source:/i)).toBeInTheDocument();
   });
 
-  it("toggles the full breakdown", async () => {
+  it("toggles ingredients & full numbers", async () => {
     render(<ResultScreen product={product} onScanAgain={() => {}} />);
     expect(screen.queryByText("Per 100g")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: /breakdown/i }));
+    await userEvent.click(screen.getByRole("button", { name: /ingredients & full numbers/i }));
     expect(screen.getByText("Per 100g")).toBeInTheDocument();
+    expect(screen.getByText(/corn meal, palmolein/i)).toBeInTheDocument();
   });
 
   it("calls onScanAgain when 'Scan another' is clicked", async () => {
@@ -59,12 +80,22 @@ describe("ResultScreen", () => {
     expect(onScanAgain).toHaveBeenCalledOnce();
   });
 
-  it("renders without a NOVA badge when nova is absent", () => {
-    const noNova: Product = {
-      ...product,
-      score: { ...product.score, breakdown: { ...product.score.breakdown, nova: undefined } },
+  it("invokes the share flow with the product when Share is tapped", async () => {
+    render(<ResultScreen product={product} onScanAgain={() => {}} />);
+    await userEvent.click(screen.getByRole("button", { name: /share/i }));
+    expect(shareResult).toHaveBeenCalledWith(product);
+  });
+
+  it("renders a clean state and no NOVA pill when product is flag-free", () => {
+    const clean: Product = {
+      ...product, name: "Roasted Chana",
+      score: {
+        overall: 84, grade: "A", verdict: "Good choice", positives: [], negatives: [],
+        breakdown: { nutrients: [{ key: "protein", label: "Protein", value_g: 9, pct: 75, level: "high", high_is_bad: false }], india_flags: [], nova: { group: 1, label: "Minimally processed" } },
+      },
     };
-    render(<ResultScreen product={noNova} onScanAgain={() => {}} />);
-    expect(screen.queryByText(/^NOVA/)).not.toBeInTheDocument();
+    render(<ResultScreen product={clean} onScanAgain={() => {}} />);
+    expect(screen.getByText(/nothing to flag here/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^NOVA 1/)).not.toBeInTheDocument();
   });
 });

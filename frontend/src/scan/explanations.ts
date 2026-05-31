@@ -6,6 +6,7 @@ export interface Explanation {
   title: string;
   body: string;
   source: string;
+  tip: string; // concrete, actionable "what to do" (the E feature)
 }
 
 // Keyed by the exact `label` the backend emits in breakdown.india_flags.
@@ -17,6 +18,7 @@ const FLAG_EXPLANATIONS: Record<string, Explanation> = {
       "and is linked to higher cardiovascular risk. The WHO recommends keeping saturated " +
       "fat below 10% of total daily energy.",
     source: "WHO, Saturated fatty acid intake guideline (2023)",
+    tip: "Enjoy occasionally, not daily — and look for variants made with groundnut, sunflower or rice-bran oil.",
   },
   "Refined flour (maida)": {
     title: "Refined flour (maida)",
@@ -25,6 +27,7 @@ const FLAG_EXPLANATIONS: Record<string, Explanation> = {
       "glycaemic index — it spikes blood sugar faster than whole grains. Diets high in " +
       "refined grains are associated with higher type-2 diabetes and heart-disease risk.",
     source: "Harvard T.H. Chan School of Public Health, Whole Grains (2023)",
+    tip: "Pick whole-wheat (atta), oats or millet versions when you can, and pair with protein or veg to soften the sugar spike.",
   },
   Additives: {
     title: "Additives & flavour enhancers",
@@ -33,6 +36,7 @@ const FLAG_EXPLANATIONS: Record<string, Explanation> = {
       "markers of ultra-processed food. Higher intake of ultra-processed foods is associated " +
       "with increased risk of obesity, heart disease and other conditions.",
     source: "BMJ, Ultra-processed foods and health outcomes (2024)",
+    tip: "Treat as an occasional snack. Whole or home-made alternatives skip these additives entirely.",
   },
 };
 
@@ -45,6 +49,7 @@ const NUTRIENT_EXPLANATIONS: Record<string, Explanation> = {
       "the risk of type-2 diabetes. The WHO recommends free sugars stay under 10% (ideally " +
       "5%) of daily energy — about 25g.",
     source: "WHO, Sugars intake for adults and children (2015)",
+    tip: "Keep the portion small and avoid stacking it with other sweet items the same day.",
   },
   sat_fat: {
     title: "Saturated fat",
@@ -53,6 +58,7 @@ const NUTRIENT_EXPLANATIONS: Record<string, Explanation> = {
       "The WHO advises limiting it to under 10% of daily energy and replacing it with " +
       "unsaturated fats.",
     source: "WHO, Saturated fatty acid intake guideline (2023)",
+    tip: "Balance it with a meal rich in fibre and unsaturated fats (nuts, seeds), and keep portions modest.",
   },
   salt: {
     title: "Salt",
@@ -60,6 +66,7 @@ const NUTRIENT_EXPLANATIONS: Record<string, Explanation> = {
       "Too much salt raises blood pressure, the leading risk factor for heart disease and " +
       "stroke. The WHO recommends less than 5g of salt per day for adults.",
     source: "WHO, Sodium intake guideline (2025)",
+    tip: "Drink plenty of water and go easy on other salty foods today. A low-sodium variant is a smart swap.",
   },
 };
 
@@ -71,6 +78,7 @@ const NOVA4_EXPLANATION: Explanation = {
     "cooking. Large studies link higher ultra-processed food intake to higher risk of " +
     "obesity, cardiovascular disease and early mortality.",
   source: "BMJ, Ultra-processed foods and health outcomes (2024)",
+  tip: "Best as an occasional treat. A whole-food or home-made option is the healthier everyday choice.",
 };
 
 /** Look up an explanation for a result-screen reason chip, or null if none. */

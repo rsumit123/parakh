@@ -2,27 +2,28 @@ import { useState } from "react";
 import type { Product } from "../api/types";
 import { gradeTone } from "../scan/grade";
 import { ScoreRing } from "../components/ScoreRing";
+import { AtAGlance } from "../components/AtAGlance";
 import { Breakdown } from "./Breakdown";
-import { explanationForReason, explanationForNova } from "../scan/explanations";
+import { explanationForReason, explanationForNova, type Explanation } from "../scan/explanations";
+import { shareResult } from "../scan/shareCard";
 import styles from "./ResultScreen.module.css";
 
-function ReasonChip({ reason, kind }: { reason: string; kind: "pos" | "neg" }) {
+/** One "what this means" card: headline reason + actionable tip, with the cited
+ *  science tucked behind a "Why?" toggle. */
+function ReasonCard({ reason, kind, exp }: { reason: string; kind: "pos" | "neg"; exp: Explanation | null }) {
   const [open, setOpen] = useState(false);
-  const exp = kind === "neg" ? explanationForReason(reason) : null;
-  const expandable = exp !== null;
-
   return (
-    <div className={`${styles.reasonWrap} ${styles[kind]}`}>
-      <button
-        className={styles.reason}
-        onClick={() => expandable && setOpen((v) => !v)}
-        aria-expanded={expandable ? open : undefined}
-        style={{ cursor: expandable ? "pointer" : "default" }}
-      >
+    <div className={`${styles.card} ${styles[kind]}`}>
+      <div className={styles.cardHead}>
         <span className={styles.ic}>{kind === "pos" ? "✓" : "!"}</span>
         <span className={styles.reasonText}>{reason}</span>
-        {expandable && <span className={styles.why}>{open ? "Hide" : "Why?"}</span>}
-      </button>
+        {exp && (
+          <button className={styles.why} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+            {open ? "Hide" : "Why?"}
+          </button>
+        )}
+      </div>
+      {exp && <p className={styles.tip}>{exp.tip}</p>}
       {open && exp && (
         <div className={styles.explain}>
           <p>{exp.body}</p>
@@ -35,11 +36,22 @@ function ReasonChip({ reason, kind }: { reason: string; kind: "pos" | "neg" }) {
 
 export function ResultScreen({ product, onScanAgain }: { product: Product; onScanAgain: () => void }) {
   const [open, setOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const { score } = product;
   const tone = gradeTone(score.grade);
   const nova = score.breakdown.nova;
-  const novaExp = nova ? explanationForNova(nova.group) : null;
-  const [novaOpen, setNovaOpen] = useState(false);
+  const hasReasons = score.positives.length > 0 || score.negatives.length > 0;
+
+  const onShare = async () => {
+    setSharing(true);
+    try {
+      await shareResult(product);
+    } catch {
+      /* user cancelled the share sheet, or it's unavailable — no-op */
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
     <div className={styles.screen}>
@@ -47,7 +59,9 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
         <div className={styles.scoreLabel}>NUTRI-SCORE</div>
         <ScoreRing grade={score.grade} overall={score.overall} />
         <div className={styles.verdict}>{score.verdict}</div>
-        <div className={styles.sub}>{product.source === "db" ? "From your scans" : "Freshly scored"}</div>
+        {nova && nova.group > 0 && (
+          <div className={styles.novaPill}>NOVA {nova.group} · {nova.label}</div>
+        )}
       </div>
 
       <div className={styles.prod}>
@@ -57,42 +71,53 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
         </div>
       </div>
 
-      {nova && nova.group > 0 && (
-        <div className={styles.novaWrap}>
-          <button
-            className={`${styles.nova} ${nova.group === 4 ? styles.nova4 : ""}`}
-            onClick={() => novaExp && setNovaOpen((v) => !v)}
-            aria-expanded={novaExp ? novaOpen : undefined}
-          >
-            <span className={styles.novaBadge}>NOVA {nova.group}</span>
-            <span className={styles.novaLabel}>{nova.label}</span>
-            {novaExp && <span className={styles.why}>{novaOpen ? "Hide" : "Why?"}</span>}
-          </button>
-          {novaOpen && novaExp && (
-            <div className={styles.explain}>
-              <p>{novaExp.body}</p>
-              <p className={styles.source}>Source: {novaExp.source}</p>
+      <AtAGlance nutrients={score.breakdown.nutrients} />
+
+      <div className={styles.section}>
+        <div className={styles.sectionTitle}>What this means for you</div>
+        <div className={styles.cards}>
+          {score.negatives.map((n) => (
+            <ReasonCard key={`n-${n}`} reason={n} kind="neg" exp={explanationForReason(n)} />
+          ))}
+          {score.positives.map((p) => (
+            <ReasonCard key={`p-${p}`} reason={p} kind="pos" exp={null} />
+          ))}
+          {nova && nova.group === 4 && (
+            <ReasonCard reason="Ultra-processed (NOVA 4)" kind="neg" exp={explanationForNova(4)} />
+          )}
+          {!hasReasons && (
+            <div className={styles.clean}>
+              <span className={styles.cleanEmoji}>🌿</span>
+              <div>
+                <b>Nothing to flag here.</b>
+                <span>No standout nutrients of concern — a solid everyday choice.</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button className={styles.seebreak} onClick={() => setOpen((v) => !v)}>
+        {open ? "▴ Hide ingredients & full numbers" : "▾ Ingredients & full numbers"}
+      </button>
+      {open && (
+        <div className={styles.detail}>
+          <Breakdown score={score} />
+          {product.ingredients.length > 0 && (
+            <div className={styles.ingredients}>
+              <div className={styles.sectionTitle}>Ingredients</div>
+              <p>{product.ingredients.join(", ")}</p>
             </div>
           )}
         </div>
       )}
 
-      <div className={styles.flags}>
-        {score.positives.map((p) => <ReasonChip key={`p-${p}`} reason={p} kind="pos" />)}
-        {score.negatives.map((n) => <ReasonChip key={`n-${n}`} reason={n} kind="neg" />)}
-        {score.positives.length === 0 && score.negatives.length === 0 && (
-          <div className={styles.noflags}>
-            No standout nutrients to flag. Open the breakdown for the full picture.
-          </div>
-        )}
+      <div className={styles.actions}>
+        <button className={styles.share} onClick={onShare} disabled={sharing}>
+          {sharing ? "Preparing…" : "↗ Share"}
+        </button>
+        <button className={styles.again} onClick={onScanAgain}>Scan another</button>
       </div>
-
-      <button className={styles.seebreak} onClick={() => setOpen((v) => !v)}>
-        {open ? "▴ Hide" : "▾ See full breakdown"}
-      </button>
-      {open && <div className={styles.detail}><Breakdown score={score} /></div>}
-
-      <button className={styles.again} onClick={onScanAgain}>Scan another</button>
     </div>
   );
 }

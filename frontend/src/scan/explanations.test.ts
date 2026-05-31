@@ -9,6 +9,14 @@ describe("explanations", () => {
     expect(e!.source).toMatch(/WHO/);
   });
 
+  it("includes an actionable tip on every explanation", () => {
+    for (const r of ["Palm oil", "High salt", "High sugar", "High saturated fat"]) {
+      const e = explanationForReason(r);
+      expect(e!.tip.length).toBeGreaterThan(0);
+    }
+    expect(explanationForNova(4)!.tip.length).toBeGreaterThan(0);
+  });
+
   it("maps 'High saturated fat' negative to the sat-fat explanation", () => {
     const e = explanationForReason("High saturated fat");
     expect(e!.title).toBe("Saturated fat");
