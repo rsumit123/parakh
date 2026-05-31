@@ -23,4 +23,10 @@
 .busy { text-align: center; font-size: 13px; color: rgba(255,255,255,0.8); }
 .divider { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
   text-transform: uppercase; color: rgba(255,255,255,0.45); margin: 4px 0 2px; }
+.notice { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 8px; padding: 40px 24px; }
+.notice b { font-size: 17px; font-weight: 800; }
+.notice span { font-size: 13.5px; color: #9aa89c; line-height: 1.5; max-width: 280px; }
+.retry { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--lime);
+  background: transparent; padding: 8px; }
 .hidden { display: none; }

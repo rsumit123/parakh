@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ScanResult } from "../api/types";
 import { useScan } from "../scan/useScan";
 import { useBarcodeScanner } from "../scan/useBarcodeScanner";
@@ -20,15 +20,19 @@ export function ScanScreen({
   token, remaining, onResult, onBack, onAuthError, scanByBarcode, scanByPhoto,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Set when a scanned barcode isn't in any database — we ask for a label photo
+  // and pause the live scanner so it doesn't keep re-reading the same code.
+  const [needsPhoto, setNeedsPhoto] = useState(false);
 
   const { busy, error, runBarcode, runPhoto } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
+    onNeedsPhoto: () => setNeedsPhoto(true),
   });
 
-  // Camera stays off while a scan is processing (busy) so it doesn't fight the overlay.
+  // Camera off while processing (busy) or once we've fallen back to the photo flow.
   const { error: cameraError } = useBarcodeScanner({
     videoRef,
-    enabled: !busy,
+    enabled: !busy && !needsPhoto,
     onScan: (code) => void runBarcode(code),
   });
 
@@ -44,17 +48,28 @@ export function ScanScreen({
         ) : <span style={{ width: 34 }} />}
       </div>
 
-      <div className={styles.viewfinder}>
-        <video ref={videoRef} muted playsInline />
-        <div className={styles.frame} />
-        <div className={styles.hint}>Line up the barcode to scan</div>
-      </div>
+      {!needsPhoto && (
+        <div className={styles.viewfinder}>
+          <video ref={videoRef} muted playsInline />
+          <div className={styles.frame} />
+          <div className={styles.hint}>Line up the barcode to scan</div>
+        </div>
+      )}
 
       <div className={styles.actions}>
+        {needsPhoto && (
+          <div className={styles.notice}>
+            <b>We don't know this product yet.</b>
+            <span>Snap or upload a photo of the nutrition label and we'll read it.</span>
+            <button className={styles.retry} onClick={() => setNeedsPhoto(false)}>
+              ← Scan a different barcode
+            </button>
+          </div>
+        )}
         {error && <div className={styles.err}>{error}</div>}
-        {cameraError && !error && <div className={styles.err}>{cameraError}</div>}
+        {cameraError && !error && !needsPhoto && <div className={styles.err}>{cameraError}</div>}
 
-        <div className={styles.divider}>can't scan? add a label photo</div>
+        {!needsPhoto && <div className={styles.divider}>can't scan? add a label photo</div>}
         <label className={`${styles.btn} ${styles.lime}`}>
           🖼 Upload label from gallery
           <input
