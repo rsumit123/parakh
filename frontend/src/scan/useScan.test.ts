@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useScan } from "./useScan";
 import { NeedsPhotoError, RateLimitError, AuthExpiredError } from "./scanApi";
 import type { ScanResult } from "../api/types";
