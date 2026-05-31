@@ -1513,10 +1513,7 @@ Expected: FAIL (module not found)
   margin: 18px 18px 0; padding: 15px; border-radius: 16px; background: var(--green-deep);
   color: #fff; font-weight: 700; font-size: 14px;
 }
-</css-keep>
 ```
-
-NOTE: remove the stray `</css-keep>` line — it must not be in the file. The file ends after the `.again` rule's closing brace.
 
 - [ ] **Step 4: Write `frontend/src/screens/ResultScreen.tsx`**
 
