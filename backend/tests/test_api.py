@@ -42,6 +42,7 @@ def test_guest_auth_then_scan_off_hit():
     body = r.json()
     assert body["product"]["score"]["grade"] == "A"
     assert body["remaining"] == 2
+    assert body["alternatives"] == []  # no other products seeded -> empty list present
 
 
 def test_barcode_not_found_returns_404_needs_photo():

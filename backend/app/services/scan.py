@@ -30,24 +30,34 @@ class ScanService:
     def scan_barcode(self, barcode: str) -> dict:
         cached = self._repo.get(barcode)
         if cached is not None and _has_usable_nutrition(cached.get("nutrition", {})):
-            return {"source": "db", "product": cached}
+            return self._envelope("db", cached)
 
         off_data = self._off.fetch(barcode)
         if off_data is not None and _has_usable_nutrition(off_data["nutrition"]):
             product = self._score_and_cache(barcode, off_data, source="off")
-            return {"source": "off", "product": product}
+            return self._envelope("off", product)
 
         raise ProductNotFound(barcode)
 
     def scan_photo(self, barcode: str, image_bytes: bytes) -> dict:
         data = self._extractor.extract(image_bytes)
         product = self._score_and_cache(barcode, data, source="photo")
-        return {"source": "photo", "product": product}
+        return self._envelope("photo", product)
+
+    def _envelope(self, source: str, product: dict) -> dict:
+        """Wrap a product with its source and a few healthier same-category alternatives."""
+        alternatives = self._repo.find_better_in_category(
+            category=product.get("category", ""),
+            min_overall=product["score"]["overall"],
+            exclude_barcode=product["barcode"],
+        )
+        return {"source": source, "product": product, "alternatives": alternatives}
 
     def _score_and_cache(self, barcode: str, data: dict, source: str) -> dict:
         scored = score_fn(data["ingredients"], data["nutrition"])
         self._repo.save(
             barcode=barcode, name=data["name"], brand=data["brand"],
+            category=data.get("category", ""),
             ingredients=data["ingredients"], nutrition=data["nutrition"],
             score=scored, source=source,
         )

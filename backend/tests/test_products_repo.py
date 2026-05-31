@@ -47,3 +47,38 @@ def test_save_is_idempotent_upsert(repo):
     p = repo.get("111")
     assert p["name"] == "New"
     assert p["score"]["overall"] == 90
+
+
+def _save(repo, barcode, category, overall, grade="C"):
+    repo.save(barcode=barcode, name=f"P{barcode}", brand="B", category=category,
+              ingredients=[], nutrition={"sugars_g": 1.0},
+              score={"overall": overall, "grade": grade, "breakdown": {}}, source="off")
+
+
+def test_category_roundtrips(repo):
+    _save(repo, "111", "biscuits", 40)
+    assert repo.get("111")["category"] == "biscuits"
+
+
+def test_find_better_in_category_returns_higher_scorers_best_first(repo):
+    _save(repo, "bad", "biscuits", 20)
+    _save(repo, "mid", "biscuits", 55)
+    _save(repo, "good", "biscuits", 80)
+    _save(repo, "other", "chips", 90)          # different category — excluded
+    out = repo.find_better_in_category(category="biscuits", min_overall=30,
+                                       exclude_barcode="bad")
+    assert [p["barcode"] for p in out] == ["good", "mid"]  # >30, best first, sorted
+
+
+def test_find_better_excludes_self_and_caps_limit(repo):
+    for i in range(5):
+        _save(repo, f"b{i}", "noodles", 50 + i)
+    out = repo.find_better_in_category(category="noodles", min_overall=40,
+                                       exclude_barcode="b4", limit=3)
+    assert "b4" not in [p["barcode"] for p in out]
+    assert len(out) == 3
+
+
+def test_find_better_in_empty_category_returns_nothing(repo):
+    _save(repo, "x", "", 90)
+    assert repo.find_better_in_category(category="", min_overall=0, exclude_barcode="z") == []

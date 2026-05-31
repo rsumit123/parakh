@@ -34,7 +34,14 @@ function ReasonCard({ reason, kind, exp }: { reason: string; kind: "pos" | "neg"
   );
 }
 
-export function ResultScreen({ product, onScanAgain }: { product: Product; onScanAgain: () => void }) {
+interface Props {
+  product: Product;
+  alternatives?: Product[];
+  onScanAgain: () => void;
+  onOpenProduct?: (p: Product) => void;
+}
+
+export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenProduct }: Props) {
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const { score } = product;
@@ -119,6 +126,30 @@ export function ResultScreen({ product, onScanAgain }: { product: Product; onSca
               <p>{product.ingredients.join(", ")}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {alternatives.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionTitle}>Healthier options</div>
+          <div className={styles.alts}>
+            {alternatives.map((a) => (
+              <button
+                key={a.barcode}
+                className={styles.alt}
+                onClick={() => onOpenProduct?.(a)}
+              >
+                <span className={`${styles.altGrade} ${styles[gradeTone(a.score.grade)]}`}>
+                  {a.score.grade}
+                </span>
+                <span className={styles.altInfo}>
+                  <span className={styles.altName}>{a.name || "Unknown product"}</span>
+                  <span className={styles.altMeta}>{a.score.overall}/100 · {a.brand || a.category}</span>
+                </span>
+                <span className={styles.altChev}>›</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -99,3 +99,35 @@ def test_empty_cache_and_no_off_data_needs_photo(repo):
     svc = ScanService(repo, FakeOFF(None), FakeExtractor(None))
     with pytest.raises(ProductNotFound):
         svc.scan_barcode("777")
+
+
+def test_photo_persists_category_from_extractor(repo):
+    extractor = FakeExtractor({"name": "Lays", "brand": "Lays", "category": "potato chips",
+                               "ingredients": ["potato"], "nutrition": HEALTHY})
+    svc = ScanService(repo, FakeOFF(None), extractor)
+    res = svc.scan_photo("c1", b"img")
+    assert res["product"]["category"] == "potato chips"
+
+
+def test_scan_returns_healthier_alternatives_in_same_category(repo):
+    # seed a healthier biscuit in the same category
+    repo.save(barcode="good", name="Oat Biscuit", brand="B", category="biscuits",
+              ingredients=[], nutrition=HEALTHY,
+              score={"overall": 85, "grade": "A", "breakdown": {}}, source="off")
+    # now scan a worse biscuit (via OFF) in the same category
+    off = FakeOFF({"name": "Cream Biscuit", "brand": "X", "category": "biscuits",
+                   "ingredients": ["sugar"], "nutrition": HEALTHY})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    res = svc.scan_barcode("worse")
+    # the worse one scores via real scorer; the seeded 85 should appear as an alternative
+    alts = res["alternatives"]
+    assert any(a["barcode"] == "good" for a in alts)
+    # and it should not suggest the product itself
+    assert all(a["barcode"] != "worse" for a in alts)
+
+
+def test_no_alternatives_when_category_unknown(repo):
+    off = FakeOFF({"name": "X", "brand": "Y", "ingredients": ["a"], "nutrition": HEALTHY})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    res = svc.scan_barcode("nocat")
+    assert res["alternatives"] == []

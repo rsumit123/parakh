@@ -28,3 +28,26 @@ def test_user_and_dailyscan_tables_exist():
         s.add(User(email="x@y.com", auth_provider="email", tier="free"))
         s.add(DailyScan(identity="guest:abc", day="2026-05-31", count=2))
         s.commit()
+
+
+def test_migration_adds_category_to_preexisting_products_table():
+    # Simulate an OLD on-disk DB whose products table predates the `category` column.
+    from sqlalchemy import text
+    engine = make_engine("sqlite://")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE products (barcode VARCHAR PRIMARY KEY, name VARCHAR, "
+            "brand VARCHAR, ingredients JSON, nutrition JSON, score_overall INTEGER, "
+            "score_grade VARCHAR, score_json JSON, source VARCHAR, created_at DATETIME)"
+        ))
+        conn.execute(text("INSERT INTO products (barcode, name) VALUES ('old', 'Legacy')"))
+    # init_db must back-fill the missing column without dropping the existing row.
+    init_db(engine)
+    from app.repositories.products import ProductRepository
+    repo = ProductRepository(make_session_factory(engine))
+    p = repo.get("old")
+    assert p is not None
+    assert p["category"] == ""  # column added with default
+
+    # idempotent: running again is a no-op (no error)
+    init_db(engine)

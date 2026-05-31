@@ -10,6 +10,7 @@ def test_fetch_maps_fields_when_found():
         "status": 1,
         "product": {
             "product_name": "Chana", "brands": "Tata",
+            "categories": "Snacks, Legumes, Roasted chickpeas",
             "ingredients_text": "Chickpeas, Salt",
             "nutriments": {"energy-kj_100g": 1500, "sugars_100g": 2,
                            "saturated-fat_100g": 0.5, "salt_100g": 0.3,
@@ -20,9 +21,23 @@ def test_fetch_maps_fields_when_found():
     result = client.fetch("111")
     assert result["name"] == "Chana"
     assert result["brand"] == "Tata"
+    assert result["category"] == "roasted chickpeas"  # most-specific, normalized
     assert "chickpeas" in result["ingredients"]
     assert result["nutrition"]["sugars_g"] == 2
     assert result["nutrition"]["fibre_g"] == 5
+
+@respx.mock
+def test_fetch_reads_category_from_tags_with_lang_prefix():
+    respx.get(URL).mock(return_value=httpx.Response(200, json={
+        "status": 1,
+        "product": {
+            "product_name": "X", "brands": "Y",
+            "categories_tags": ["en:snacks", "en:potato-chips"],
+            "ingredients_text": "Potato",
+            "nutriments": {"sugars_100g": 1},
+        },
+    }))
+    assert OpenFoodFactsClient().fetch("111")["category"] == "potato chips"
 
 @respx.mock
 def test_fetch_returns_none_when_not_found():

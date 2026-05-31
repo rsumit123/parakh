@@ -13,6 +13,7 @@ class Product(Base):
     barcode: Mapped[str] = mapped_column(String, primary_key=True)
     name: Mapped[str] = mapped_column(String, default="")
     brand: Mapped[str] = mapped_column(String, default="")
+    category: Mapped[str] = mapped_column(String, default="", index=True)  # for "similar products"
     ingredients: Mapped[list] = mapped_column(JSON, default=list)
     nutrition: Mapped[dict] = mapped_column(JSON, default=dict)
     score_overall: Mapped[int] = mapped_column(Integer, default=0)   # denormalized for queries

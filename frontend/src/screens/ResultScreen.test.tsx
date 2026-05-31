@@ -98,4 +98,23 @@ describe("ResultScreen", () => {
     expect(screen.getByText(/nothing to flag here/i)).toBeInTheDocument();
     expect(screen.queryByText(/^NOVA 1/)).not.toBeInTheDocument();
   });
+
+  it("lists healthier alternatives and opens one when tapped", async () => {
+    const alt: Product = {
+      ...product, barcode: "alt1", name: "Baked Oat Snack", brand: "Healthy Co",
+      score: { ...product.score, overall: 82, grade: "A", verdict: "Good choice" },
+    };
+    const onOpenProduct = vi.fn();
+    render(
+      <ResultScreen product={product} alternatives={[alt]} onScanAgain={() => {}} onOpenProduct={onOpenProduct} />,
+    );
+    expect(screen.getByText(/healthier options/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Baked Oat Snack"));
+    expect(onOpenProduct).toHaveBeenCalledWith(alt);
+  });
+
+  it("shows no 'Healthier options' section when there are none", () => {
+    render(<ResultScreen product={product} alternatives={[]} onScanAgain={() => {}} />);
+    expect(screen.queryByText(/healthier options/i)).not.toBeInTheDocument();
+  });
 });

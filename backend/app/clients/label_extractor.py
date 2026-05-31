@@ -4,9 +4,12 @@ import httpx
 
 _PROMPT = (
     "You are reading a packaged food label (often an Indian product). Return ONLY a "
-    "JSON object with keys: name (string), brand (string), ingredients (array of "
-    "lowercase strings), and nutrition (object with numeric per-100g keys: energy_kj, "
-    "sugars_g, sat_fat_g, salt_g, fibre_g, protein_g).\n"
+    "JSON object with keys: name (string), brand (string), category (string), "
+    "ingredients (array of lowercase strings), and nutrition (object with numeric "
+    "per-100g keys: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g).\n"
+    "- category: a short, generic lowercase food category for finding similar products "
+    "(e.g. 'biscuits', 'potato chips', 'instant noodles', 'chocolate', 'breakfast cereal', "
+    "'namkeen', 'soft drink'). Prefer a common type over a brand-specific name.\n"
     "Rules for nutrition, applied to the per-100g column:\n"
     "- All values must be per 100g. If only per-serving values are given, convert to "
     "per 100g using the serving size.\n"
@@ -80,6 +83,7 @@ class LabelExtractor:
         return {
             "name": data.get("name", "") or "",
             "brand": data.get("brand", "") or "",
+            "category": str(data.get("category", "") or "").strip().lower(),
             "ingredients": [str(i).lower() for i in raw_ingredients],
             "nutrition": _normalize_nutrition(data.get("nutrition", {})),
         }

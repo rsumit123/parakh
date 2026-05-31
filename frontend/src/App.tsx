@@ -51,6 +51,8 @@ function Shell() {
         {profile("dark")}
         <ResultScreen
           product={result.product}
+          alternatives={result.alternatives ?? []}
+          onOpenProduct={showProduct}
           onScanAgain={() => { setResult(null); setView("home"); }}
         />
       </div>

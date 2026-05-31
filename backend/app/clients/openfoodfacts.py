@@ -10,6 +10,21 @@ def _split_ingredients(text: str) -> list[str]:
     return [p.strip().lower() for p in parts if p.strip()]
 
 
+def _main_category(p: dict) -> str:
+    """Pick a single, normalized category for the product. OFF returns a comma-list
+    in `categories` (broad -> specific); we take the most specific (last) and strip
+    any language prefix like 'en:'. Falls back to the first categories_tags entry."""
+    raw = (p.get("categories", "") or "").strip()
+    if raw:
+        last = raw.split(",")[-1].strip()
+        if last:
+            return last.split(":", 1)[-1].replace("-", " ").strip().lower()
+    tags = p.get("categories_tags") or []
+    if tags:
+        return str(tags[-1]).split(":", 1)[-1].replace("-", " ").strip().lower()
+    return ""
+
+
 def _map_nutrition(n: dict) -> dict:
     g = lambda k: float(n.get(k, 0) or 0)
     return {
@@ -45,6 +60,7 @@ class OpenFoodFactsClient:
         return {
             "name": p.get("product_name", "") or "",
             "brand": (p.get("brands", "") or "").split(",")[0].strip(),
+            "category": _main_category(p),
             "ingredients": _split_ingredients(p.get("ingredients_text", "")),
             "nutrition": nutrition,
         }
