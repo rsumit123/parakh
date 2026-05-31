@@ -3,10 +3,19 @@ import json
 import httpx
 
 _PROMPT = (
-    "You are reading a packaged food label. Return ONLY a JSON object with keys: "
-    "name (string), brand (string), ingredients (array of lowercase strings), and "
-    "nutrition (object with numeric per-100g keys: energy_kj, sugars_g, sat_fat_g, "
-    "salt_g, fibre_g, protein_g). Use 0 for any value you cannot read. No prose."
+    "You are reading a packaged food label (often an Indian product). Return ONLY a "
+    "JSON object with keys: name (string), brand (string), ingredients (array of "
+    "lowercase strings), and nutrition (object with numeric per-100g keys: energy_kj, "
+    "sugars_g, sat_fat_g, salt_g, fibre_g, protein_g).\n"
+    "Rules for nutrition, applied to the per-100g column:\n"
+    "- All values must be per 100g. If only per-serving values are given, convert to "
+    "per 100g using the serving size.\n"
+    "- energy_kj: if energy is given in kcal (kilocalories), convert to kilojoules: "
+    "kJ = kcal * 4.184.\n"
+    "- salt_g: if the label lists sodium in mg, convert to salt in grams: "
+    "salt_g = sodium_mg * 2.5 / 1000. If it lists sodium in g, salt_g = sodium_g * 2.5.\n"
+    "- sugars_g: use total sugars.\n"
+    "- Use 0 only for values genuinely absent from the label. No prose, JSON only."
 )
 
 
