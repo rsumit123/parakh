@@ -46,7 +46,7 @@ describe("ScanScreen", () => {
     await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "999");
     await userEvent.click(screen.getByRole("button", { name: /^look up$/i }));
     const file = new File([new Uint8Array([1, 2, 3])], "label.jpg", { type: "image/jpeg" });
-    await userEvent.upload(screen.getByTestId("photo-input"), file);
+    await userEvent.upload(screen.getByTestId("photo-input-needs-photo"), file);
     expect(props.scanByPhoto).toHaveBeenCalled();
     expect(props.onResult).toHaveBeenCalledWith(RESULT);
   });
@@ -56,5 +56,22 @@ describe("ScanScreen", () => {
     await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "1");
     await userEvent.click(screen.getByRole("button", { name: /^look up$/i }));
     expect(await screen.findByText(/daily scan limit/i)).toBeInTheDocument();
+  });
+
+  it("calls onAuthError when the token is rejected (401)", async () => {
+    const onAuthError = vi.fn();
+    const props = setup({
+      onAuthError,
+      scanByBarcode: vi.fn().mockRejectedValue(new AuthExpiredError()),
+    });
+    await userEvent.type(screen.getByPlaceholderText(/enter barcode/i), "1");
+    await userEvent.click(screen.getByRole("button", { name: /^look up$/i }));
+    expect(onAuthError).toHaveBeenCalledOnce();
+    expect(props.onResult).not.toHaveBeenCalled();
+  });
+
+  it("shows the remaining-scans pill when provided", () => {
+    setup({ remaining: 2 });
+    expect(screen.getByText(/2 scans left today/i)).toBeInTheDocument();
   });
 });
