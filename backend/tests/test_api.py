@@ -112,6 +112,31 @@ def test_failed_photo_extraction_does_not_consume_quota():
         assert r.status_code == 422
 
 
+def test_google_login_route_issues_token():
+    from unittest.mock import patch
+    client = build_client()
+    info = {"sub": "g-api", "email": "z@b.com", "name": "Zed", "picture": "http://x/z.png"}
+    with patch("app.services.auth.google_id_token.verify_oauth2_token", return_value=info):
+        r = client.post("/auth/google", json={"id_token": "fake"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["email"] == "z@b.com"
+    assert body["token"].startswith("user:")
+    # The issued token authorizes a scan (counts against the free limit).
+    headers = {"Authorization": f"Bearer {body['token']}"}
+    assert client.post("/scan/barcode", json={"barcode": "x"},
+                       headers=headers).status_code in (404, 200)
+
+
+def test_google_login_route_rejects_bad_token():
+    from unittest.mock import patch
+    client = build_client()
+    with patch("app.services.auth.google_id_token.verify_oauth2_token",
+               side_effect=ValueError("bad")):
+        r = client.post("/auth/google", json={"id_token": "bad"})
+    assert r.status_code == 401
+
+
 def test_unknown_then_photo_costs_one_scan():
     # The core flow: barcode unknown (404, free) -> photo succeeds (charged once).
     client = build_client(off_result=None,
