@@ -53,6 +53,21 @@ def test_migration_adds_category_to_preexisting_products_table():
     init_db(engine)
 
 
+def test_products_table_gets_image_url_on_existing_db():
+    from sqlalchemy import text, inspect
+    from app.db import make_engine, init_db
+    engine = make_engine("sqlite://")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE products (barcode VARCHAR PRIMARY KEY, name VARCHAR, "
+            "brand VARCHAR, ingredients JSON, nutrition JSON, score_overall INTEGER, "
+            "score_grade VARCHAR, score_json JSON, source VARCHAR, created_at DATETIME)"
+        ))
+    init_db(engine)
+    cols = {c["name"] for c in inspect(engine).get_columns("products")}
+    assert "image_url" in cols
+
+
 def test_users_table_gets_google_columns_on_existing_db():
     # Simulate a pre-existing DB: create the users table WITHOUT the new columns,
     # then run init_db and confirm the lightweight migration adds them.
