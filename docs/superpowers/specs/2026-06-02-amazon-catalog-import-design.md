@@ -62,6 +62,8 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
 
 **Seeder** (`backend/scripts/seed_catalog.py`): reads `catalog_extracted.json`; for each record it uses the record's `category` directly (already a fixed Parakh bucket), computes the score at seed time with `score_fn(ingredients, nutrition, category)` (deterministic, in-code — same pattern as `seed_products.py`), then `repo.save(barcode=<real-or-amazon:asin>, name, brand, category, ingredients, nutrition, score, source="amazon", image_url=display_image_url)`. Idempotent upsert. Bundled in Docker (Dockerfile already `COPY scripts ./scripts`).
 
+**Duplicate guard (read-time, non-destructive):** a catalog product stored under a synthetic `amazon:<asin>` key can later be re-stored under its real barcode when a user scans it (different primary key → two rows for one product). We do NOT merge by name (size/flavour variants share names — fusing them would corrupt scores). Instead, alternatives are de-duplicated at read time: `find_better_in_category` gains an `exclude_name_brand: str = ""` param; it fetches a few extra candidates and drops any whose normalized `name|brand` equals the scanned product's (via a shared `_norm_key(name, brand)` = lowercased, whitespace-collapsed `"{name}|{brand}"`), then trims to `limit`. `ScanService._envelope` passes the scanned product's `_norm_key`. This guarantees a product is never suggested as its own healthier option, even if a duplicate row exists. Storage-level dedup/merge is deferred.
+
 **Product-image surfacing:**
 - **Open Food Facts client** (`clients/openfoodfacts.py`): extract a front image URL (`image_front_url` → `image_url` → `selected_images.front.display.*` fallbacks) and return it as `image_url` in the normalized dict, so real (non-catalog) barcode scans also get a photo.
 - **ScanService** (`services/scan.py`): thread `image_url` through `_score_and_cache` into `repo.save`; photo scans pass `image_url=""`. The product dict (and thus each alternative dict) now carries `image_url`.
@@ -136,6 +138,7 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
 - `seed_catalog`: against a 2-row fixture JSON → upserts → `repo.get` returns scored rows with `image_url`, `source="amazon"`, real barcode used when present.
 - Migration: pre-existing `products` table without `image_url` gains it after `init_db` (mirrors the existing category/google migration tests).
 - Repository: `save(..., image_url=...)` round-trips via `_to_dict`.
+- Duplicate guard: `find_better_in_category(..., exclude_name_brand=_norm_key(name, brand))` drops a candidate that shares the scanned product's normalized name+brand even though its barcode differs (simulating an `amazon:<asin>` twin), and still returns up to `limit` others; `_norm_key` normalizes case/whitespace.
 - OFF client: respx-mocked payload with `image_front_url` → normalized dict has `image_url`; absent → `""`.
 - ScanService: `image_url` from OFF flows into the product dict and into alternative dicts.
 
