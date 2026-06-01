@@ -139,3 +139,26 @@ def test_no_alternatives_when_category_unknown(repo):
     svc = ScanService(repo, off, FakeExtractor(None))
     res = svc.scan_barcode("nocat")
     assert res["alternatives"] == []
+
+
+def test_off_image_url_flows_into_product(repo):
+    off = FakeOFF({"name": "Chana", "brand": "Tata", "ingredients": ["chana"],
+                   "nutrition": HEALTHY, "image_url": "https://img/x.jpg"})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    res = svc.scan_barcode("777")
+    assert res["product"]["image_url"] == "https://img/x.jpg"
+
+
+def test_alternative_twin_with_same_name_is_not_suggested(repo):
+    # Seed a healthy alternative that shares the scanned product's name+brand but a
+    # different barcode (a catalog 'amazon:' twin). It must not be suggested.
+    from app.scoring.scorer import score as score_fn
+    twin_score = score_fn(["oats"], HEALTHY, "breakfast cereal")
+    repo.save(barcode="amazon:T", name="Choco", brand="ACME",
+              category="breakfast cereal", ingredients=["oats"], nutrition=HEALTHY,
+              score=twin_score, source="amazon")
+    off = FakeOFF({"name": "Choco", "brand": "ACME", "ingredients": ["sugar", "maida"],
+                   "nutrition": JUNK})
+    svc = ScanService(repo, off, FakeExtractor(None))
+    res = svc.scan_barcode("888")
+    assert "amazon:T" not in [a["barcode"] for a in res["alternatives"]]
