@@ -19,7 +19,8 @@ class Product(Base):
     score_overall: Mapped[int] = mapped_column(Integer, default=0)   # denormalized for queries
     score_grade: Mapped[str] = mapped_column(String, default="E")    # denormalized for queries
     score_json: Mapped[dict] = mapped_column(JSON, default=dict)     # full scorer output
-    source: Mapped[str] = mapped_column(String, default="db")  # db|off|photo
+    source: Mapped[str] = mapped_column(String, default="db")  # db|off|photo|amazon
+    image_url: Mapped[str] = mapped_column(String, default="")  # front/display image
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
