@@ -48,3 +48,27 @@ def test_fetch_returns_none_when_not_found():
 def test_fetch_returns_none_on_http_error():
     respx.get(URL).mock(return_value=httpx.Response(500))
     assert OpenFoodFactsClient().fetch("111") is None
+
+
+@respx.mock
+def test_fetch_returns_front_image_url():
+    respx.get(URL).mock(return_value=httpx.Response(200, json={
+        "status": 1,
+        "product": {
+            "product_name": "Chana", "brands": "Tata",
+            "ingredients_text": "Chickpeas",
+            "image_front_url": "https://img.off/front.jpg",
+            "nutriments": {"sugars_100g": 2},
+        },
+    }))
+    assert OpenFoodFactsClient().fetch("111")["image_url"] == "https://img.off/front.jpg"
+
+
+@respx.mock
+def test_fetch_image_url_empty_when_absent():
+    respx.get(URL).mock(return_value=httpx.Response(200, json={
+        "status": 1,
+        "product": {"product_name": "X", "brands": "Y",
+                    "ingredients_text": "Potato", "nutriments": {"sugars_100g": 1}},
+    }))
+    assert OpenFoodFactsClient().fetch("111")["image_url"] == ""
