@@ -1,6 +1,8 @@
 node_modules/
 .superpowers/
 .env
+.env.local
+*.local
 *.db
 __pycache__/
 dist/
