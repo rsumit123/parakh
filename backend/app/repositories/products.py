@@ -1,5 +1,13 @@
+import re
 from sqlalchemy import select
 from app.models import Product
+
+
+def _norm_key(name: str, brand: str) -> str:
+    """Normalized identity for dedup: each of name/brand lowercased, trimmed, and
+    whitespace-collapsed, joined as 'name|brand'."""
+    norm = lambda s: re.sub(r"\s+", " ", (s or "")).strip().lower()
+    return f"{norm(name)}|{norm(brand)}"
 
 
 class ProductRepository:
@@ -35,14 +43,16 @@ class ProductRepository:
 
     def find_better_in_category(self, *, category: str, min_overall: int,
                                 exclude_barcode: str, limit: int = 3,
-                                better_than_grade: str = "") -> list[dict]:
+                                better_than_grade: str = "",
+                                exclude_name_brand: str = "") -> list[dict]:
         """Healthier alternatives in the same category, best first.
 
         A suggestion must be MEANINGFULLY better — a better grade letter, not just a
-        couple more points (otherwise we'd tell someone to swap their B drink for a
-        slightly different B). When `better_than_grade` is given we require the
-        candidate's grade to be strictly better; we always also require a higher
-        score as a tie-break floor. An empty category never matches."""
+        couple more points. When `better_than_grade` is given we require the candidate's
+        grade to be strictly better; we always also require a higher score as a tie-break
+        floor. `exclude_name_brand` (a `_norm_key`) drops a duplicate of the scanned
+        product stored under a different barcode, so a product is never its own option.
+        An empty category never matches."""
         if not category:
             return []
         # Score floors per grade band (mirror grade_from_score): to beat grade X we
@@ -56,9 +66,15 @@ class ProductRepository:
                 .where(Product.score_overall >= floor)
                 .where(Product.barcode != exclude_barcode)
                 .order_by(Product.score_overall.desc())
-                .limit(limit)
             ).all()
-            return [self._to_dict(p) for p in rows]
+        out: list[dict] = []
+        for p in rows:
+            if exclude_name_brand and _norm_key(p.name, p.brand) == exclude_name_brand:
+                continue
+            out.append(self._to_dict(p))
+            if len(out) >= limit:
+                break
+        return out
 
     @staticmethod
     def _to_dict(p: Product) -> dict:
