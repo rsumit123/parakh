@@ -88,6 +88,9 @@ export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenPr
       </div>
 
       <div className={styles.prod}>
+        {product.image_url && (
+          <img className={styles.prodImg} src={product.image_url} alt={product.name || "product"} />
+        )}
         <div>
           <h3>{product.name || "Unknown product"}</h3>
           <p>{product.brand || product.barcode}</p>
@@ -139,6 +142,9 @@ export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenPr
                 className={styles.alt}
                 onClick={() => onOpenProduct?.(a)}
               >
+                {a.image_url && (
+                  <img className={styles.altThumb} src={a.image_url} alt={a.name || "product"} />
+                )}
                 <span className={`${styles.altGrade} ${styles[gradeTone(a.score.grade)]}`}>
                   {a.score.grade}
                 </span>
