@@ -12,7 +12,9 @@ RUN pip install --no-cache-dir \
     "httpx>=0.27" \
     "pydantic>=2.6" \
     "pydantic-settings>=2.2" \
-    "python-multipart>=0.0.9"
+    "python-multipart>=0.0.9" \
+    "google-auth>=2.27.0" \
+    "requests>=2.31.0"
 
 # Copy application source. Tests, venv, db, env are excluded via .dockerignore.
 COPY app ./app
