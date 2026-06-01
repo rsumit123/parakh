@@ -29,6 +29,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True)
     auth_provider: Mapped[str] = mapped_column(String, default="email")
     tier: Mapped[str] = mapped_column(String, default="free")  # guest|free|paid
+    google_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
