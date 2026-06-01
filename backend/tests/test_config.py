@@ -20,3 +20,13 @@ def test_secret_key_is_separate_from_openrouter_key(monkeypatch):
     s = Settings(_env_file=None)
     assert s.secret_key == "sign-with-this"
     assert s.secret_key != s.openrouter_api_key
+
+
+def test_google_client_id_defaults_empty():
+    assert Settings(_env_file=None).google_client_id == ""
+
+
+def test_google_client_id_reads_env(monkeypatch):
+    monkeypatch.setenv("PARAKH_GOOGLE_CLIENT_ID", "abc.apps.googleusercontent.com")
+    s = Settings(_env_file=None)
+    assert s.google_client_id == "abc.apps.googleusercontent.com"
