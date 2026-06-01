@@ -39,6 +39,23 @@ describe("ResultScreen", () => {
     expect(screen.getByText("Kurkure")).toBeInTheDocument();
   });
 
+  it("shows the product image when image_url is present", () => {
+    render(
+      <ResultScreen
+        product={{ ...product, image_url: "https://img/x.jpg" }}
+        onScanAgain={() => {}}
+      />,
+    );
+    const img = screen.getByAltText(/kurkure/i) as HTMLImageElement;
+    expect(img).toBeInTheDocument();
+    expect(img.src).toContain("https://img/x.jpg");
+  });
+
+  it("renders no product image when image_url is absent", () => {
+    render(<ResultScreen product={product} onScanAgain={() => {}} />);
+    expect(screen.queryByAltText(/kurkure/i)).not.toBeInTheDocument();
+  });
+
   it("shows the NOVA pill in the hero", () => {
     render(<ResultScreen product={product} onScanAgain={() => {}} />);
     expect(screen.getByText(/NOVA 4 · Ultra-processed/i)).toBeInTheDocument();

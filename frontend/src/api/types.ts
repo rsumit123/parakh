@@ -1,5 +1,5 @@
 export type Grade = "A" | "B" | "C" | "D" | "E";
-export type Source = "db" | "off" | "photo";
+export type Source = "db" | "off" | "photo" | "amazon";
 export type BarLevel = "low" | "ok" | "high";
 
 export function isGrade(value: string): value is Grade {
@@ -53,6 +53,7 @@ export interface Product {
   nutrition: Nutrition;
   source: Source;
   score: Score;
+  image_url?: string;
 }
 
 export interface ScanResult {

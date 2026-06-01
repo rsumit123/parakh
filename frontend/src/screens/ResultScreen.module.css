@@ -81,3 +81,8 @@
 .share:disabled { opacity: 0.6; }
 .again { flex: 2; padding: 15px; border-radius: 16px; background: var(--green-deep);
   color: #fff; font-weight: 700; font-size: 14px; border: 0; }
+
+.prodImg { width: 56px; height: 56px; border-radius: 12px; object-fit: contain;
+  background: #fff; border: 1px solid var(--line); flex-shrink: 0; }
+.altThumb { width: 34px; height: 34px; border-radius: 8px; object-fit: contain;
+  background: #fff; border: 1px solid var(--line); flex-shrink: 0; }
