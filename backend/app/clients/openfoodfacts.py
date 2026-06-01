@@ -38,6 +38,10 @@ def _map_nutrition(n: dict) -> dict:
     }
 
 
+def _image_url(p: dict) -> str:
+    return (p.get("image_front_url") or p.get("image_url") or "").strip()
+
+
 class OpenFoodFactsClient:
     """Fetches a product from OpenFoodFacts and normalizes it to our shape."""
 
@@ -63,4 +67,5 @@ class OpenFoodFactsClient:
             "category": _main_category(p),
             "ingredients": _split_ingredients(p.get("ingredients_text", "")),
             "nutrition": nutrition,
+            "image_url": _image_url(p),
         }
