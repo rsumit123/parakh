@@ -51,3 +51,22 @@ def test_migration_adds_category_to_preexisting_products_table():
 
     # idempotent: running again is a no-op (no error)
     init_db(engine)
+
+
+def test_users_table_gets_google_columns_on_existing_db():
+    # Simulate a pre-existing DB: create the users table WITHOUT the new columns,
+    # then run init_db and confirm the lightweight migration adds them.
+    from sqlalchemy import text
+    from app.db import make_engine, init_db
+
+    engine = make_engine("sqlite://")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "CREATE TABLE users ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "email VARCHAR, auth_provider VARCHAR, tier VARCHAR, created_at DATETIME)"
+        ))
+    init_db(engine)
+    from sqlalchemy import inspect
+    cols = {c["name"] for c in inspect(engine).get_columns("users")}
+    assert {"google_id", "display_name", "avatar_url"} <= cols
