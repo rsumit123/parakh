@@ -35,12 +35,14 @@ export async function guestLogin(): Promise<string> {
   return token;
 }
 
-export async function emailLogin(email: string): Promise<string> {
-  const { token } = await fetchJson<{ token: string }>("/auth/login", {
-    method: "POST",
-    json: { email },
-  });
-  saveToken(token);
-  localStorage.setItem(EMAIL_KEY, email);
-  return token;
+export async function googleLogin(
+  idToken: string,
+): Promise<{ token: string; email: string | null }> {
+  const res = await fetchJson<{ token: string; email: string; name: string | null; avatar_url: string | null }>(
+    "/auth/google",
+    { method: "POST", json: { id_token: idToken } },
+  );
+  saveToken(res.token);
+  if (res.email) localStorage.setItem(EMAIL_KEY, res.email);
+  return { token: res.token, email: res.email || null };
 }
