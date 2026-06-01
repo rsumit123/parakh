@@ -72,6 +72,7 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
 **Subagent output schema (Pass 2):**
 ```json
 {
+  "name": "Kellogg's Multigrain Chocos",
   "found_nutrition": true,
   "nutrition": {"energy_kj": 0, "sugars_g": 0, "sat_fat_g": 0, "salt_g": 0,
                 "fibre_g": 0, "protein_g": 0, "fruit_veg_nuts_pct": 0},
@@ -82,7 +83,7 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
   "confidence": "high"
 }
 ```
-`found_nutrition=false` (or `confidence=low`) → product is skipped. Indices map back to the ordered own-ASIN image URL list passed to the agent.
+`name` is the concise consumer-facing product name read off the front pack (brand + product, dropping pack size and marketing copy). `found_nutrition=false` (or `confidence=low`) → product is skipped. Indices map back to the ordered own-ASIN image URL list passed to the agent.
 
 **`catalog_extracted.json` record (committed, facts only):**
 ```json
@@ -107,6 +108,8 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
 
 **Category map** (filename → Parakh bucket): `breakfast` → `breakfast cereal`, `dark_chocolate` → `chocolate`, `drinks` → `drinks`, `namkeen_snacks` → `namkeen`. (These are existing `_BUCKETS` values, so alternatives match across catalog + real scans.)
 
+**Name derivation:** use the subagent's `name` (read off the front pack). If missing/empty, fall back to a cleaned `title`: take the first segment before `|` or `,`, strip a trailing pack size (e.g. `385G`, `1.05kg`), and trim. The product name is used for display (result heading, alternative cards, share card) and Phase 2 search; it is NOT used for scoring or category.
+
 **Brand cleanup:** strip Amazon storefront wrapping — `"Visit the Kellogg's Store"` / `"Kellogg's Store"` → `"Kellogg's"`; trim trailing `" Store"`; `null`/empty → `""`.
 
 **Own-image filter:** keep only `image_urls` whose path segment after the category equals the product's `asin`.
@@ -126,6 +129,7 @@ A build process (run by Claude Code now; a helper script + a Workflow) produces 
 **Backend unit (pure functions / mocked):**
 - Barcode pick: given a fake decoder returning formats, choose the first valid EAN/UPC; none → `amazon:<asin>`.
 - Brand cleanup: the storefront variants → clean brand; `None` → `""`.
+- Name derivation: subagent `name` used when present; missing → cleaned from `title` (first segment before `|`/`,`, trailing pack size stripped).
 - Category map: each of the 4 filenames → expected bucket.
 - Plausibility validator: plausible passes; each implausible case (negative, energy 99999, sugar 250, all-zero) is rejected with the right reason.
 - Record assembly: merges barcode + extraction + cleaned fields into the committed-record shape.
