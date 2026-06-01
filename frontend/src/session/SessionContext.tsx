@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { loadToken, clearToken, guestLogin, emailLogin, loadEmail, isGuestToken } from "./session";
+import { loadToken, clearToken, guestLogin, googleLogin, loadEmail, isGuestToken } from "./session";
 
 interface SessionValue {
   token: string | null;
   isGuest: boolean;
   email: string | null;
   guest: () => Promise<void>;
-  login: (email: string) => Promise<void>;
+  loginGoogle: (credential: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -20,9 +20,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setToken(await guestLogin());
     setEmail(null);
   };
-  const login = async (e: string) => {
-    setToken(await emailLogin(e));
-    setEmail(e);
+  const loginGoogle = async (credential: string) => {
+    const res = await googleLogin(credential);
+    setToken(res.token);
+    setEmail(res.email);
   };
   const signOut = () => {
     clearToken();
@@ -32,7 +33,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider
-      value={{ token, isGuest: isGuestToken(token), email, guest, login, signOut }}
+      value={{ token, isGuest: isGuestToken(token), email, guest, loginGoogle, signOut }}
     >
       {children}
     </SessionContext.Provider>
