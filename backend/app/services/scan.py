@@ -1,5 +1,6 @@
 from app.scoring.scorer import score as score_fn
 from app.categories import normalize_category
+from app.repositories.products import _norm_key
 
 # Nutrition keys that indicate the product actually carries usable label data.
 _NUTRITION_SIGNALS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
@@ -52,6 +53,7 @@ class ScanService:
             min_overall=product["score"]["overall"],
             exclude_barcode=product["barcode"],
             better_than_grade=product["score"].get("grade", ""),
+            exclude_name_brand=_norm_key(product.get("name", ""), product.get("brand", "")),
         )
         return {"source": source, "product": product, "alternatives": alternatives}
 
@@ -65,6 +67,6 @@ class ScanService:
             barcode=barcode, name=data["name"], brand=data["brand"],
             category=category,
             ingredients=data["ingredients"], nutrition=data["nutrition"],
-            score=scored, source=source,
+            score=scored, source=source, image_url=data.get("image_url", ""),
         )
         return self._repo.get(barcode)
