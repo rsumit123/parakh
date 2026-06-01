@@ -1,33 +1,70 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./AuthScreen.module.css";
 
 interface Props {
   onGuest: () => Promise<void> | void;
-  onEmailLogin: (email: string) => Promise<void> | void;
+  onGoogleLogin: (credential: string) => Promise<void> | void;
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+interface GoogleId {
+  initialize: (cfg: {
+    client_id: string;
+    callback: (r: { credential?: string }) => void;
+  }) => void;
+  renderButton: (el: HTMLElement, opts: Record<string, unknown>) => void;
+}
 
-export function AuthScreen({ onGuest, onEmailLogin }: Props) {
-  const [email, setEmail] = useState("");
+declare global {
+  interface Window {
+    google?: { accounts: { id: GoogleId } };
+  }
+}
+
+export function AuthScreen({ onGuest, onGoogleLogin }: Props) {
+  const btnRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const submitEmail = async () => {
-    if (!EMAIL_RE.test(email)) {
-      setError("Enter a valid email address.");
-      return;
-    }
-    setError(null);
-    setBusy(true);
-    try {
-      await onEmailLogin(email);
-    } catch {
-      setError("We couldn't sign you in. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!clientId) return;
+    let cancelled = false;
+
+    const tryRender = (): boolean => {
+      const id = window.google?.accounts?.id;
+      if (!id) return false;
+      id.initialize({
+        client_id: clientId,
+        callback: (resp) => {
+          if (resp.credential) {
+            Promise.resolve(onGoogleLogin(resp.credential)).catch(() =>
+              setError("We couldn't sign you in. Try again."),
+            );
+          }
+        },
+      });
+      if (btnRef.current) {
+        id.renderButton(btnRef.current, {
+          type: "standard",
+          theme: "outline",
+          shape: "pill",
+          size: "large",
+          text: "continue_with",
+          width: 280,
+        });
+      }
+      return true;
+    };
+
+    if (tryRender()) return;
+    const interval = setInterval(() => {
+      if (cancelled || tryRender()) clearInterval(interval);
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [onGoogleLogin]);
 
   const doGuest = async () => {
     setError(null);
@@ -43,28 +80,43 @@ export function AuthScreen({ onGuest, onEmailLogin }: Props) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.top}>
-        <div className={styles.mark}>P</div>
-        <h1>Know what's<br />in your food.</h1>
-        <p>Scan, get a clear score, shop smarter. No spreadsheets, no guilt.</p>
+      <div className={styles.brand}>
+        <span className={styles.leaf}>P</span>
+        <span className={styles.wordmark}>
+          Par<b>akh</b>
+        </span>
       </div>
-      <div className={styles.sheet}>
-        <input
-          className={styles.input}
-          type="email"
-          placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-        />
-        <button className={`${styles.btn} ${styles.dark}`} disabled={busy} onClick={submitEmail}>
-          Continue with email
-        </button>
+
+      <div className={styles.hero}>
+        <div className={styles.art}>
+          <span className={`${styles.corner} ${styles.c1}`} />
+          <span className={`${styles.corner} ${styles.c2}`} />
+          <span className={`${styles.corner} ${styles.c3}`} />
+          <span className={`${styles.corner} ${styles.c4}`} />
+          <span className={styles.beam} />
+          <span className={styles.emoji} role="img" aria-label="canned food">
+            🥫
+          </span>
+        </div>
+        <h1 className={styles.headline}>
+          Know what's
+          <br />
+          really in your food.
+        </h1>
+        <p className={styles.tagline}>
+          Scan a pack and get one honest A–E health score in seconds.
+        </p>
+      </div>
+
+      <div className={styles.auth}>
+        <div className={styles.gbtnWrap}>
+          <div ref={btnRef} data-testid="google-signin-btn" />
+        </div>
+        <div className={styles.divider}>or</div>
         <button className={styles.guest} disabled={busy} onClick={doGuest}>
           Just looking? <b>Continue as guest →</b>
         </button>
         {error && <div className={styles.err}>{error}</div>}
-        <div className={styles.note}>Guest: 3 scans/day · Free account: 10 scans/day</div>
       </div>
     </div>
   );

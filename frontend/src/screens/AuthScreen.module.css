@@ -1,17 +1,62 @@
-.screen { min-height: 100dvh; display: flex; flex-direction: column; justify-content: flex-end;
-  background: linear-gradient(180deg, #10211a 0%, #0e1311 100%); color: #fff; }
-.top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-.mark { width: 72px; height: 72px; border-radius: 22px; background: var(--lime); color: #10211a;
-  display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 800; margin-bottom: 22px; }
-.top h1 { font-size: 25px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; }
-.top p { color: #9aa89c; font-size: 13.5px; max-width: 240px; line-height: 1.6; }
-.sheet { background: var(--card); color: var(--ink); border-radius: 30px 30px 0 0; padding: 24px 22px 26px;
-  display: flex; flex-direction: column; gap: 10px; }
-.input { border: 1px solid var(--line); border-radius: 15px; padding: 14px; font-size: 14px; font-family: inherit; }
-.btn { border-radius: 15px; padding: 14px; font-weight: 700; font-size: 14px; }
-.btn.dark { background: var(--ink); color: #fff; }
-.btn.lime { background: var(--lime); color: #10211a; }
-.guest { background: transparent; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 8px; }
-.guest b { color: var(--green); }
-.note { font-size: 10.5px; text-align: center; color: #a9b3a8; margin-top: 2px; }
-.err { font-size: 12px; color: var(--red); text-align: center; font-weight: 600; }
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 28px 30px;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(177deg, #11231b 0%, #0d1512 60%, #0b0f0d 100%);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.leaf {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: var(--lime); color: #0d1512;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800;
+  box-shadow: 0 6px 16px -6px rgba(199, 249, 76, 0.6);
+}
+.wordmark { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+.wordmark b { color: var(--lime); }
+
+.hero {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-top: 30px;
+}
+.art {
+  width: 158px; height: 158px; border-radius: 38px; position: relative;
+  background:
+    radial-gradient(120px 120px at 30% 25%, rgba(199, 249, 76, 0.18), transparent 70%),
+    linear-gradient(150deg, #1fa463, #0b3d2c);
+  box-shadow: 0 30px 60px -24px rgba(31, 164, 99, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  display: flex; align-items: center; justify-content: center;
+}
+.emoji { font-size: 60px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3)); }
+.corner { position: absolute; width: 26px; height: 26px; border: 3.5px solid var(--lime); }
+.c1 { top: 18px; left: 18px; border-right: 0; border-bottom: 0; border-radius: 9px 0 0 0; }
+.c2 { top: 18px; right: 18px; border-left: 0; border-bottom: 0; border-radius: 0 9px 0 0; }
+.c3 { bottom: 18px; left: 18px; border-right: 0; border-top: 0; border-radius: 0 0 0 9px; }
+.c4 { bottom: 18px; right: 18px; border-left: 0; border-top: 0; border-radius: 0 0 9px 0; }
+.beam {
+  position: absolute; left: 18px; right: 18px; top: 50%; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--lime), transparent);
+  box-shadow: 0 0 14px 2px rgba(199, 249, 76, 0.5);
+}
+
+.headline { font-size: 28px; font-weight: 800; line-height: 1.16; letter-spacing: -0.02em; margin-top: 34px; }
+.tagline { color: #9aa89c; font-size: 14.5px; margin-top: 14px; line-height: 1.55; max-width: 260px; }
+
+.auth { margin-top: 40px; }
+.gbtnWrap { display: flex; justify-content: center; min-height: 44px; }
+.divider {
+  display: flex; align-items: center; gap: 12px; margin: 22px 4px 0;
+  color: #5d6b5f; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.09); }
+.guest {
+  display: block; width: 100%; margin-top: 16px; padding: 8px;
+  background: transparent; text-align: center; font-size: 14px; font-weight: 600; color: #b7c3b8;
+}
+.guest b { color: var(--lime); font-weight: 700; }
+.err { font-size: 12px; color: var(--red); text-align: center; font-weight: 600; margin-top: 12px; }
