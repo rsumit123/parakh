@@ -26,25 +26,33 @@ _ADDITIVE_GROUPS = [
 _ADDITIVE_POINTS = 3
 _ADDITIVE_CAP = 9
 
-# NOVA ultra-processing markers: cosmetic/industrial ingredients whose presence
-# marks a product as NOVA group 4 (ultra-processed). Substring match, lowercase.
-_NOVA4_MARKERS = [
+# Strong NOVA-4 markers: cosmetic/industrial ingredients that on their own signal
+# ultra-processing (flavours, colours, sweeteners, hydrogenated/industrial fats &
+# syrups). A SINGLE one of these marks group 4.
+_NOVA4_STRONG = [
     "flavour", "flavor", "artificial colour", "artificial color", "colour (",
-    "color (", "emulsifier", "stabiliser", "stabilizer", "maltodextrin",
-    "monosodium glutamate", "msg", "hydrogenated", "invert syrup", "glucose syrup",
-    "high fructose", "corn syrup", "acidity regulator", "raising agent",
-    "anti-caking", "preservative", "sweetener", "modified starch", "dextrose",
-    "protein isolate", "whey protein", "e621", "e635", "e150", "e160",
+    "color (", "monosodium glutamate", "msg", "hydrogenated", "invert syrup",
+    "glucose syrup", "high fructose", "corn syrup", "sweetener", "maltodextrin",
+    "protein isolate", "modified starch", "e621", "e635", "e150", "e160",
+]
+# Weak markers: common functional additives (a stabilizer/emulsifier/acidity
+# regulator) that are fine alone — plain buttermilk has a stabilizer and is NOT
+# ultra-processed. Two or more of these together do indicate ultra-processing.
+_NOVA4_WEAK = [
+    "emulsifier", "stabiliser", "stabilizer", "acidity regulator", "raising agent",
+    "anti-caking", "preservative", "dextrose", "whey protein",
 ]
 
 
 def _nova(ingredients: list[str]) -> dict:
     """Estimate the NOVA processing group (1-4) from the ingredient list.
-    This is informational (it does not change the score). Group 4 (ultra-processed)
-    is detected by cosmetic/industrial markers; otherwise we estimate from how many
-    ingredients are listed."""
+    Informational (does not change the score). Group 4 needs real evidence: a strong
+    cosmetic marker (flavour/colour/sweetener/...) OR two-plus weak functional
+    additives. A lone stabilizer/emulsifier (e.g. plain buttermilk) is NOT group 4."""
     text = " ".join(i.lower() for i in ingredients)
-    if any(m in text for m in _NOVA4_MARKERS):
+    strong = any(m in text for m in _NOVA4_STRONG)
+    weak_hits = sum(1 for m in _NOVA4_WEAK if m in text)
+    if strong or weak_hits >= 2:
         return {"group": 4, "label": "Ultra-processed"}
     count = len([i for i in ingredients if i.strip()])
     if count == 0:
@@ -136,17 +144,16 @@ def _beverage_sugar_penalty(sugars_g: float) -> int:
     """Extra penalty for sugar in DRINKS only. The base score uses the food sugar
     scale, on which a sugary soda still scores deceptively well; beverages need a
     far harsher sugar response (real Nutri-Score uses a separate beverage scale).
-    Calibrated so a full-sugar cola (~11g/100ml) lands D, a reduced-sugar drink
-    (~7g) lands C, and a zero-sugar drink stays B."""
+
+    No penalty below 5g/100ml so naturally low-sugar drinks (plain buttermilk,
+    lassi, milk — whose ~2g is intrinsic dairy lactose, not added sugar) are not
+    punished. Calibrated so a full-sugar cola (~11g) lands D, a reduced-sugar drink
+    (~7g) lands C, and zero/low-sugar drinks stay B."""
     s = sugars_g
-    if s <= 0:
-        return 0
-    if s <= 2:
-        return 5
     if s <= 5:
-        return 15
+        return 0
     if s <= 8:
-        return 25
+        return 20
     return 40
 
 
@@ -171,8 +178,10 @@ def score(ingredients: list[str], nutrition: dict, category: str = "") -> dict:
                  for b in bars if (not b["high_is_bad"]) and b["level"] != "low"]
     negatives = [f"High {b['label'].lower()}"
                  for b in bars if b["high_is_bad"] and b["level"] == "high"]
+    # Only label "High sugar" when the beverage penalty actually fired (sugar is
+    # meaningfully high) — not for low-sugar drinks that incur no penalty.
     if drink_sugar_penalty > 0 and "High sugar" not in negatives:
-        negatives.append("High sugar")  # surfaced even if the food-scale bar wasn't "high"
+        negatives.append("High sugar")
     negatives += [f["label"] for f in india_flags]
 
     return {

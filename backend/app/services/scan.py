@@ -51,6 +51,7 @@ class ScanService:
             category=product.get("category", ""),
             min_overall=product["score"]["overall"],
             exclude_barcode=product["barcode"],
+            better_than_grade=product["score"].get("grade", ""),
         )
         return {"source": source, "product": product, "alternatives": alternatives}
 

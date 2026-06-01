@@ -82,3 +82,24 @@ def test_find_better_excludes_self_and_caps_limit(repo):
 def test_find_better_in_empty_category_returns_nothing(repo):
     _save(repo, "x", "", 90)
     assert repo.find_better_in_category(category="", min_overall=0, exclude_barcode="z") == []
+
+
+def test_better_than_grade_requires_a_strictly_better_grade(repo):
+    # A B-grade drink (overall 69) must NOT be offered another B (overall 73) as a
+    # healthier option — only a strictly better grade (A) qualifies.
+    _save(repo, "buttermilk", "drinks", 69, grade="B")
+    _save(repo, "cokezero", "drinks", 73, grade="B")   # higher score, SAME grade
+    _save(repo, "water", "drinks", 95, grade="A")      # genuinely better grade
+    out = repo.find_better_in_category(category="drinks", min_overall=69,
+                                       exclude_barcode="buttermilk", better_than_grade="B")
+    bcs = [p["barcode"] for p in out]
+    assert "cokezero" not in bcs        # same grade -> not a suggestion
+    assert "water" in bcs               # better grade -> suggested
+
+
+def test_better_than_grade_offers_real_upgrade_for_a_D(repo):
+    _save(repo, "cola", "drinks", 29, grade="D")
+    _save(repo, "zero", "drinks", 73, grade="B")
+    out = repo.find_better_in_category(category="drinks", min_overall=29,
+                                       exclude_barcode="cola", better_than_grade="D")
+    assert "zero" in [p["barcode"] for p in out]
