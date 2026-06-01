@@ -1,6 +1,7 @@
 import pytest
 from app.db import make_engine, make_session_factory, init_db
 from app.repositories.products import ProductRepository
+from app.repositories.products import _norm_key as _nk
 
 
 @pytest.fixture
@@ -118,3 +119,24 @@ def test_better_than_grade_offers_real_upgrade_for_a_D(repo):
     out = repo.find_better_in_category(category="drinks", min_overall=29,
                                        exclude_barcode="cola", better_than_grade="D")
     assert "zero" in [p["barcode"] for p in out]
+
+
+def test_norm_key_normalizes_case_and_space():
+    from app.repositories.products import _norm_key
+    assert _norm_key("Amul  Dark", "  Amul ") == _norm_key("amul dark", "amul")
+
+
+def test_find_better_excludes_same_name_brand_twin(repo):
+    # A duplicate of the scanned product (same name+brand) stored under a DIFFERENT
+    # barcode must NOT be offered as its own healthier option.
+    _save(repo, "scan", "chocolate", 40, grade="C")
+    repo.save(barcode="amazon:Z", name="Pscan", brand="B", category="chocolate",
+              ingredients=[], nutrition={"sugars_g": 1.0},
+              score={"overall": 95, "grade": "A", "breakdown": {}}, source="amazon")
+    _save(repo, "real", "chocolate", 90, grade="A")  # a genuinely different A
+    out = repo.find_better_in_category(
+        category="chocolate", min_overall=40, exclude_barcode="scan",
+        better_than_grade="C", exclude_name_brand=_nk("Pscan", "B"))
+    bcs = [p["barcode"] for p in out]
+    assert "amazon:Z" not in bcs   # same name+brand twin dropped
+    assert "real" in bcs           # real alternative kept
