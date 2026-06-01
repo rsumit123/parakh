@@ -49,6 +49,21 @@ def test_save_is_idempotent_upsert(repo):
     assert p["score"]["overall"] == 90
 
 
+def test_image_url_roundtrips(repo):
+    repo.save(barcode="111", name="Chana", brand="Tata", ingredients=["chana"],
+              nutrition={"sugars_g": 1.0},
+              score={"overall": 84, "grade": "A", "breakdown": {}}, source="amazon",
+              image_url="https://example.com/front.jpg")
+    p = repo.get("111")
+    assert p["image_url"] == "https://example.com/front.jpg"
+
+
+def test_image_url_defaults_empty_when_omitted(repo):
+    repo.save(barcode="222", name="X", brand="B", ingredients=[], nutrition={},
+              score={"overall": 10, "grade": "E", "breakdown": {}}, source="off")
+    assert repo.get("222")["image_url"] == ""
+
+
 def _save(repo, barcode, category, overall, grade="C"):
     repo.save(barcode=barcode, name=f"P{barcode}", brand="B", category=category,
               ingredients=[], nutrition={"sugars_g": 1.0},
