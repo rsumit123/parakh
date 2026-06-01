@@ -15,7 +15,7 @@ class ProductRepository:
 
     def save(self, *, barcode: str, name: str, brand: str,
              ingredients: list, nutrition: dict, score: dict, source: str,
-             category: str = "") -> None:
+             category: str = "", image_url: str = "") -> None:
         with self._Session() as s:
             p = s.get(Product, barcode)
             if p is None:
@@ -30,6 +30,7 @@ class ProductRepository:
             p.score_grade = score["grade"]
             p.score_json = score
             p.source = source
+            p.image_url = image_url
             s.commit()
 
     def find_better_in_category(self, *, category: str, min_overall: int,
@@ -67,4 +68,5 @@ class ProductRepository:
             "ingredients": p.ingredients, "nutrition": p.nutrition,
             "score": p.score_json,
             "source": p.source,
+            "image_url": p.image_url,
         }
