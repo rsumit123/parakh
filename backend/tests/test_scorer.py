@@ -108,3 +108,42 @@ def test_drink_detected_by_ingredients_when_category_missing():
     # No category, but carbonated water in ingredients -> still treated as a drink.
     r = score(["carbonated water", "sugar"], COLA)
     assert r["grade"] == "D"
+
+
+# --- Low-sugar dairy drinks (buttermilk/lassi/milk) regression: the bugs the user
+#     spotted — a "High sugar" warning + ultra-processed flag + being out-ranked by
+#     diet soda on plain chaas. ---
+
+BUTTERMILK = {"energy_kj": 121, "sugars_g": 1.8, "sat_fat_g": 1.0, "salt_g": 0.625,
+              "fibre_g": 0, "protein_g": 1.5, "fruit_veg_nuts_pct": 0}
+
+
+def test_buttermilk_no_false_high_sugar_warning():
+    # 1.8g (natural dairy lactose) is LOW -> no beverage penalty, no "High sugar".
+    r = score(["milk solids", "iodised salt", "stabilizer (460i)"], BUTTERMILK,
+              category="drinks")
+    assert "High sugar" not in r["negatives"], r["negatives"]
+
+
+def test_buttermilk_not_ultra_processed():
+    # A lone stabilizer must NOT make plain buttermilk NOVA group 4.
+    r = score(["milk solids", "iodised salt", "spices & condiments", "stabilizer (460i)"],
+              BUTTERMILK, category="drinks")
+    assert r["breakdown"]["nova"]["group"] != 4, r["breakdown"]["nova"]
+
+
+def test_buttermilk_and_zero_soda_are_same_grade():
+    # Plain chaas must not be dragged below a diet cola. Both land "B"; whether a
+    # same-grade soda is suggested as an "alternative" is enforced in the repository
+    # (better-grade rule), not here.
+    bm = score(["milk solids", "iodised salt", "stabilizer (460i)"], BUTTERMILK,
+               category="drinks")
+    cola_zero = score(["carbonated water", "sweeteners (955, 950)"], ZERO_SODA,
+                      category="drinks")
+    assert bm["grade"] == cola_zero["grade"] == "B"
+
+
+def test_two_weak_additives_still_flag_ultra_processed():
+    # emulsifier + preservative together (no lone-additive escape) -> group 4.
+    r = score(["wheat flour", "emulsifier", "preservative"], JUNK)
+    assert r["breakdown"]["nova"]["group"] == 4
