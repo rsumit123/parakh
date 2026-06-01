@@ -11,18 +11,19 @@ from app.clients.label_extractor import LabelExtractor, ExtractionError
 from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
-from app.schemas import GuestRequest, EmailLoginRequest, TokenResponse, BarcodeRequest
+from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
+                         TokenResponse, BarcodeRequest)
 
 
 def create_app(*, session_factory, off_client, label_extractor, secret,
-               guest_limit, free_limit, today=None):
+               guest_limit, free_limit, google_client_id="", today=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
     app = FastAPI(title="Parakh API")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                        allow_headers=["*"])
 
-    auth = AuthService(session_factory, secret=secret)
+    auth = AuthService(session_factory, secret=secret, google_client_id=google_client_id)
     limiter = RateLimiter(session_factory, guest_limit=guest_limit, free_limit=free_limit)
     scanner = ScanService(ProductRepository(session_factory), off_client, label_extractor)
 
@@ -60,12 +61,12 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
         except AuthError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    @app.post("/auth/login", response_model=TokenResponse)
-    def auth_login(req: EmailLoginRequest):
+    @app.post("/auth/google", response_model=GoogleLoginResponse)
+    def auth_google(req: GoogleLoginRequest):
         try:
-            return {"token": auth.login_email(req.email)}
+            return auth.login_google(req.id_token)
         except AuthError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=401, detail=str(e))
 
     @app.post("/scan/barcode")
     def scan_barcode(req: BarcodeRequest, identity: dict = Depends(current_identity)):
@@ -113,6 +114,7 @@ def app_from_settings() -> FastAPI:
             api_key=settings.openrouter_api_key, model=settings.vision_model,
             url=settings.openrouter_url),
         secret=settings.secret_key,
+        google_client_id=settings.google_client_id,
         guest_limit=settings.guest_daily_limit,
         free_limit=settings.free_daily_limit,
     )
