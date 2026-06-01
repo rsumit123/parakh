@@ -5,8 +5,15 @@ class GuestRequest(BaseModel):
     device_id: str
 
 
-class EmailLoginRequest(BaseModel):
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
+class GoogleLoginResponse(BaseModel):
+    token: str
     email: str
+    name: str | None = None
+    avatar_url: str | None = None
 
 
 class TokenResponse(BaseModel):
