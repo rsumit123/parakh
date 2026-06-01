@@ -12,7 +12,7 @@ import type { Product, ScanResult } from "./api/types";
 type View = "home" | "scan" | "history";
 
 function Shell() {
-  const { token, isGuest, email, guest, login, signOut } = useSession();
+  const { token, isGuest, email, guest, loginGoogle, signOut } = useSession();
   const [view, setView] = useState<View>("home");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
@@ -29,7 +29,7 @@ function Shell() {
   };
 
   if (!token) {
-    return <AuthScreen onGuest={guest} onEmailLogin={login} />;
+    return <AuthScreen onGuest={guest} onGoogleLogin={loginGoogle} />;
   }
 
   // The profile menu floats top-right over every signed-in screen.
