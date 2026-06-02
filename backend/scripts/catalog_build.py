@@ -8,6 +8,11 @@ CATEGORY_MAP = {
     "dark_chocolate": "chocolate",
     "drinks": "drinks",
     "namkeen_snacks": "namkeen",
+    "biscuits": "biscuits",
+    "health_drinks": "health drinks",
+    "icecreams": "ice cream",
+    "noodles": "noodles & pasta",
+    "spreads": "spreads & sauces",
 }
 
 _CORE = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")

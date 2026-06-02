@@ -134,7 +134,12 @@ def _nutrient_bars(nutrition: dict) -> list[dict]:
 def _is_drink(category: str, ingredients: list[str]) -> bool:
     """True if the product is a beverage. Detected by category OR soda ingredients,
     so it works for seeded items (category set) and messy real scans alike."""
-    if "drink" in (category or "").lower():
+    c = (category or "").lower()
+    # Malt / "health drink" POWDERS (Bournvita, Horlicks, Boost) are sold as powder
+    # and consumed diluted — score them as food (per-100g), not per-100ml beverages.
+    if "malt" in c or "health drink" in c:
+        return False
+    if "drink" in c:
         return True
     text = " ".join(i.lower() for i in ingredients)
     return "carbonated water" in text or "soft drink" in text

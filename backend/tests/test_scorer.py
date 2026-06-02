@@ -147,3 +147,15 @@ def test_two_weak_additives_still_flag_ultra_processed():
     # emulsifier + preservative together (no lone-additive escape) -> group 4.
     r = score(["wheat flour", "emulsifier", "preservative"], JUNK)
     assert r["breakdown"]["nova"]["group"] == 4
+
+
+def test_malt_health_drink_powders_are_not_beverages():
+    # Bournvita/Horlicks-type powders are sold as powder (high sugar per 100g) but
+    # consumed diluted — they must NOT get the per-100ml beverage sugar penalty.
+    from app.scoring.scorer import _is_drink
+    assert _is_drink("health drinks", []) is False
+    assert _is_drink("malt drink mix", []) is False
+    # real beverages still detected
+    assert _is_drink("drinks", []) is True
+    assert _is_drink("soft drink", []) is True
+    assert _is_drink("", ["carbonated water", "sugar"]) is True
