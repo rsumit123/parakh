@@ -1,0 +1,7 @@
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex;
+  background: var(--card); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0); }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 9px 0 11px; font-size: 10.5px; font-weight: 700; color: var(--muted); background: transparent; }
+.icon { font-size: 18px; line-height: 1; }
+.on { color: var(--green); }
