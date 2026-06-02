@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { CompareScreen } from "./CompareScreen";
 import type { Product } from "../api/types";
 
-function make(over: Partial<Product> & { nutrition?: Partial<Product["nutrition"]> }): Product {
+function make(over: Partial<Omit<Product, "nutrition" | "score">> & {
+  nutrition?: Partial<Product["nutrition"]>;
+  score?: Product["score"];
+}): Product {
   const { nutrition, score, ...rest } = over;
   return {
     barcode: "x", name: "Prod", brand: "Brand", source: "amazon", ingredients: [],
