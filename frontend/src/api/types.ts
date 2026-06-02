@@ -56,6 +56,11 @@ export interface Product {
   image_url?: string;
 }
 
+export interface CategoryCount {
+  category: string;
+  count: number;
+}
+
 export interface ScanResult {
   source: Source;
   remaining: number;
