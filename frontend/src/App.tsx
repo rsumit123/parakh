@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SessionProvider, useSession } from "./session/SessionContext";
+import { navDepth } from "./session/nav";
 import { AuthScreen } from "./screens/AuthScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ScanScreen } from "./screens/ScanScreen";
@@ -19,6 +20,30 @@ function Shell() {
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [compare, setCompare] = useState<{ a: Product; b: Product } | null>(null);
+
+  // Back-button support: push a browser history entry when navigating to a deeper
+  // screen so the device Back button (and on-screen back) walk back through the app
+  // (Compare→Result→Home, Scan/History→Home) instead of leaving the site.
+  useEffect(() => {
+    const depth = navDepth({ view, hasResult: !!result, hasCompare: !!compare });
+    const current = (window.history.state?.depth as number | undefined) ?? 0;
+    if (depth > current) window.history.pushState({ depth }, "");
+  }, [view, result, compare]);
+
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      const target = (e.state?.depth as number | undefined) ?? 0;
+      if (target <= 0) {
+        setCompare(null);
+        setResult(null);
+        setView("home");
+      } else if (target === 1) {
+        setCompare(null);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const handleResult = (r: ScanResult) => {
     setRemaining(r.remaining);
@@ -48,7 +73,7 @@ function Shell() {
   );
 
   if (compare) {
-    return <CompareScreen a={compare.a} b={compare.b} onBack={() => setCompare(null)} />;
+    return <CompareScreen a={compare.a} b={compare.b} onBack={() => window.history.back()} />;
   }
 
   if (result) {
@@ -59,7 +84,7 @@ function Shell() {
           product={result.product}
           alternatives={result.alternatives ?? []}
           onCompare={(alt) => setCompare({ a: result.product, b: alt })}
-          onScanAgain={() => { setResult(null); setView("home"); }}
+          onScanAgain={() => window.history.back()}
         />
       </div>
     );
@@ -69,7 +94,7 @@ function Shell() {
     return (
       <HistoryScreen
         entries={history}
-        onBack={() => setView("home")}
+        onBack={() => window.history.back()}
         onOpen={showProduct}
         onClear={() => { clearHistory(); setHistory([]); }}
       />
@@ -83,7 +108,7 @@ function Shell() {
         remaining={remaining}
         isGuest={isGuest}
         onResult={handleResult}
-        onBack={() => setView("home")}
+        onBack={() => window.history.back()}
         onSignIn={signOut}
         onAuthError={signOut}
       />
