@@ -56,6 +56,17 @@ describe("ResultScreen", () => {
     expect(screen.queryByAltText(/kurkure/i)).not.toBeInTheDocument();
   });
 
+  it("compares an alternative when its row is activated", async () => {
+    const alt = { ...product, barcode: "alt-1", name: "Makhana", image_url: "https://img/m.jpg" };
+    const onCompare = vi.fn();
+    render(
+      <ResultScreen product={product} alternatives={[alt]} onScanAgain={() => {}} onCompare={onCompare} />,
+    );
+    expect(screen.getByText(/compare/i)).toBeInTheDocument(); // visible affordance
+    await userEvent.click(screen.getByRole("button", { name: /makhana/i }));
+    expect(onCompare).toHaveBeenCalledWith(alt);
+  });
+
   it("shows the NOVA pill in the hero", () => {
     render(<ResultScreen product={product} onScanAgain={() => {}} />);
     expect(screen.getByText(/NOVA 4 · Ultra-processed/i)).toBeInTheDocument();
@@ -116,18 +127,14 @@ describe("ResultScreen", () => {
     expect(screen.queryByText(/^NOVA 1/)).not.toBeInTheDocument();
   });
 
-  it("lists healthier alternatives and opens one when tapped", async () => {
+  it("lists healthier alternatives", () => {
     const alt: Product = {
       ...product, barcode: "alt1", name: "Baked Oat Snack", brand: "Healthy Co",
       score: { ...product.score, overall: 82, grade: "A", verdict: "Good choice" },
     };
-    const onOpenProduct = vi.fn();
-    render(
-      <ResultScreen product={product} alternatives={[alt]} onScanAgain={() => {}} onOpenProduct={onOpenProduct} />,
-    );
+    render(<ResultScreen product={product} alternatives={[alt]} onScanAgain={() => {}} onCompare={vi.fn()} />);
     expect(screen.getByText(/healthier options/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByText("Baked Oat Snack"));
-    expect(onOpenProduct).toHaveBeenCalledWith(alt);
+    expect(screen.getByText("Baked Oat Snack")).toBeInTheDocument();
   });
 
   it("shows no 'Healthier options' section when there are none", () => {
