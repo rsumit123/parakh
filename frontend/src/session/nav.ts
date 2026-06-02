@@ -1,21 +1,30 @@
-/** Pure navigation-depth logic for back-button (History API) support.
- * Screen depth: 0 = Home, 1 = Scan/History/Result, 2 = Compare (over Result). */
+import type { ScanResult, Product } from "../api/types";
 
-export interface NavState {
-  view: "home" | "scan" | "history";
-  hasResult: boolean;
-  hasCompare: boolean;
+/** Screen-stack navigation. stack[0] is always a tab root (home/explore/history);
+ * the active screen is the top of the stack. The whole stack is serialized into
+ * history.state so the device Back button can restore the previous stack. */
+
+export type Tab = "home" | "explore" | "history";
+export type Screen =
+  | { t: "home" } | { t: "explore" } | { t: "history" }
+  | { t: "category"; category: string }
+  | { t: "scan" }
+  | { t: "result"; result: ScanResult }
+  | { t: "compare"; a: Product; b: Product };
+export type Stack = Screen[];
+
+export function top(stack: Stack): Screen { return stack[stack.length - 1]; }
+export function activeTab(stack: Stack): Tab { return stack[0].t as Tab; }
+export function isTabRoot(s: Screen): boolean {
+  return s.t === "home" || s.t === "explore" || s.t === "history";
 }
-
-export function navDepth(s: NavState): 0 | 1 | 2 {
-  if (s.hasCompare) return 2;
-  if (s.hasResult || s.view === "scan" || s.view === "history") return 1;
-  return 0;
+export function push(stack: Stack, screen: Screen): Stack { return [...stack, screen]; }
+export function selectTab(_stack: Stack, tab: Tab): Stack { return [{ t: tab }]; }
+export function pushResultFromScan(stack: Stack, result: ScanResult): Stack {
+  const base = top(stack).t === "scan" ? stack.slice(0, -1) : stack;
+  return [...base, { t: "result", result }];
 }
-
-/** Where the app should land when the browser pops back to `depth`. */
-export function unwindTo(s: NavState, depth: number): NavState {
-  if (depth <= 0) return { view: "home", hasResult: false, hasCompare: false };
-  if (depth === 1) return { ...s, hasCompare: false };
-  return s;
+export function pop(stack: Stack): Stack {
+  if (stack.length > 1) return stack.slice(0, -1);
+  return stack[0].t === "home" ? stack : [{ t: "home" }];
 }
