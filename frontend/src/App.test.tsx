@@ -16,7 +16,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ token: "g" }) }));
     render(<App />);
     await userEvent.click(screen.getByRole("button", { name: /guest/i }));
-    expect(await screen.findByRole("button", { name: /scan barcode/i })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /scan a product/i })).toBeInTheDocument();
     // critical: no camera auto-start on the landing page
     expect(document.querySelector("video")).toBeNull();
   });
@@ -25,7 +25,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ token: "g" }) }));
     render(<App />);
     await userEvent.click(screen.getByRole("button", { name: /guest/i }));
-    await userEvent.click(await screen.findByRole("button", { name: /scan barcode/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /scan a product/i }));
     expect(await screen.findByText(/line up the barcode/i)).toBeInTheDocument();
   });
 });

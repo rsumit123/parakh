@@ -30,3 +30,6 @@
 .retry { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--lime);
   background: transparent; padding: 8px; }
 .hidden { display: none; }
+.manualRow { display: flex; gap: 8px; }
+.manualRow .input { background: #fff; color: var(--ink); }
+.go { background: var(--lime); color: #10211a; font-weight: 800; border-radius: 14px; padding: 0 18px; font-size: 14px; }

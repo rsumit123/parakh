@@ -28,6 +28,15 @@ function setup(overrides = {}) {
 }
 
 describe("ScanScreen", () => {
+  it("looks up a manually entered barcode from the camera screen", async () => {
+    const props = setup();
+    await userEvent.click(screen.getByRole("button", { name: /enter barcode manually/i }));
+    await userEvent.type(screen.getByPlaceholderText(/enter barcode number/i), "8901058000177");
+    await userEvent.click(screen.getByRole("button", { name: /^go$/i }));
+    expect(props.scanByBarcode).toHaveBeenCalledWith("8901058000177", "tok");
+    expect(props.onResult).toHaveBeenCalledWith(RESULT);
+  });
+
   it("renders the camera viewfinder and a back button", () => {
     setup();
     expect(screen.getByLabelText(/back/i)).toBeInTheDocument();
