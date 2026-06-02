@@ -14,6 +14,7 @@ interface Props {
 const EMOJI: Record<string, string> = {
   drinks: "🥤", namkeen: "🥜", "breakfast cereal": "🥣", chocolate: "🍫",
   biscuits: "🍪", "spreads & sauces": "🫙", "condiments & spices": "🧂",
+  "ice cream": "🍦", "health drinks": "🥛", "noodles & pasta": "🍜",
 };
 
 export function ExploreScreen({ token, onOpenCategory, onOpenProduct }: Props) {
