@@ -187,3 +187,37 @@ def test_list_products_limit_clamped_and_total_reported(repo):
     out = repo.list_products(category="drinks", limit=2)
     assert len(out["items"]) == 2
     assert out["total"] == 5
+
+
+def _savei(repo, barcode, category, overall, grade, name, brand, image_url):
+    repo.save(barcode=barcode, name=name, brand=brand, category=category,
+              ingredients=[], nutrition={"sugars_g": 1.0},
+              score={"overall": overall, "grade": grade, "breakdown": {}}, source="amazon",
+              image_url=image_url)
+
+
+def test_list_products_excludes_empty_name(repo):
+    _saven(repo, "a", "drinks", 50, "C", "", "Amul")  # unknown -> excluded
+    _saven(repo, "b", "drinks", 60, "B", "Real Juice", "Dabur")
+    out = repo.list_products(category="drinks")
+    assert [p["barcode"] for p in out["items"]] == ["b"]
+    assert out["total"] == 1
+
+
+def test_list_products_dedups_by_name_brand_preferring_image(repo):
+    _savei(repo, "noimg", "drinks", 70, "B", "Rose Milk", "Amul", "")
+    _savei(repo, "img", "drinks", 60, "B", "Rose Milk", "Amul", "http://x/r.jpg")
+    _saven(repo, "other", "drinks", 90, "A", "Coconut Water", "Raw")
+    out = repo.list_products(category="drinks")
+    assert out["total"] == 2  # Rose Milk collapsed to one
+    bcs = [p["barcode"] for p in out["items"]]
+    assert "noimg" not in bcs and "img" in bcs   # imaged representative kept
+    assert bcs == ["other", "img"]               # still healthiest-first overall
+
+
+def test_category_counts_counts_distinct_products(repo):
+    _savei(repo, "x1", "drinks", 70, "B", "Rose Milk", "Amul", "")
+    _savei(repo, "x2", "drinks", 60, "B", "Rose Milk", "Amul", "http://x/r.jpg")
+    _saven(repo, "u", "drinks", 50, "C", "", "Amul")  # empty name excluded
+    out = repo.category_counts()
+    assert {"category": "drinks", "count": 1} in out  # 1 distinct named product

@@ -79,11 +79,14 @@ class ProductRepository:
     def category_counts(self) -> list[dict]:
         """Non-empty categories with their product counts, most products first."""
         with self._Session() as s:
+            distinct_products = func.count(func.distinct(
+                func.lower(Product.name).op("||")("|").op("||")(func.lower(Product.brand))))
             rows = s.execute(
-                select(Product.category, func.count())
+                select(Product.category, distinct_products)
                 .where(Product.category != "")
+                .where(Product.name != "")
                 .group_by(Product.category)
-                .order_by(func.count().desc(), Product.category.asc())
+                .order_by(distinct_products.desc(), Product.category.asc())
             ).all()
             return [{"category": c, "count": n} for c, n in rows]
 
@@ -91,10 +94,12 @@ class ProductRepository:
                       limit: int = 60, offset: int = 0) -> dict:
         """Filtered product list, healthiest first. Filters (category/grade/q) are
         ANDed; any blank filter is ignored. `q` matches name OR brand, case-insensitive.
-        Returns {items: [...], total: <count before paging>}."""
+        Unnamed rows are excluded, and rows are de-duplicated by normalized name+brand
+        (keeping the copy that has an image, then the highest score) so a product shows
+        once. Returns {items: [...], total: <distinct count before paging>}."""
         limit = max(1, min(limit, 200))
         offset = max(0, offset)
-        conds = []
+        conds = [Product.name != ""]  # never surface "Unknown product" rows in browse
         if category:
             conds.append(Product.category == category)
         if grade:
@@ -103,17 +108,27 @@ class ProductRepository:
             like = f"%{q.strip().lower()}%"
             conds.append(func.lower(Product.name).like(like) | func.lower(Product.brand).like(like))
         with self._Session() as s:
-            count_q = select(func.count()).select_from(Product)
             list_q = select(Product)
             for c in conds:
-                count_q = count_q.where(c)
                 list_q = list_q.where(c)
-            total = s.scalar(count_q) or 0
+            # Order so the preferred representative of each name+brand comes first:
+            # an imaged row, then higher score.
             rows = s.scalars(
-                list_q.order_by(Product.score_overall.desc(), Product.name.asc())
-                      .limit(limit).offset(offset)
+                list_q.order_by((Product.image_url != "").desc(),
+                                Product.score_overall.desc(), Product.name.asc())
             ).all()
-            return {"items": [self._to_dict(p) for p in rows], "total": total}
+            seen: set[str] = set()
+            deduped = []
+            for p in rows:
+                k = _norm_key(p.name, p.brand)
+                if k in seen:
+                    continue
+                seen.add(k)
+                deduped.append(p)
+            deduped.sort(key=lambda p: (-p.score_overall, p.name))  # healthiest first
+            total = len(deduped)
+            page = deduped[offset:offset + limit]
+            return {"items": [self._to_dict(p) for p in page], "total": total}
 
     @staticmethod
     def _to_dict(p: Product) -> dict:
