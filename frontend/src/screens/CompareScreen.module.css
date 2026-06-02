@@ -1,0 +1,36 @@
+.screen { min-height: 100dvh; background: var(--paper); color: var(--ink);
+  display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; gap: 8px; padding: 14px 14px 6px; }
+.back { font-size: 24px; line-height: 1; color: var(--ink); background: transparent; padding: 0 6px; }
+.title { font-size: 16px; font-weight: 800; }
+
+.header { position: sticky; top: 0; z-index: 5; background: var(--paper);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 14px 12px;
+  border-bottom: 1px solid var(--line); }
+.pcard { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 12px; text-align: center; }
+.thumb, .placeholder { width: 56px; height: 56px; border-radius: 12px; margin: 0 auto 8px;
+  background: #fff; border: 1px solid var(--line); object-fit: contain; }
+.placeholder { display: flex; align-items: center; justify-content: center; font-size: 28px; background: #eef3ec; }
+.pn { font-size: 12.5px; font-weight: 700; line-height: 1.2; max-height: 30px; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pb { font-size: 10.5px; color: var(--muted); margin-bottom: 8px; }
+.gline { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.g { width: 26px; height: 26px; border-radius: 8px; color: #fff; font-weight: 800; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; }
+.g.good { background: var(--green); } .g.ok { background: var(--amber); } .g.bad { background: var(--red); }
+.sc { font-size: 13px; font-weight: 800; }
+
+.rows { padding: 6px 14px 28px; }
+.nrow { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.nlab { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .04em; text-align: center; margin-bottom: 6px; }
+.vals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cell { position: relative; text-align: center; font-size: 15px; font-weight: 800;
+  padding: 8px 4px; border-radius: 10px; background: #f0efe8; color: var(--ink); }
+.cell[data-winner="true"] { background: #e7f6ea; color: var(--green-deep); }
+.tick { position: absolute; top: 3px; right: 7px; font-size: 10px; color: var(--green); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.chip { font-size: 9.5px; font-weight: 700; padding: 3px 7px; border-radius: 7px; }
+.bad { background: #fde8e5; color: var(--red); }
+.ok { background: #e7f6ea; color: var(--green); }
