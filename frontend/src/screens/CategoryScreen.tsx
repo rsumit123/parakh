@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Product } from "../api/types";
 import { fetchCatalogProducts } from "../api/catalog";
 import { gradeTone } from "../scan/grade";
+import { Thumb } from "../components/Thumb";
 import styles from "./CategoryScreen.module.css";
 
 interface Props {
@@ -54,9 +55,7 @@ export function CategoryScreen({ token, category, onOpenProduct, onBack }: Props
           {items.map((p) => (
             <button key={p.barcode} className={styles.card} onClick={() => onOpenProduct(p)}>
               <span className={`${styles.badge} ${styles[gradeTone(p.score.grade)]}`}>{p.score.grade}</span>
-              {p.image_url
-                ? <img className={styles.img} src={p.image_url} alt={p.name || "product"} />
-                : <span className={styles.ph} aria-hidden="true">🛒</span>}
+              <Thumb src={p.image_url} alt={p.name || "product"} className={styles.img} />
               <span className={styles.nm}>{p.name || "Unknown product"}</span>
               <span className={styles.mt}>{p.score.overall}/100 · {p.brand}</span>
             </button>

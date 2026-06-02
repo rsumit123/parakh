@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { CategoryCount, Product } from "../api/types";
 import { fetchCategories, fetchCatalogProducts } from "../api/catalog";
 import { gradeTone } from "../scan/grade";
+import { Thumb } from "../components/Thumb";
 import styles from "./ExploreScreen.module.css";
 
 interface Props {
@@ -56,9 +57,7 @@ export function ExploreScreen({ token, onOpenCategory, onOpenProduct }: Props) {
           {results && results.length === 0 && <div className={styles.muted}>No products found.</div>}
           {results && results.map((p) => (
             <button key={p.barcode} className={styles.ritem} onClick={() => onOpenProduct(p)}>
-              {p.image_url
-                ? <img className={styles.rthumb} src={p.image_url} alt={p.name || "product"} />
-                : <span className={styles.rph} aria-hidden="true">🛒</span>}
+              <Thumb src={p.image_url} alt={p.name || "product"} className={styles.rthumb} />
               <span className={`${styles.grade} ${styles[gradeTone(p.score.grade)]}`}>{p.score.grade}</span>
               <span className={styles.rinfo}>
                 <span className={styles.rname}>{p.name || "Unknown product"}</span>
