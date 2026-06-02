@@ -38,10 +38,10 @@ interface Props {
   product: Product;
   alternatives?: Product[];
   onScanAgain: () => void;
-  onOpenProduct?: (p: Product) => void;
+  onCompare?: (p: Product) => void;
 }
 
-export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenProduct }: Props) {
+export function ResultScreen({ product, alternatives = [], onScanAgain, onCompare }: Props) {
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const { score } = product;
@@ -140,7 +140,7 @@ export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenPr
               <button
                 key={a.barcode}
                 className={styles.alt}
-                onClick={() => onOpenProduct?.(a)}
+                onClick={() => onCompare?.(a)}
               >
                 {a.image_url && (
                   <img className={styles.altThumb} src={a.image_url} alt={a.name || "product"} />
@@ -152,7 +152,7 @@ export function ResultScreen({ product, alternatives = [], onScanAgain, onOpenPr
                   <span className={styles.altName}>{a.name || "Unknown product"}</span>
                   <span className={styles.altMeta}>{a.score.overall}/100 · {a.brand || a.category}</span>
                 </span>
-                <span className={styles.altChev}>›</span>
+                <span className={styles.comparePill}>Compare ⇄</span>
               </button>
             ))}
           </div>
