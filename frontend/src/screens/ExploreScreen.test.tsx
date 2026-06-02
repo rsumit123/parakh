@@ -31,4 +31,10 @@ describe("ExploreScreen", () => {
     await userEvent.click(screen.getByText("Amul Buttermilk"));
     expect(onOpenProduct).toHaveBeenCalled();
   });
+
+  it("shows a skeleton while categories load", () => {
+    vi.spyOn(catalog, "fetchCategories").mockReturnValue(new Promise(() => {}));
+    render(<ExploreScreen token="t" onOpenCategory={vi.fn()} onOpenProduct={vi.fn()} />);
+    expect(screen.getByTestId("explore-loading")).toBeInTheDocument();
+  });
 });
