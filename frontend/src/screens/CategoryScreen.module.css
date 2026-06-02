@@ -1,0 +1,22 @@
+.screen { min-height: 100dvh; background: var(--paper); color: var(--ink); padding: 14px 16px 24px; }
+.top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.back { font-size: 24px; line-height: 1; color: var(--ink); background: transparent; padding: 0 4px; }
+.title { font-size: 19px; font-weight: 800; text-transform: capitalize; }
+.count { font-size: 12px; color: var(--muted); font-weight: 600; margin-left: auto; }
+.filter { display: flex; align-items: center; gap: 7px; overflow-x: auto; padding: 4px 0 12px; }
+.flab { font-size: 11px; font-weight: 700; color: var(--muted); flex: 0 0 auto; }
+.chip { flex: 0 0 auto; font-size: 12px; font-weight: 800; padding: 6px 12px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line); color: var(--ink); }
+.chip.on { background: var(--green-deep); color: #fff; border-color: var(--green-deep); }
+.muted { color: var(--muted); font-size: 13.5px; padding: 24px 2px; text-align: center; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 15px;
+  padding: 9px; text-align: left; }
+.badge { position: absolute; top: 14px; left: 14px; width: 22px; height: 22px; border-radius: 7px;
+  color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.badge.good { background: var(--green); } .badge.ok { background: var(--amber); } .badge.bad { background: var(--red); }
+.img, .ph { width: 100%; height: 84px; border-radius: 10px; object-fit: contain; background: #fff;
+  border: 1px solid var(--line); margin-bottom: 7px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.nm { font-size: 11.5px; font-weight: 700; line-height: 1.18; display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; }
+.mt { font-size: 10.5px; color: var(--muted); margin-top: 3px; display: block; }
