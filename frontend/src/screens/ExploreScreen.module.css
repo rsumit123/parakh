@@ -1,0 +1,29 @@
+.screen { min-height: 100dvh; background: var(--paper); color: var(--ink); padding: 14px 16px 80px; }
+.h1 { font-size: 24px; font-weight: 800; margin: 6px 2px 10px; }
+.search { width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 13px;
+  padding: 12px 14px; font-size: 14px; font-family: inherit; margin-bottom: 14px; }
+.muted { color: var(--muted); font-size: 13.5px; padding: 16px 2px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.tile { border-radius: 18px; padding: 16px 14px; min-height: 100px; display: flex; flex-direction: column;
+  justify-content: space-between; color: #fff; text-align: left; background: linear-gradient(150deg, #1fa463, #0b3d2c); }
+.em { font-size: 26px; }
+.tname { font-size: 15px; font-weight: 800; text-transform: capitalize; }
+.tcount { font-size: 11px; opacity: .85; font-weight: 600; }
+.t_drinks { background: linear-gradient(150deg, #2a8cf0, #0b4a8c); }
+.t_namkeen { background: linear-gradient(150deg, #f0a23b, #b25e12); }
+.t_breakfast { background: linear-gradient(150deg, #e0a93b, #9c6b12); }
+.t_chocolate { background: linear-gradient(150deg, #7b4a2b, #3d2317); }
+.t_biscuits { background: linear-gradient(150deg, #d98a4a, #8c4a1c); }
+.t_spreads { background: linear-gradient(150deg, #1fa463, #0b3d2c); }
+.t_condiments { background: linear-gradient(150deg, #b05cd6, #5e2b86); }
+.results { display: flex; flex-direction: column; gap: 8px; }
+.ritem { display: flex; align-items: center; gap: 11px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 13px; padding: 9px; text-align: left; }
+.rthumb, .rph { width: 42px; height: 42px; border-radius: 9px; object-fit: contain; background: #fff;
+  border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.grade { width: 28px; height: 28px; border-radius: 8px; color: #fff; font-weight: 800; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.grade.good { background: var(--green); } .grade.ok { background: var(--amber); } .grade.bad { background: var(--red); }
+.rinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rname { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rmeta { font-size: 10.5px; color: var(--muted); }
