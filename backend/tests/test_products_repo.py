@@ -140,3 +140,50 @@ def test_find_better_excludes_same_name_brand_twin(repo):
     bcs = [p["barcode"] for p in out]
     assert "amazon:Z" not in bcs   # same name+brand twin dropped
     assert "real" in bcs           # real alternative kept
+
+
+def test_category_counts_groups_excludes_empty_and_orders_desc(repo):
+    _save(repo, "d1", "drinks", 50); _save(repo, "d2", "drinks", 60)
+    _save(repo, "n1", "namkeen", 40)
+    _save(repo, "u1", "", 70)  # uncategorized -> excluded
+    out = repo.category_counts()
+    assert out == [{"category": "drinks", "count": 2}, {"category": "namkeen", "count": 1}]
+
+
+def _saven(repo, barcode, category, overall, grade, name, brand):
+    repo.save(barcode=barcode, name=name, brand=brand, category=category,
+              ingredients=[], nutrition={"sugars_g": 1.0},
+              score={"overall": overall, "grade": grade, "breakdown": {}}, source="amazon")
+
+
+def test_list_products_by_category_healthiest_first(repo):
+    _saven(repo, "a", "drinks", 30, "D", "Cola", "Coke")
+    _saven(repo, "b", "drinks", 88, "A", "Coconut Water", "Raw")
+    _saven(repo, "c", "namkeen", 90, "A", "Makhana", "Farmley")
+    out = repo.list_products(category="drinks")
+    assert out["total"] == 2
+    assert [p["barcode"] for p in out["items"]] == ["b", "a"]
+
+
+def test_list_products_grade_filter(repo):
+    _saven(repo, "a", "drinks", 30, "D", "Cola", "Coke")
+    _saven(repo, "b", "drinks", 88, "A", "Coconut Water", "Raw")
+    out = repo.list_products(category="drinks", grade="A")
+    assert [p["barcode"] for p in out["items"]] == ["b"]
+    assert out["total"] == 1
+
+
+def test_list_products_search_name_and_brand_case_insensitive(repo):
+    _saven(repo, "a", "chocolate", 48, "C", "99% Cacao", "Amul")
+    _saven(repo, "b", "drinks", 69, "B", "Buttermilk", "AMUL")
+    _saven(repo, "c", "drinks", 29, "D", "Cola", "Coke")
+    out = repo.list_products(q="amul")
+    assert {p["barcode"] for p in out["items"]} == {"a", "b"}
+
+
+def test_list_products_limit_clamped_and_total_reported(repo):
+    for i in range(5):
+        _saven(repo, f"p{i}", "drinks", 50 + i, "B", f"P{i}", "B")
+    out = repo.list_products(category="drinks", limit=2)
+    assert len(out["items"]) == 2
+    assert out["total"] == 5

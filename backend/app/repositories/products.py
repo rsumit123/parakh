@@ -1,5 +1,5 @@
 import re
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.models import Product
 
 
@@ -75,6 +75,45 @@ class ProductRepository:
             if len(out) >= limit:
                 break
         return out
+
+    def category_counts(self) -> list[dict]:
+        """Non-empty categories with their product counts, most products first."""
+        with self._Session() as s:
+            rows = s.execute(
+                select(Product.category, func.count())
+                .where(Product.category != "")
+                .group_by(Product.category)
+                .order_by(func.count().desc(), Product.category.asc())
+            ).all()
+            return [{"category": c, "count": n} for c, n in rows]
+
+    def list_products(self, *, category: str = "", grade: str = "", q: str = "",
+                      limit: int = 60, offset: int = 0) -> dict:
+        """Filtered product list, healthiest first. Filters (category/grade/q) are
+        ANDed; any blank filter is ignored. `q` matches name OR brand, case-insensitive.
+        Returns {items: [...], total: <count before paging>}."""
+        limit = max(1, min(limit, 200))
+        offset = max(0, offset)
+        conds = []
+        if category:
+            conds.append(Product.category == category)
+        if grade:
+            conds.append(Product.score_grade == grade)
+        if q:
+            like = f"%{q.strip().lower()}%"
+            conds.append(func.lower(Product.name).like(like) | func.lower(Product.brand).like(like))
+        with self._Session() as s:
+            count_q = select(func.count()).select_from(Product)
+            list_q = select(Product)
+            for c in conds:
+                count_q = count_q.where(c)
+                list_q = list_q.where(c)
+            total = s.scalar(count_q) or 0
+            rows = s.scalars(
+                list_q.order_by(Product.score_overall.desc(), Product.name.asc())
+                      .limit(limit).offset(offset)
+            ).all()
+            return {"items": [self._to_dict(p) for p in rows], "total": total}
 
     @staticmethod
     def _to_dict(p: Product) -> dict:
