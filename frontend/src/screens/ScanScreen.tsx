@@ -29,6 +29,9 @@ export function ScanScreen({
   // The barcode that triggered needs-photo, reused as the photo's cache key so the
   // product becomes barcode-searchable after the label is read.
   const [pendingBarcode, setPendingBarcode] = useState<string | undefined>();
+  // Manual barcode entry (moved here from Home) — for packs the camera can't read.
+  const [showManual, setShowManual] = useState(false);
+  const [manual, setManual] = useState("");
 
   const { busy, error, limitReached, runBarcode, runPhoto, clearLimit } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
@@ -97,6 +100,25 @@ export function ScanScreen({
             onChange={(e) => runPhoto(e.target.files?.[0], pendingBarcode)}
           />
         </label>
+
+        {showManual ? (
+          <div className={styles.manualRow}>
+            <input
+              className={styles.input}
+              placeholder="Enter barcode number"
+              value={manual}
+              inputMode="numeric"
+              autoFocus
+              onChange={(e) => setManual(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void runBarcode(manual); }}
+            />
+            <button className={styles.go} onClick={() => void runBarcode(manual)}>Go</button>
+          </div>
+        ) : (
+          <button className={`${styles.btn} ${styles.ghost}`} onClick={() => setShowManual(true)}>
+            # Enter barcode manually
+          </button>
+        )}
       </div>
 
       <LimitModal

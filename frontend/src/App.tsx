@@ -104,10 +104,10 @@ function Shell() {
         onClear={() => { clearHistory(); setHistory([]); }} />, "light");
   }
   return tabbed(
-    <HomeScreen token={token} remaining={remaining} isGuest={isGuest} history={history}
-      onResult={handleResult} onOpenCamera={() => go(push(stack, { t: "scan" }))}
+    <HomeScreen remaining={remaining} isGuest={isGuest} history={history}
+      onOpenCamera={() => go(push(stack, { t: "scan" }))}
       onOpenProduct={showProduct} onSeeHistory={() => go(selectTab(stack, "history"))}
-      onSignIn={signOut} onAuthError={signOut} />, "light");
+      onSignIn={signOut} />, "light");
 }
 
 export default function App() {
