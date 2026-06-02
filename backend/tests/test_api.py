@@ -149,3 +149,58 @@ def test_unknown_then_photo_costs_one_scan():
     r = client.post("/scan/photo", data={"barcode": "444"}, files=files, headers=headers)
     assert r.status_code == 200
     assert r.json()["remaining"] == 2
+
+
+def _build_with_sf():
+    engine = make_engine("sqlite://"); init_db(engine)
+    sf = make_session_factory(engine)
+    app = create_app(session_factory=sf, off_client=FakeOFF(None),
+                     label_extractor=FakeExtractor(None), secret="test",
+                     guest_limit=3, free_limit=10, today="2026-05-31")
+    return TestClient(app), sf
+
+
+def _seed_catalog(sf):
+    from app.repositories.products import ProductRepository
+    repo = ProductRepository(sf)
+    def s(bc, cat, ov, gr, nm, br):
+        repo.save(barcode=bc, name=nm, brand=br, category=cat, ingredients=[],
+                  nutrition={"sugars_g": 1.0}, score={"overall": ov, "grade": gr, "breakdown": {}},
+                  source="amazon")
+    s("d1", "drinks", 88, "A", "Coconut Water", "Raw")
+    s("d2", "drinks", 29, "D", "Cola", "Coke")
+    s("n1", "namkeen", 82, "A", "Makhana", "Farmley")
+
+
+def test_catalog_categories_lists_counts():
+    client, sf = _build_with_sf(); _seed_catalog(sf)
+    headers = _guest_headers(client)
+    r = client.get("/catalog/categories", headers=headers)
+    assert r.status_code == 200
+    cats = r.json()["categories"]
+    assert {"category": "drinks", "count": 2} in cats
+    assert {"category": "namkeen", "count": 1} in cats
+
+
+def test_catalog_products_filters_by_category_and_grade():
+    client, sf = _build_with_sf(); _seed_catalog(sf)
+    headers = _guest_headers(client)
+    r = client.get("/catalog/products?category=drinks", headers=headers)
+    body = r.json()
+    assert body["total"] == 2
+    assert [p["barcode"] for p in body["items"]] == ["d1", "d2"]
+    r2 = client.get("/catalog/products?category=drinks&grade=A", headers=headers)
+    assert [p["barcode"] for p in r2.json()["items"]] == ["d1"]
+
+
+def test_catalog_products_search_query():
+    client, sf = _build_with_sf(); _seed_catalog(sf)
+    headers = _guest_headers(client)
+    r = client.get("/catalog/products?q=cola", headers=headers)
+    assert [p["barcode"] for p in r.json()["items"]] == ["d2"]
+
+
+def test_catalog_requires_auth():
+    client, _ = _build_with_sf()
+    assert client.get("/catalog/categories").status_code == 401
+    assert client.get("/catalog/products?category=drinks").status_code == 401
