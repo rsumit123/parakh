@@ -46,7 +46,13 @@ export function ExploreScreen({ token, onOpenCategory, onOpenProduct }: Props) {
 
       {q.trim() ? (
         <div className={styles.results}>
-          {results === null && <div className={styles.muted}>Searching…</div>}
+          {results === null && (
+            <div data-testid="explore-loading">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={`${styles.skelRow} skeleton`} />
+              ))}
+            </div>
+          )}
           {results && results.length === 0 && <div className={styles.muted}>No products found.</div>}
           {results && results.map((p) => (
             <button key={p.barcode} className={styles.ritem} onClick={() => onOpenProduct(p)}>
@@ -63,6 +69,12 @@ export function ExploreScreen({ token, onOpenCategory, onOpenProduct }: Props) {
         </div>
       ) : err ? (
         <div className={styles.muted}>Couldn't load categories.</div>
+      ) : cats === null ? (
+        <div className={styles.tiles} data-testid="explore-loading">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`${styles.skelTile} skeleton`} />
+          ))}
+        </div>
       ) : (
         <div className={styles.tiles}>
           {(cats ?? []).map((c) => (

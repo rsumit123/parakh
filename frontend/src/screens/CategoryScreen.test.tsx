@@ -32,4 +32,10 @@ describe("CategoryScreen", () => {
     await userEvent.click(screen.getByRole("button", { name: /back/i }));
     expect(onBack).toHaveBeenCalled();
   });
+
+  it("shows a skeleton grid while products load", () => {
+    vi.spyOn(catalog, "fetchCatalogProducts").mockReturnValue(new Promise(() => {}));
+    render(<CategoryScreen token="t" category="drinks" onOpenProduct={vi.fn()} onBack={vi.fn()} />);
+    expect(screen.getByTestId("category-loading")).toBeInTheDocument();
+  });
 });

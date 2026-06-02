@@ -32,7 +32,7 @@ export function CategoryScreen({ token, category, onOpenProduct, onBack }: Props
       <div className={styles.top}>
         <button className={styles.back} onClick={onBack} aria-label="Back">‹</button>
         <span className={styles.title}>{category}</span>
-        <span className={styles.count}>{total} products</span>
+        {items !== null && <span className={styles.count}>{total} products</span>}
       </div>
       <div className={styles.filter}>
         <span className={styles.flab}>Grade</span>
@@ -42,7 +42,11 @@ export function CategoryScreen({ token, category, onOpenProduct, onBack }: Props
         ))}
       </div>
       {items === null ? (
-        <div className={styles.muted}>Loading…</div>
+        <div className={styles.grid} data-testid="category-loading">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`${styles.skelCard} skeleton`} />
+          ))}
+        </div>
       ) : items.length === 0 ? (
         <div className={styles.muted}>No products here yet.</div>
       ) : (

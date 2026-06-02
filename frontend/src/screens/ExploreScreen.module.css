@@ -27,3 +27,5 @@
 .rinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .rname { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rmeta { font-size: 10.5px; color: var(--muted); }
+.skelTile { min-height: 100px; border-radius: 18px; }
+.skelRow { height: 60px; border-radius: 13px; margin-bottom: 8px; }
