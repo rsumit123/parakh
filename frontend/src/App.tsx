@@ -4,6 +4,7 @@ import { AuthScreen } from "./screens/AuthScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ScanScreen } from "./screens/ScanScreen";
 import { ResultScreen } from "./screens/ResultScreen";
+import { CompareScreen } from "./screens/CompareScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
 import { ProfileMenu } from "./components/ProfileMenu";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
@@ -17,6 +18,7 @@ function Shell() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+  const [compare, setCompare] = useState<{ a: Product; b: Product } | null>(null);
 
   const handleResult = (r: ScanResult) => {
     setRemaining(r.remaining);
@@ -45,6 +47,10 @@ function Shell() {
     </div>
   );
 
+  if (compare) {
+    return <CompareScreen a={compare.a} b={compare.b} onBack={() => setCompare(null)} />;
+  }
+
   if (result) {
     return (
       <div style={{ position: "relative", minHeight: "100dvh" }}>
@@ -52,7 +58,7 @@ function Shell() {
         <ResultScreen
           product={result.product}
           alternatives={result.alternatives ?? []}
-          onOpenProduct={showProduct}
+          onCompare={(alt) => setCompare({ a: result.product, b: alt })}
           onScanAgain={() => { setResult(null); setView("home"); }}
         />
       </div>
