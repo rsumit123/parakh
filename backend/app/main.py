@@ -26,6 +26,7 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
     auth = AuthService(session_factory, secret=secret, google_client_id=google_client_id)
     limiter = RateLimiter(session_factory, guest_limit=guest_limit, free_limit=free_limit)
     scanner = ScanService(ProductRepository(session_factory), off_client, label_extractor)
+    catalog = ProductRepository(session_factory)
 
     def _today() -> str:
         if today is not None:
@@ -92,6 +93,20 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
                                 detail={"error": "could not read label, retake photo"})
         remaining = _consume(identity)
         return {**result, "remaining": remaining}
+
+    @app.get("/catalog/categories")
+    def catalog_categories(identity: dict = Depends(current_identity)):
+        return {"categories": catalog.category_counts()}
+
+    @app.get("/catalog/products")
+    def catalog_products(category: str = "", grade: str = "", q: str = "",
+                         limit: int = 60, offset: int = 0,
+                         identity: dict = Depends(current_identity)):
+        g = grade.upper()
+        if g not in ("A", "B", "C", "D", "E"):
+            g = ""
+        return catalog.list_products(category=category, grade=g, q=q,
+                                     limit=limit, offset=offset)
 
     @app.get("/health")
     def health():
