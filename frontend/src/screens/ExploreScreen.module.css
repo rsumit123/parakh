@@ -29,3 +29,6 @@
 .rmeta { font-size: 10.5px; color: var(--muted); }
 .skelTile { min-height: 100px; border-radius: 18px; }
 .skelRow { height: 60px; border-radius: 13px; margin-bottom: 8px; }
+.t_ice { background: linear-gradient(150deg, #5bc6e8, #2a6f9c); }
+.t_health { background: linear-gradient(150deg, #7a5a3c, #4a3320); }
+.t_noodles { background: linear-gradient(150deg, #e0762b, #9c4a12); }
