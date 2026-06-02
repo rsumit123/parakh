@@ -19,6 +19,8 @@ def test_clean_brand_strips_storefront_wrapping():
     assert clean_brand("Saffola Store") == "Saffola"
     assert clean_brand(None) == ""
     assert clean_brand("  Pintola  ") == "Pintola"
+    assert clean_brand("Brand: Dairy Day") == "Dairy Day"
+    assert clean_brand("Brand:Yakult") == "Yakult"
 
 
 def test_derive_name_prefers_agent_then_cleans_title():

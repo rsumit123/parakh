@@ -31,7 +31,7 @@ def category_for_filename(filename: str) -> str:
 def clean_brand(raw) -> str:
     if not raw:
         return ""
-    b = str(raw).strip()
+    b = re.sub(r"^\s*brand\s*[:\-]?\s*", "", str(raw).strip(), flags=re.I)  # "Brand: X" -> "X"
     if b.lower().startswith("visit the "):
         b = b[len("visit the "):]
     if b.lower().endswith(" store"):
