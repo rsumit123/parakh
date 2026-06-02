@@ -221,3 +221,25 @@ def test_category_counts_counts_distinct_products(repo):
     _saven(repo, "u", "drinks", 50, "C", "", "Amul")  # empty name excluded
     out = repo.category_counts()
     assert {"category": "drinks", "count": 1} in out  # 1 distinct named product
+
+
+def test_dedupe_keeps_real_barcode_imaged_best_and_removes_rest(repo):
+    # same product, three rows: amazon no-image, amazon imaged, real-barcode imaged
+    _savei(repo, "amazon:Z1", "drinks", 70, "B", "Rose Milk", "Amul", "")
+    _savei(repo, "amazon:Z2", "drinks", 75, "B", "Rose Milk", "Amul", "http://x/a.jpg")
+    _savei(repo, "890111", "dairy", 60, "B", "Rose Milk", "Amul", "http://x/b.jpg")
+    _saven(repo, "other", "drinks", 90, "A", "Coconut Water", "Raw")
+    removed = repo.dedupe_by_name_brand()
+    assert removed == 2
+    # kept row = the real-barcode imaged one (scannable wins)
+    assert repo.get("890111") is not None
+    assert repo.get("amazon:Z1") is None and repo.get("amazon:Z2") is None
+    assert repo.get("other") is not None  # distinct product untouched
+
+
+def test_dedupe_dry_run_counts_without_deleting(repo):
+    _savei(repo, "amazon:A", "drinks", 70, "B", "Rose Milk", "Amul", "")
+    _savei(repo, "amazon:B", "drinks", 75, "B", "Rose Milk", "Amul", "http://x/a.jpg")
+    n = repo.dedupe_by_name_brand(dry_run=True)
+    assert n == 1
+    assert repo.get("amazon:A") is not None and repo.get("amazon:B") is not None  # nothing deleted

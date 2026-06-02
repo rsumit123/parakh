@@ -130,6 +130,35 @@ class ProductRepository:
             page = deduped[offset:offset + limit]
             return {"items": [self._to_dict(p) for p in page], "total": total}
 
+    def dedupe_by_name_brand(self, dry_run: bool = False) -> int:
+        """Collapse rows that share a normalized name+brand down to one best row,
+        keeping (in priority): a real barcode over an 'amazon:<asin>' synthetic key
+        (so physical scans still hit), then one that has an image, then the higher
+        score. Deletes the rest. Returns how many rows were (or would be) removed.
+        Empty-name rows are ignored. Safe to re-run; run after each catalog seed."""
+        with self._Session() as s:
+            rows = s.scalars(select(Product).where(Product.name != "")).all()
+            groups: dict[str, list[Product]] = {}
+            for p in rows:
+                groups.setdefault(_norm_key(p.name, p.brand), []).append(p)
+            removed = 0
+            for ps in groups.values():
+                if len(ps) < 2:
+                    continue
+                ps.sort(key=lambda p: (
+                    1 if p.barcode.startswith("amazon:") else 0,  # real barcode first
+                    0 if p.image_url else 1,                       # imaged first
+                    -p.score_overall,                              # higher score first
+                    p.barcode,                                     # stable tiebreak
+                ))
+                for dup in ps[1:]:
+                    removed += 1
+                    if not dry_run:
+                        s.delete(dup)
+            if not dry_run:
+                s.commit()
+            return removed
+
     @staticmethod
     def _to_dict(p: Product) -> dict:
         return {
