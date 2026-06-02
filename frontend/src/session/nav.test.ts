@@ -1,35 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { navDepth, unwindTo, type NavState } from "./nav";
+import { push, pop, selectTab, pushResultFromScan, top, activeTab, isTabRoot, type Stack } from "./nav";
+import type { ScanResult, Product } from "../api/types";
 
-const home: NavState = { view: "home", hasResult: false, hasCompare: false };
+const prod = { barcode: "x", name: "P", brand: "B", ingredients: [], source: "amazon",
+  nutrition: { energy_kj: 0, sugars_g: 0, sat_fat_g: 0, salt_g: 0, fibre_g: 0, protein_g: 0, fruit_veg_nuts_pct: 0 },
+  score: { overall: 1, grade: "C", verdict: "", positives: [], negatives: [], breakdown: { nutrients: [], india_flags: [] } } } as Product;
+const result = { source: "db", remaining: 5, product: prod } as ScanResult;
 
-describe("navDepth", () => {
-  it("home is depth 0", () => {
-    expect(navDepth(home)).toBe(0);
+describe("nav stack", () => {
+  it("push/pop", () => {
+    const s: Stack = [{ t: "explore" }];
+    const s2 = push(s, { t: "category", category: "drinks" });
+    expect(top(s2)).toEqual({ t: "category", category: "drinks" });
+    expect(pop(s2)).toEqual([{ t: "explore" }]);
   });
-  it("scan / history / result are depth 1", () => {
-    expect(navDepth({ ...home, view: "scan" })).toBe(1);
-    expect(navDepth({ ...home, view: "history" })).toBe(1);
-    expect(navDepth({ ...home, hasResult: true })).toBe(1);
+  it("pop at a non-home tab root goes home", () => {
+    expect(pop([{ t: "explore" }])).toEqual([{ t: "home" }]);
   });
-  it("compare is depth 2 and wins over everything", () => {
-    expect(navDepth({ view: "history", hasResult: true, hasCompare: true })).toBe(2);
+  it("pop at home stays home", () => {
+    expect(pop([{ t: "home" }])).toEqual([{ t: "home" }]);
   });
-});
-
-describe("unwindTo", () => {
-  it("depth 0 returns home with nothing open", () => {
-    const s: NavState = { view: "history", hasResult: true, hasCompare: true };
-    expect(unwindTo(s, 0)).toEqual(home);
+  it("selectTab resets the stack to that tab", () => {
+    expect(selectTab([{ t: "explore" }, { t: "category", category: "x" }], "history")).toEqual([{ t: "history" }]);
   });
-  it("depth 1 clears compare but keeps result/view (compare -> result)", () => {
-    const s: NavState = { view: "home", hasResult: true, hasCompare: true };
-    expect(unwindTo(s, 1)).toEqual({ view: "home", hasResult: true, hasCompare: false });
+  it("scan result replaces the scan screen (back from it skips the camera)", () => {
+    const s: Stack = [{ t: "home" }, { t: "scan" }];
+    const s2 = pushResultFromScan(s, result);
+    expect(s2).toEqual([{ t: "home" }, { t: "result", result }]);
+    expect(pop(s2)).toEqual([{ t: "home" }]);
   });
-  it("result unwinds to home at depth 0", () => {
-    expect(unwindTo({ view: "scan", hasResult: true, hasCompare: false }, 0)).toEqual(home);
-  });
-  it("negative/zero depth is treated as home", () => {
-    expect(unwindTo({ view: "scan", hasResult: false, hasCompare: false }, -1)).toEqual(home);
+  it("activeTab/isTabRoot", () => {
+    expect(activeTab([{ t: "explore" }, { t: "category", category: "x" }])).toBe("explore");
+    expect(isTabRoot({ t: "category", category: "x" })).toBe(false);
+    expect(isTabRoot({ t: "home" })).toBe(true);
   });
 });
