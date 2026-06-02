@@ -100,11 +100,6 @@
   "reason": "no_images"
  },
  {
-  "asin": "B00TIMOXFO",
-  "category": "breakfast cereal",
-  "reason": "low_confidence"
- },
- {
   "asin": "B09PV566V2",
   "category": "breakfast cereal",
   "reason": "no_images"
@@ -345,64 +340,19 @@
   "reason": "no_nutrition"
  },
  {
-  "asin": "B0DPCCMF1X",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0GRMC94JJ",
   "category": "drinks",
   "reason": "no_images"
  },
  {
-  "asin": "B0C4LBT6L9",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00LWZAIDG",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DTPGYSMC",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FB484XQV",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09SKZFT81",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0C4LCCVXZ",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B07D2HF2KV",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
   "asin": "B09N3MVHN2",
   "category": "drinks",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B00XBS5ASU",
   "category": "drinks",
   "reason": "no_images"
- },
- {
-  "asin": "B07G15JDK1",
-  "category": "drinks",
-  "reason": "no_extraction"
  },
  {
   "asin": "B004Y6ZW4U",
@@ -420,59 +370,14 @@
   "reason": "no_images"
  },
  {
-  "asin": "B00SGUIYCC",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DP2DYY2T",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0C2YH7RPS",
-  "category": "drinks",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FD9YXTCK",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0C55STHRR",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B08JLGLVT9",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B016DXNVF8",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01BDDX7WU",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "low_confidence"
  },
  {
   "asin": "B0CH1FZVX7",
   "category": "namkeen",
   "reason": "no_images"
- },
- {
-  "asin": "B0BC9GVPZ1",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0024VD730",
-  "category": "namkeen",
-  "reason": "no_extraction"
  },
  {
   "asin": "B0CBP9TRV8",
@@ -487,97 +392,17 @@
  {
   "asin": "B005OR9FM8",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0D33LNW3T",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0F9FQJ92P",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01BDDXDN8",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01HCYY3WW",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B012S2KIGS",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00GCEY932",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00G7SCPG6",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B00M8PZ1EU",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0F1DF8C7V",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FJFD7CWV",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0CNRQD6X6",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0GGSFYFQH",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0F9T81MSB",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CRTYRHXQ",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B005OR9ED8",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B08X767BVL",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B08PP7MCL5",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B08KSTWR34",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B008JZSNR0",
@@ -590,39 +415,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B01BDDXDYW",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B00XUUCEMY",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B08FRBC2D5",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01FSDG4C6",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09L84KDFP",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CG95PRTZ",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B06WWKR6BS",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B00SGXBRLO",
@@ -635,54 +430,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B08BMF3M3P",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00EZZPS80",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B018O5V5XS",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CP466P7Q",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01BDDX7WA",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09ZKSG9L9",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B019C0AQIE",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00UJUQ26W",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CJYCP9Q9",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B079LBDTN7",
   "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "low_confidence"
  },
  {
   "asin": "B0CG8ZPJSM",
@@ -690,19 +440,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B0024V95BI",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09L85P9XK",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0DNZK7RSF",
   "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "low_confidence"
  },
  {
   "asin": "B0GJD7D4ML",
@@ -715,29 +455,14 @@
   "reason": "no_images"
  },
  {
-  "asin": "B0G4HB57HR",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0FJFF2SXK",
   "category": "namkeen",
   "reason": "no_images"
  },
  {
-  "asin": "B0BXXFCR34",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0DKHYSK5N",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FJFD129P",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "low_confidence"
  },
  {
   "asin": "B09X78R587",
@@ -750,39 +475,9 @@
   "reason": "no_extraction"
  },
  {
-  "asin": "B074NBPRR4",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CND5QMWP",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00ITJOZVY",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B09L839Z4R",
   "category": "namkeen",
   "reason": "no_images"
- },
- {
-  "asin": "B012S2JYCM",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B07WJN6SCW",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FQPCYVRC",
-  "category": "namkeen",
-  "reason": "no_extraction"
  },
  {
   "asin": "B0BGLZQYM4",
@@ -790,24 +485,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B019BV5L5C",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0DWXV46S8",
   "category": "namkeen",
   "reason": "no_images"
- },
- {
-  "asin": "B0186XLBWS",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B06WW5922Q",
-  "category": "namkeen",
-  "reason": "no_extraction"
  },
  {
   "asin": "B00UJUQ442",
@@ -815,19 +495,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B08WJ4C33Z",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0D965CQ5V",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0GPRDRKCL",
   "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0GZ4Y4HD3",
@@ -837,7 +507,7 @@
  {
   "asin": "B0CXXKT263",
   "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "low_confidence"
  },
  {
   "asin": "B0BYK1S7B9",
@@ -850,59 +520,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B0GW8P8BKJ",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09L84BCHJ",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0C9X8G2FB",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B005OR9H62",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CZTKSZMS",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B07NVS3FR1",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0B6C3V8GT",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CZTLNL2G",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DXFQW8DF",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B00KL8DLPC",
   "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0B2WYL9SC",
-  "category": "namkeen",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0DDQ53GNM",
@@ -910,23 +530,8 @@
   "reason": "no_images"
  },
  {
-  "asin": "B00L9Q2WAA",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0FF3K1M4F",
-  "category": "namkeen",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0C9X6MTQW",
   "category": "namkeen",
   "reason": "no_images"
- },
- {
-  "asin": "B09L84LRD7",
-  "category": "namkeen",
-  "reason": "no_extraction"
  }
 ]
