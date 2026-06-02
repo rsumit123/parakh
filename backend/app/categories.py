@@ -23,6 +23,13 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
         "peanut butter", "spread", "jam", "ketchup", "sauce", "honey",
         "mayonnaise", "mayo",
     )),
+    # Malt / nutrition POWDERS — before drinks (so "nutrition drink" lands here, not
+    # drinks) and before dairy (so "milk" doesn't grab them). Scored as food.
+    ("health drinks", (
+        "bournvita", "horlicks", "boost", "complan", "pediasure", "malt",
+        "health drink", "nutrition drink", "drinking chocolate",
+    )),
+    ("ice cream", ("ice cream", "icecream", "kulfi", "gelato", "frozen dessert")),
     ("drinks", (
         "buttermilk", "chaas", "lassi", "flavoured milk", "flavored milk",
         "milkshake", "milk shake", "soft drink", "cola", "soda", "juice",

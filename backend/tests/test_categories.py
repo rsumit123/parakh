@@ -66,3 +66,10 @@ def test_unknown_category_passes_through_lowercased():
 
 def test_empty_when_nothing_known():
     assert normalize_category("", "") == ""
+
+
+def test_new_phase2_category_buckets():
+    from app.categories import normalize_category
+    assert normalize_category("", "Amul Vanilla Ice Cream Tub") == "ice cream"
+    assert normalize_category("", "Cadbury Bournvita Health Drink") == "health drinks"
+    assert normalize_category("", "Horlicks Classic Malt") == "health drinks"
