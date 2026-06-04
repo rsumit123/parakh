@@ -1,13 +1,19 @@
 from app.categories import normalize_category
 
 
-def test_drinks_bucket_catches_flavoured_milk_and_buttermilk():
-    # The bug that motivated this: each landed in a category of one.
-    assert normalize_category("flavoured milk") == "drinks"
-    assert normalize_category("rose flavoured milk") == "drinks"
-    assert normalize_category("buttermilk") == "drinks"
+def test_drinks_bucket_catches_sodas_and_juice():
     assert normalize_category("soft drink") == "drinks"
     assert normalize_category("mango juice") == "drinks"
+
+
+def test_milk_based_drinks_are_dairy_not_drinks():
+    # For "Healthier options" a milk drink should compare against yogurt/dahi, not
+    # sodas/juices — so buttermilk/lassi/flavoured milk live in dairy.
+    assert normalize_category("flavoured milk") == "dairy"
+    assert normalize_category("rose flavoured milk") == "dairy"
+    assert normalize_category("buttermilk") == "dairy"
+    assert normalize_category("masti buttermilk chaas") == "dairy"
+    assert normalize_category("lassi") == "dairy"
 
 
 def test_namkeen_bucket():
@@ -28,11 +34,12 @@ def test_spreads_before_chocolate():
     assert normalize_category("peanut butter") == "spreads & sauces"
 
 
-def test_plain_dairy_vs_beverage_milk():
+def test_plain_dairy_and_milk_chocolate():
     assert normalize_category("milk") == "dairy"
     assert normalize_category("paneer") == "dairy"
-    # but a milk-based drink is a drink
-    assert normalize_category("flavoured milk") == "drinks"
+    # bare "milk" must NOT pull milk chocolate / milk bread out of their buckets
+    assert normalize_category("milk chocolate") == "chocolate"
+    assert normalize_category("milk bread") == "bread"
 
 
 def test_condiments():
@@ -55,7 +62,7 @@ def test_buckets_are_idempotent():
 
 
 def test_name_fallback_when_category_missing():
-    assert normalize_category("", "Rose Flavoured Milk") == "drinks"
+    assert normalize_category("", "Rose Flavoured Milk") == "dairy"
     assert normalize_category("", "Dark Chocolate Bar") == "chocolate"
 
 

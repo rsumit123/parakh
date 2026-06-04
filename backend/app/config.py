@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dims: int = 256
     embedding_url: str = "https://api.openai.com/v1/embeddings"
-    alt_min_similarity: float = 0.5  # cosine floor for a like-for-like suggestion
+    alt_min_similarity: float = 0.4  # cosine floor for a like-for-like suggestion
 
 
 def get_settings() -> Settings:
