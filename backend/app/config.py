@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     openrouter_api_key: str = "changeme"
     vision_model: str = "google/gemini-2.5-flash"
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
+    # Embeddings (OpenAI) power semantic "Healthier options" matching.
+    openai_api_key: str = ""  # set PARAKH_OPENAI_API_KEY in prod
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dims: int = 256
+    embedding_url: str = "https://api.openai.com/v1/embeddings"
+    alt_min_similarity: float = 0.5  # cosine floor for a like-for-like suggestion
 
 
 def get_settings() -> Settings:

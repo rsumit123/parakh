@@ -1,7 +1,7 @@
 import re
 from sqlalchemy import select, func
 from app.models import Product
-from app.subtypes import subtype_of
+from app.embeddings import cosine
 
 
 def _norm_key(name: str, brand: str) -> str:
@@ -30,7 +30,7 @@ class ProductRepository:
 
     def save(self, *, barcode: str, name: str, brand: str,
              ingredients: list, nutrition: dict, score: dict, source: str,
-             category: str = "", image_url: str = "") -> None:
+             category: str = "", image_url: str = "", embedding: list | None = None) -> None:
         with self._Session() as s:
             p = s.get(Product, barcode)
             if p is None:
@@ -46,23 +46,31 @@ class ProductRepository:
             p.score_json = score
             p.source = source
             p.image_url = image_url
+            if embedding is not None:  # preserve an existing embedding when not provided
+                p.embedding = embedding
             s.commit()
+
+    def get_embedding(self, barcode: str) -> list:
+        with self._Session() as s:
+            p = s.scalar(select(Product.embedding).where(Product.barcode == barcode))
+            return p or []
 
     def find_better_in_category(self, *, category: str, min_overall: int,
                                 exclude_barcode: str, limit: int = 3,
                                 better_than_grade: str = "",
                                 exclude_name_brand: str = "",
-                                prefer_subtype: str = "") -> list[dict]:
+                                query_embedding: list | None = None,
+                                min_similarity: float = 0.5) -> list[dict]:
         """Healthier alternatives in the same category, best first.
 
-        A suggestion must be MEANINGFULLY better — a better grade letter, not just a
-        couple more points. When `better_than_grade` is given we require the candidate's
-        grade to be strictly better; we always also require a higher score as a tie-break
-        floor. `exclude_name_brand` (a `_norm_key`) drops a duplicate of the scanned
-        product stored under a different barcode. When `prefer_subtype` is set (e.g.
-        "dairy" for a lassi), suggestions are restricted to that sub-type so swaps stay
-        like-for-like; only if NO healthier same-sub-type product exists do we fall back
-        to the whole category. An empty category never matches."""
+        A suggestion must be MEANINGFULLY better — a strictly better grade letter (plus a
+        higher score as a tie-break floor). `exclude_name_brand` (a `_norm_key`) drops a
+        duplicate of the scanned product stored under a different barcode. When
+        `query_embedding` is given, candidates are ranked by cosine similarity to the
+        scanned product and any below `min_similarity` are dropped — so suggestions stay
+        like-for-like (a lassi suggests buttermilk, never a juice) across EVERY category;
+        better to show nothing than something unrelated. Without an embedding we fall back
+        to score order. An empty category never matches."""
         if not category:
             return []
         # Score floors per grade band (mirror grade_from_score): to beat grade X we
@@ -79,11 +87,12 @@ class ProductRepository:
             ).all()
         cands = [p for p in rows
                  if not (exclude_name_brand and _norm_key(p.name, p.brand) == exclude_name_brand)]
-        if prefer_subtype:
-            # Strict: only like-for-like swaps. Better to show nothing than an unrelated
-            # drink (a buttermilk should never suggest a sea-buckthorn juice).
-            cands = [p for p in cands
-                     if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
+        if query_embedding:
+            # Keep only similar-enough products, ordered most-similar first.
+            scored = [(cosine(query_embedding, p.embedding), p) for p in cands if p.embedding]
+            scored = [(sim, p) for sim, p in scored if sim >= min_similarity]
+            scored.sort(key=lambda x: -x[0])
+            cands = [p for _, p in scored]
         out: list[dict] = []
         seen: set[str] = set()
         for p in cands:  # de-dup the suggestions by NAME (same product can have

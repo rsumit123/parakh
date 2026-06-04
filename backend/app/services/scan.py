@@ -1,7 +1,8 @@
 from app.scoring.scorer import score as score_fn
 from app.categories import normalize_category
 from app.repositories.products import _norm_key
-from app.subtypes import subtype_of
+from app.embeddings import embed_one
+from app.config import get_settings
 
 # Nutrition keys that indicate the product actually carries usable label data.
 _NUTRITION_SIGNALS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
@@ -55,8 +56,8 @@ class ScanService:
             exclude_barcode=product["barcode"],
             better_than_grade=product["score"].get("grade", ""),
             exclude_name_brand=_norm_key(product.get("name", ""), product.get("brand", "")),
-            prefer_subtype=subtype_of(product.get("category", ""), product.get("name", ""),
-                                      product.get("ingredients", [])),
+            query_embedding=self._repo.get_embedding(product["barcode"]),
+            min_similarity=get_settings().alt_min_similarity,
         )
         return {"source": source, "product": product, "alternatives": alternatives}
 
@@ -71,5 +72,6 @@ class ScanService:
             category=category,
             ingredients=data["ingredients"], nutrition=data["nutrition"],
             score=scored, source=source, image_url=data.get("image_url", ""),
+            embedding=embed_one(data["name"], category),
         )
         return self._repo.get(barcode)

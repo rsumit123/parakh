@@ -252,21 +252,24 @@ def test_list_products_search_ignores_punctuation(repo):
     assert [p["barcode"] for p in repo.list_products(q="lay")["items"]] == ["a"]
 
 
-def test_find_better_prefers_same_subtype(repo):
-    # Scanned: a sweet lassi (C). A healthier buttermilk (dairy, B) should win over a
-    # higher-scoring but unrelated sea-buckthorn juice (A).
-    _saven(repo, "buttermilk", "drinks", 69, "B", "Amul Masti Buttermilk", "Amul")
-    _saven(repo, "juice", "drinks", 88, "A", "Sea Buckthorn Juice", "Wellwith")
-    out = repo.find_better_in_category(category="drinks", min_overall=50,
-                                       exclude_barcode="scan", better_than_grade="C",
-                                       prefer_subtype="dairy")
-    assert [p["barcode"] for p in out] == ["buttermilk"]  # juice excluded — wrong sub-type
+def test_find_better_ranks_and_filters_by_embedding(repo):
+    # query ~ [1,0]: a chaas is close, a mango juice is orthogonal -> juice dropped even
+    # though it scores higher.
+    repo.save(barcode="butter", name="Chaas", brand="X", category="drinks", ingredients=[],
+              nutrition={"sugars_g": 1.0}, score={"overall": 69, "grade": "B", "breakdown": {}},
+              source="amazon", embedding=[0.99, 0.14])
+    repo.save(barcode="juice", name="Mango Juice", brand="Y", category="drinks", ingredients=[],
+              nutrition={"sugars_g": 1.0}, score={"overall": 88, "grade": "A", "breakdown": {}},
+              source="amazon", embedding=[0.0, 1.0])
+    out = repo.find_better_in_category(category="drinks", min_overall=50, exclude_barcode="scan",
+                                       better_than_grade="C", query_embedding=[1.0, 0.0],
+                                       min_similarity=0.5)
+    assert [p["barcode"] for p in out] == ["butter"]
 
 
-def test_find_better_shows_nothing_rather_than_wrong_subtype(repo):
-    # No healthier DAIRY drink exists, only an unrelated juice -> show nothing, not the juice.
-    _saven(repo, "juice", "drinks", 88, "A", "Sea Buckthorn Juice", "Wellwith")
+def test_find_better_falls_back_to_score_order_without_embedding(repo):
+    _saven(repo, "a", "drinks", 70, "B", "Pa", "X")
+    _saven(repo, "b", "drinks", 88, "A", "Pb", "Y")
     out = repo.find_better_in_category(category="drinks", min_overall=50,
-                                       exclude_barcode="scan", better_than_grade="C",
-                                       prefer_subtype="dairy")
-    assert out == []
+                                       exclude_barcode="scan", better_than_grade="C")
+    assert [p["barcode"] for p in out] == ["b", "a"]
