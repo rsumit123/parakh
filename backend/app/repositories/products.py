@@ -86,9 +86,9 @@ class ProductRepository:
                      if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
         out: list[dict] = []
         seen: set[str] = set()
-        for p in cands:  # also de-dup the suggestions themselves by name+brand
-            k = _norm_key(p.name, p.brand)
-            if k in seen:
+        for p in cands:  # de-dup the suggestions by NAME (same product can have
+            k = _norm_text(p.name)  # inconsistent brand strings, e.g. "Coke Zero" vs "Coca-Cola")
+            if not k or k in seen:
                 continue
             seen.add(k)
             out.append(self._to_dict(p))
