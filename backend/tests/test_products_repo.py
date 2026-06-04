@@ -263,9 +263,10 @@ def test_find_better_prefers_same_subtype(repo):
     assert [p["barcode"] for p in out] == ["buttermilk"]  # juice excluded — wrong sub-type
 
 
-def test_find_better_falls_back_to_category_when_no_same_subtype(repo):
+def test_find_better_shows_nothing_rather_than_wrong_subtype(repo):
+    # No healthier DAIRY drink exists, only an unrelated juice -> show nothing, not the juice.
     _saven(repo, "juice", "drinks", 88, "A", "Sea Buckthorn Juice", "Wellwith")
     out = repo.find_better_in_category(category="drinks", min_overall=50,
                                        exclude_barcode="scan", better_than_grade="C",
                                        prefer_subtype="dairy")
-    assert [p["barcode"] for p in out] == ["juice"]  # no dairy healthier -> fall back
+    assert out == []

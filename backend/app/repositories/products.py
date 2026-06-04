@@ -80,10 +80,10 @@ class ProductRepository:
         cands = [p for p in rows
                  if not (exclude_name_brand and _norm_key(p.name, p.brand) == exclude_name_brand)]
         if prefer_subtype:
-            same = [p for p in cands
-                    if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
-            if same:  # only narrow when like-for-like healthier swaps actually exist
-                cands = same
+            # Strict: only like-for-like swaps. Better to show nothing than an unrelated
+            # drink (a buttermilk should never suggest a sea-buckthorn juice).
+            cands = [p for p in cands
+                     if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
         return [self._to_dict(p) for p in cands[:limit]]
 
     def category_counts(self) -> list[dict]:
