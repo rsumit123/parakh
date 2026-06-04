@@ -84,7 +84,17 @@ class ProductRepository:
             # drink (a buttermilk should never suggest a sea-buckthorn juice).
             cands = [p for p in cands
                      if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
-        return [self._to_dict(p) for p in cands[:limit]]
+        out: list[dict] = []
+        seen: set[str] = set()
+        for p in cands:  # also de-dup the suggestions themselves by name+brand
+            k = _norm_key(p.name, p.brand)
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append(self._to_dict(p))
+            if len(out) >= limit:
+                break
+        return out
 
     def category_counts(self) -> list[dict]:
         """Non-empty categories with their product counts, most products first."""
