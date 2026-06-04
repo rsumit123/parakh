@@ -21,6 +21,7 @@ class Product(Base):
     score_json: Mapped[dict] = mapped_column(JSON, default=dict)     # full scorer output
     source: Mapped[str] = mapped_column(String, default="db")  # db|off|photo|amazon
     image_url: Mapped[str] = mapped_column(String, default="")  # front/display image
+    embedding: Mapped[list] = mapped_column(JSON, default=list)  # vector for similar-product search
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
