@@ -10,6 +10,12 @@ def _norm_key(name: str, brand: str) -> str:
     return f"{norm(name)}|{norm(brand)}"
 
 
+def _norm_text(s: str) -> str:
+    """Lowercase + drop everything but letters/digits, so search ignores spaces and
+    punctuation: 'Lay's' -> 'lays', matching a query of 'lays'."""
+    return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+
 class ProductRepository:
     """Read/write products in SQLite, keyed by barcode. Returns plain dicts."""
 
@@ -104,9 +110,8 @@ class ProductRepository:
             conds.append(Product.category == category)
         if grade:
             conds.append(Product.score_grade == grade)
-        if q:
-            like = f"%{q.strip().lower()}%"
-            conds.append(func.lower(Product.name).like(like) | func.lower(Product.brand).like(like))
+        # `q` is matched in Python, punctuation-insensitively, so "lays" finds "Lay's".
+        nq = _norm_text(q)
         with self._Session() as s:
             list_q = select(Product)
             for c in conds:
@@ -117,6 +122,9 @@ class ProductRepository:
                 list_q.order_by((Product.image_url != "").desc(),
                                 Product.score_overall.desc(), Product.name.asc())
             ).all()
+            if nq:
+                rows = [p for p in rows
+                        if nq in _norm_text(p.name) or nq in _norm_text(p.brand)]
             seen: set[str] = set()
             deduped = []
             for p in rows:

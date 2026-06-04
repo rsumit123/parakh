@@ -243,3 +243,10 @@ def test_dedupe_dry_run_counts_without_deleting(repo):
     n = repo.dedupe_by_name_brand(dry_run=True)
     assert n == 1
     assert repo.get("amazon:A") is not None and repo.get("amazon:B") is not None  # nothing deleted
+
+
+def test_list_products_search_ignores_punctuation(repo):
+    _saven(repo, "a", "chips", 22, "D", "Lay's Classic Salted", "Lay's")
+    _saven(repo, "b", "chips", 30, "D", "Bingo Mad Angles", "Bingo")
+    assert [p["barcode"] for p in repo.list_products(q="lays")["items"]] == ["a"]
+    assert [p["barcode"] for p in repo.list_products(q="lay")["items"]] == ["a"]
