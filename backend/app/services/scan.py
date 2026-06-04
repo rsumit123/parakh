@@ -1,6 +1,7 @@
 from app.scoring.scorer import score as score_fn
 from app.categories import normalize_category
 from app.repositories.products import _norm_key
+from app.subtypes import subtype_of
 
 # Nutrition keys that indicate the product actually carries usable label data.
 _NUTRITION_SIGNALS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
@@ -54,6 +55,8 @@ class ScanService:
             exclude_barcode=product["barcode"],
             better_than_grade=product["score"].get("grade", ""),
             exclude_name_brand=_norm_key(product.get("name", ""), product.get("brand", "")),
+            prefer_subtype=subtype_of(product.get("category", ""), product.get("name", ""),
+                                      product.get("ingredients", [])),
         )
         return {"source": source, "product": product, "alternatives": alternatives}
 

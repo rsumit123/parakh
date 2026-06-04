@@ -250,3 +250,22 @@ def test_list_products_search_ignores_punctuation(repo):
     _saven(repo, "b", "chips", 30, "D", "Bingo Mad Angles", "Bingo")
     assert [p["barcode"] for p in repo.list_products(q="lays")["items"]] == ["a"]
     assert [p["barcode"] for p in repo.list_products(q="lay")["items"]] == ["a"]
+
+
+def test_find_better_prefers_same_subtype(repo):
+    # Scanned: a sweet lassi (C). A healthier buttermilk (dairy, B) should win over a
+    # higher-scoring but unrelated sea-buckthorn juice (A).
+    _saven(repo, "buttermilk", "drinks", 69, "B", "Amul Masti Buttermilk", "Amul")
+    _saven(repo, "juice", "drinks", 88, "A", "Sea Buckthorn Juice", "Wellwith")
+    out = repo.find_better_in_category(category="drinks", min_overall=50,
+                                       exclude_barcode="scan", better_than_grade="C",
+                                       prefer_subtype="dairy")
+    assert [p["barcode"] for p in out] == ["buttermilk"]  # juice excluded — wrong sub-type
+
+
+def test_find_better_falls_back_to_category_when_no_same_subtype(repo):
+    _saven(repo, "juice", "drinks", 88, "A", "Sea Buckthorn Juice", "Wellwith")
+    out = repo.find_better_in_category(category="drinks", min_overall=50,
+                                       exclude_barcode="scan", better_than_grade="C",
+                                       prefer_subtype="dairy")
+    assert [p["barcode"] for p in out] == ["juice"]  # no dairy healthier -> fall back

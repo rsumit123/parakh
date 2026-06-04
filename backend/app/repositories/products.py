@@ -1,6 +1,7 @@
 import re
 from sqlalchemy import select, func
 from app.models import Product
+from app.subtypes import subtype_of
 
 
 def _norm_key(name: str, brand: str) -> str:
@@ -50,15 +51,18 @@ class ProductRepository:
     def find_better_in_category(self, *, category: str, min_overall: int,
                                 exclude_barcode: str, limit: int = 3,
                                 better_than_grade: str = "",
-                                exclude_name_brand: str = "") -> list[dict]:
+                                exclude_name_brand: str = "",
+                                prefer_subtype: str = "") -> list[dict]:
         """Healthier alternatives in the same category, best first.
 
         A suggestion must be MEANINGFULLY better — a better grade letter, not just a
         couple more points. When `better_than_grade` is given we require the candidate's
         grade to be strictly better; we always also require a higher score as a tie-break
         floor. `exclude_name_brand` (a `_norm_key`) drops a duplicate of the scanned
-        product stored under a different barcode, so a product is never its own option.
-        An empty category never matches."""
+        product stored under a different barcode. When `prefer_subtype` is set (e.g.
+        "dairy" for a lassi), suggestions are restricted to that sub-type so swaps stay
+        like-for-like; only if NO healthier same-sub-type product exists do we fall back
+        to the whole category. An empty category never matches."""
         if not category:
             return []
         # Score floors per grade band (mirror grade_from_score): to beat grade X we
@@ -73,14 +77,14 @@ class ProductRepository:
                 .where(Product.barcode != exclude_barcode)
                 .order_by(Product.score_overall.desc())
             ).all()
-        out: list[dict] = []
-        for p in rows:
-            if exclude_name_brand and _norm_key(p.name, p.brand) == exclude_name_brand:
-                continue
-            out.append(self._to_dict(p))
-            if len(out) >= limit:
-                break
-        return out
+        cands = [p for p in rows
+                 if not (exclude_name_brand and _norm_key(p.name, p.brand) == exclude_name_brand)]
+        if prefer_subtype:
+            same = [p for p in cands
+                    if subtype_of(category, p.name, p.ingredients) == prefer_subtype]
+            if same:  # only narrow when like-for-like healthier swaps actually exist
+                cands = same
+        return [self._to_dict(p) for p in cands[:limit]]
 
     def category_counts(self) -> list[dict]:
         """Non-empty categories with their product counts, most products first."""
