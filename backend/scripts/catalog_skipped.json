@@ -85,11 +85,6 @@
   "reason": "no_images"
  },
  {
-  "asin": "B08KGYWZKZ",
-  "category": "biscuits",
-  "reason": "no_images"
- },
- {
   "asin": "B0FSCTQKYZ",
   "category": "biscuits",
   "reason": "no_images"
@@ -98,6 +93,86 @@
   "asin": "B08L7Q6FJT",
   "category": "biscuits",
   "reason": "no_images"
+ },
+ {
+  "asin": "B0C2C49FLY",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GYF7CV3F",
+  "category": "bread",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0BXWZGQ93",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H2PKJP35",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GSF6PL2F",
+  "category": "bread",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0DPCN7ZK9",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FZJFJFH9",
+  "category": "bread",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0GWJ92W1X",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GCSKWYTP",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BXX8LKBP",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BXWSS41F",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BZ8N48TD",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H2HB9B6H",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H2PMJXQZ",
+  "category": "bread",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0D6Z11CL4",
+  "category": "bread",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B018E0H71C",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0DP4XY158",
@@ -278,6 +353,221 @@
   "asin": "B0949GVL2P",
   "category": "breakfast cereal",
   "reason": "no_images"
+ },
+ {
+  "asin": "B0CV48BK3W",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07VGMYM15",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0D31VVJCN",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GJD4GG1X",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CJ3CBKCW",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08XZCFGNF",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DQ62795S",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DNNFBS1K",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DWXTG2VW",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F7HQ9R5Z",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GYQ2RHQG",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BWFRQP1D",
+  "category": "chips",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08661CTF3",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B01DDAG2R8",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BJF4J9X4",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CC2QJ7XM",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FPXRJWTJ",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": null,
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DWXN5B4H",
+  "category": "chips",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GRV7CY1K",
+  "category": "chips",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07KX1M5SQ",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07LB4XRPD",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B09S6PKGFF",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0CBP9H3TN",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BXX898TN",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B091NCN1R8",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0F9KW8GN5",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08DNWMRCG",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B089VT3TC3",
+  "category": "dairy",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0BJ25VH6T",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GXWY2XTK",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GLQ3MMKG",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B09TWNL421",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BXWWLY7V",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08P9JGS9Z",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DVC98HJT",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FP2LN1X9",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B093XZMYSM",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GVP2WPC8",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07BG7D7HF",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08NK5WVGJ",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FMKPCBKC",
+  "category": "dairy",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0G9438P39",
+  "category": "dairy",
+  "reason": "low_confidence"
  },
  {
   "asin": "B08VKFXHGJ",
@@ -835,6 +1125,436 @@
   "reason": "no_nutrition"
  },
  {
+  "asin": "B0DSBVRQ25",
+  "category": "spreads & sauces",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B07B6N53KM",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0F8W5QFQ4",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0C6KRL4YZ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B00RTC48PA",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0B5B4ZGCP",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DX76ZM7P",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DBYQ7RM4",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DQ5YGWTY",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B06XDM156D",
+  "category": "spreads & sauces",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0DZXGG7FQ",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0G1BZKSQD",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0BMXDDLDT",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B015O5I5MK",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B071H8KMJ7",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B08MZFRVP5",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B075X15TTC",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0D73RGQQG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F6SLFQ81",
+  "category": "spreads & sauces",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0DDPLH17G",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DR8XTXGZ",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DD7KHX4F",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0F4XW83CL",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0C69R1F24",
+  "category": "spreads & sauces",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0D9SFM3RK",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CDM2STFP",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0G5Y9Q9JP",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0010CAT8K",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B00RZ6NBL2",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F8W27FD4",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B075P2D9M9",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B09MFR1RSH",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CGJ62S3L",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CSG3WSYF",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GVZFLP9T",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CBTW3FDR",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B08FRM7DPJ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B09QXK7NLQ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GXKNMCKG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0B2LTXJ8T",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GK1KGBND",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B08X7BT98J",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GK1CNJM3",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0FNDBBT68",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0G5PM2WVY",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DL3N81RZ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0G49HGDSG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DBVKQDMP",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0C2ZG29GY",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DDPL75ZG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0BMGKN2VY",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GX9C6KSS",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GPR36PM5",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DM4YJ9XM",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CGJ4MK2P",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DPQR9DN3",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B01IHPAL1W",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0FTCYTXJS",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DJ3C5TZQ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0H1W1XQTB",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F8W5SJPW",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0129KLDV8",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GX9217V9",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B00RTC5NYK",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B01IBJ6KEG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0D2B6QGLB",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DL3N4JNZ",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DL3KB6Q5",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B082FJHRNL",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B098J8KF6V",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B01M9EA7G3",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B07P6G35C5",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B07C623K49",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F6V9SNV4",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GZZXBL3S",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B018268JF6",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0CR7CFQBG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0F74M1JS2",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0FR59LTKG",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B08VDR7K8Q",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B08NZVWQ3S",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0DWLZCBGH",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B081YB3GNF",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0H3GBXCC7",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0C8D17RJ8",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0D5D6JBR6",
+  "category": "spreads & sauces",
+  "reason": "no_images"
+ },
+ {
   "asin": "B08JLGLVT9",
   "category": "namkeen",
   "reason": "low_confidence"
@@ -1175,29 +1895,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B0DTV8SDJN",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CBRT331Q",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B079Y4WFKM",
   "category": "spreads & sauces",
   "reason": "no_images"
- },
- {
-  "asin": "B08BVMNLBP",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B018E0H71C",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
  },
  {
   "asin": "B097B47Q6X",
@@ -1210,44 +1910,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B01IA0V136",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01DIO6D4Q",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DFWL9G2Z",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B08TWSR47Y",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0GVYQ88SF",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B00RT31RNU",
   "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01M2VIE89",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B085PDGP1P",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0F6KJ374D",
@@ -1265,19 +1930,9 @@
   "reason": "no_images"
  },
  {
-  "asin": "B09RKD68XX",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B01G9RGPTW",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B07R3GKNQ5",
   "category": "spreads & sauces",
-  "reason": "no_extraction"
+  "reason": "non_food"
  },
  {
   "asin": "B0CTQ8KT8T",
@@ -1285,54 +1940,14 @@
   "reason": "no_images"
  },
  {
-  "asin": "B079H9R7SR",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00PLKTUW8",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B09PF2M2Y9",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0CZTY2X5W",
   "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B098RLG72K",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DJPL73YJ",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CTKDXRNP",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B00RTC02IW",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0924XLCFW",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0F6KN7TBR",
   "category": "spreads & sauces",
-  "reason": "no_extraction"
+  "reason": "non_food"
  },
  {
   "asin": "B0D2PCCG6W",
@@ -1340,69 +1955,14 @@
   "reason": "no_images"
  },
  {
-  "asin": "B0GCMZMNC5",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0CTZJL19B",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0GYPL8SNZ",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B096542J3L",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0D2PB12FH",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B0CN4LV35T",
   "category": "spreads & sauces",
   "reason": "no_images"
  },
  {
-  "asin": "B0BJ25VH6T",
-  "category": "spreads & sauces",
-  "reason": "no_images"
- },
- {
-  "asin": "B0DSLGYS9T",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0G2BW8D82",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B0DZTNMXCG",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B005SH5FJG",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
-  "asin": "B06WVM9CSH",
-  "category": "spreads & sauces",
-  "reason": "no_extraction"
- },
- {
   "asin": "B084GP61RJ",
   "category": "spreads & sauces",
-  "reason": "no_extraction"
+  "reason": "no_nutrition"
  },
  {
   "asin": "B0CBRRYZPK",
