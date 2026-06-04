@@ -13,6 +13,10 @@ CATEGORY_MAP = {
     "icecreams": "ice cream",
     "noodles": "noodles & pasta",
     "spreads": "spreads & sauces",
+    "chips": "chips",
+    "bread": "bread",
+    "ketchup": "spreads & sauces",
+    "curd": "dairy",
 }
 
 _CORE = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")

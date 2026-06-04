@@ -32,3 +32,6 @@
 .t_ice { background: linear-gradient(150deg, #5bc6e8, #2a6f9c); }
 .t_health { background: linear-gradient(150deg, #7a5a3c, #4a3320); }
 .t_noodles { background: linear-gradient(150deg, #e0762b, #9c4a12); }
+.t_chips { background: linear-gradient(150deg, #e8a33b, #a85e12); }
+.t_bread { background: linear-gradient(150deg, #caa05a, #7a5424); }
+.t_dairy { background: linear-gradient(150deg, #6fb0e0, #2a5f9c); }

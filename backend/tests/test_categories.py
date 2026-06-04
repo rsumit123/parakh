@@ -11,7 +11,7 @@ def test_drinks_bucket_catches_flavoured_milk_and_buttermilk():
 
 
 def test_namkeen_bucket():
-    assert normalize_category("potato chips") == "namkeen"
+    assert normalize_category("potato chips") == "chips"  # chips split into its own bucket
     assert normalize_category("bikaneri bhujia") == "namkeen"
     assert normalize_category("roasted makhana") == "namkeen"
 
@@ -73,3 +73,10 @@ def test_new_phase2_category_buckets():
     assert normalize_category("", "Amul Vanilla Ice Cream Tub") == "ice cream"
     assert normalize_category("", "Cadbury Bournvita Health Drink") == "health drinks"
     assert normalize_category("", "Horlicks Classic Malt") == "health drinks"
+
+
+def test_chips_bread_dairy_buckets():
+    from app.categories import normalize_category
+    assert normalize_category("", "Lay's Classic Salted Potato Chips") == "chips"
+    assert normalize_category("", "Modern Brown Bread Loaf") == "bread"
+    assert normalize_category("", "Mother Dairy Classic Curd") == "dairy"
