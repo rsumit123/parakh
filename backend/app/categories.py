@@ -16,8 +16,11 @@ import re
 
 # (bucket, keywords). ORDER MATTERS: the first bucket with a hit wins, so more
 # specific groups precede broader ones that could share a word (spreads before
-# chocolate so "chocolate hazelnut spread" -> spreads; drinks before dairy so a
-# milk-based *drink* stays a drink).
+# chocolate so "chocolate hazelnut spread" -> spreads). DAIRY IS LAST so bare
+# "milk" never grabs milk chocolate/bread/biscuit; but milk-based DRINKS
+# (buttermilk/lassi/flavoured milk/milkshake) are claimed by dairy via their own
+# keywords — for "Healthier options" they should compare against yogurt/dahi, NOT
+# sodas and fruit juices, so they belong in dairy, not drinks.
 _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
     ("spreads & sauces", (
         "peanut butter", "spread", "jam", "ketchup", "sauce", "honey",
@@ -31,8 +34,7 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
     )),
     ("ice cream", ("ice cream", "icecream", "kulfi", "gelato", "frozen dessert")),
     ("drinks", (
-        "buttermilk", "chaas", "lassi", "flavoured milk", "flavored milk",
-        "milkshake", "milk shake", "soft drink", "cola", "soda", "juice",
+        "soft drink", "cola", "soda", "juice",
         "nectar", "squash", "sharbat", "smoothie", "iced tea", "energy drink",
         "beverage", "drink",
     )),
@@ -55,7 +57,12 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
         "seasoning",
     )),
     ("sweets", ("mithai", "halwa", "candy", "toffee", "gulab jamun", "sweet")),
-    ("dairy", ("milk", "curd", "dahi", "yogurt", "yoghurt", "paneer", "cheese",
+    # Includes milk-based DRINKS (buttermilk/lassi/flavoured milk/milkshake) so they
+    # get dairy alternatives, not sodas. Bare "milk" is safe here only because dairy
+    # is LAST (chocolate/bread/biscuit already claimed "milk chocolate" etc.).
+    ("dairy", ("buttermilk", "chaas", "lassi", "milkshake", "milk shake",
+               "flavoured milk", "flavored milk", "rabdi", "kefir",
+               "milk", "curd", "dahi", "yogurt", "yoghurt", "paneer", "cheese",
                "ghee", "butter", "dairy")),
 ]
 
