@@ -15,6 +15,7 @@ const EMOJI: Record<string, string> = {
   drinks: "🥤", namkeen: "🥜", "breakfast cereal": "🥣", chocolate: "🍫",
   biscuits: "🍪", "spreads & sauces": "🫙", "condiments & spices": "🧂",
   "ice cream": "🍦", "health drinks": "🥛", "noodles & pasta": "🍜",
+  chips: "🍟", bread: "🍞", dairy: "🧀",
 };
 
 export function ExploreScreen({ token, onOpenCategory, onOpenProduct }: Props) {

@@ -41,11 +41,13 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
         "breakfast cereal", "cereal",
     )),
     ("noodles & pasta", ("noodle", "pasta", "vermicelli", "macaroni")),
+    # Chips/crisps — before namkeen so they split out of the savoury-snack bucket.
+    ("chips", ("potato chip", "chips", "crisps", "nachos", "wafer")),
     ("namkeen", (
         "namkeen", "bhujia", "bhuja", "sev", "mixture", "farsan", "chivda",
-        "wafer", "potato chip", "chips", "savoury", "savory", "makhana",
-        "snack",
+        "savoury", "savory", "makhana", "snack",
     )),
+    ("bread", ("bread", "pav", "loaf", "baguette", "croissant", "bun")),
     ("biscuits", ("biscuit", "cookie", "cracker", "rusk")),
     ("chocolate", ("chocolate", "cocoa", "cacao")),
     ("condiments & spices", (
