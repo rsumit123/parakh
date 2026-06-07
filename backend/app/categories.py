@@ -108,4 +108,6 @@ def normalize_category(raw: str, name: str = "") -> str:
         bucket = _match(nm)
         if bucket:
             return bucket
-    return cat  # unknown but consistent (identical raws still cluster together)
+    # Return "" for anything that didn't match a known bucket — never pass through
+    # raw model output (which can be anything from "mobile game" to gibberish).
+    return ""

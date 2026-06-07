@@ -66,8 +66,9 @@ def test_name_fallback_when_category_missing():
     assert normalize_category("", "Dark Chocolate Bar") == "chocolate"
 
 
-def test_unknown_category_passes_through_lowercased():
-    assert normalize_category("Frozen Paratha") == "frozen paratha"
+def test_unknown_category_returns_empty_not_raw():
+    assert normalize_category("Frozen Paratha") == ""
+    assert normalize_category("mobile game") == ""
     assert normalize_category("") == ""
 
 
