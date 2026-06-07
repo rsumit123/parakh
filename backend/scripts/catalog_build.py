@@ -17,6 +17,8 @@ CATEGORY_MAP = {
     "bread": "bread",
     "ketchup": "spreads & sauces",
     "curd": "dairy",
+    "dry_fruits": "dry fruits & nuts",
+    "protein_bar": "protein bars",
 }
 
 _CORE = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
