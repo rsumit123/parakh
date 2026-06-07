@@ -106,7 +106,8 @@ class ProductRepository:
         return out
 
     def category_counts(self) -> list[dict]:
-        """Non-empty categories with their product counts, most products first."""
+        """Non-empty categories with their product counts, most products first.
+        Excludes one-off user photo scans (source='photo')."""
         with self._Session() as s:
             distinct_products = func.count(func.distinct(
                 func.lower(Product.name).op("||")("|").op("||")(func.lower(Product.brand))))
@@ -114,6 +115,7 @@ class ProductRepository:
                 select(Product.category, distinct_products)
                 .where(Product.category != "")
                 .where(Product.name != "")
+                .where(Product.source != "photo")
                 .group_by(Product.category)
                 .order_by(distinct_products.desc(), Product.category.asc())
             ).all()
@@ -128,7 +130,7 @@ class ProductRepository:
         once. Returns {items: [...], total: <distinct count before paging>}."""
         limit = max(1, min(limit, 200))
         offset = max(0, offset)
-        conds = [Product.name != ""]  # never surface "Unknown product" rows in browse
+        conds = [Product.name != "", Product.source != "photo"]  # never surface unnamed or one-off user-scan rows
         if category:
             conds.append(Product.category == category)
         if grade:
