@@ -56,6 +56,14 @@ _BUCKETS: list[tuple[str, tuple[str, ...]]] = [
         "masala", "spice", "asafoetida", "hing", "pickle", "achaar", "chutney",
         "seasoning",
     )),
+    ("dry fruits & nuts", (
+        "dry fruit", "dried fruit", "almond", "cashew", "walnut", "pistachio",
+        "peanut", "raisin", "date", "fig", "apricot", "prune", "nut",
+    )),
+    ("protein bars", (
+        "protein bar", "energy bar", "nutrition bar", "granola bar",
+        "cereal bar", "muesli bar", "oat bar", "meal bar",
+    )),
     ("sweets", ("mithai", "halwa", "candy", "toffee", "gulab jamun", "sweet")),
     # Includes milk-based DRINKS (buttermilk/lassi/flavoured milk/milkshake) so they
     # get dairy alternatives, not sodas. Bare "milk" is safe here only because dairy

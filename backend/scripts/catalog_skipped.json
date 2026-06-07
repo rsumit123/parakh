@@ -216,7 +216,7 @@
  },
  {
   "asin": "B0BVLZ4957",
-  "category": "breakfast cereal",
+  "category": "protein bars",
   "reason": "no_nutrition"
  },
  {
@@ -758,6 +758,301 @@
   "asin": "B0CKRGN23K",
   "category": "drinks",
   "reason": "no_images"
+ },
+ {
+  "asin": "B07GQNQNJG",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GZKK6TF7",
+  "category": "dry fruits & nuts",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0GTYX9FRB",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0967PS861",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0FKNDLDHN",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0974JHBB4",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0FDL3TY7V",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0F2N4ST13",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GCFSYJP8",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GR24VMV",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GR3S1RR",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FVTBMH8H",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B07GQW1HHN",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GQNLYBN",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GQVNVV8",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08GKFPK6Z",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07BKRDDN4",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08NVPLB43",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DY7K46CB",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08X6K464N",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0DSLGBMBW",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0H1CS86GQ",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CVW732",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CTHB87",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CYFJ1H",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B092ZDD54M",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0FCC1TYG2",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GKZ82VDN",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0CQR6J46Q",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0C24CJD71",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0754LKDJ4",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0F63HJXSR",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0CMTN9PLG",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B079LBZ1NJ",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GQW1HJC",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CXMVCP",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1D4Q59F",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CY7267",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0D5JKF8PK",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0BMYMX2QJ",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0CMV1DSJ4",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B07GQZSS48",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08TBZGVZJ",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B01LY6B08A",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B084429DVD",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B09F8G2BDX",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07GR82XJR",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0C24BT6ZQ",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B078H8BGRR",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0GF2CP268",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0H1RSPGS3",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0G48LV8GB",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1CLVC35",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0GXC3XR7K",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H1D1Q341",
+  "category": "dry fruits & nuts",
+  "reason": "implausible:energy_kj"
+ },
+ {
+  "asin": "B0DL5ZB9V6",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0C6TPMFPL",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08CN882JT",
+  "category": "dry fruits & nuts",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0F2N7XTWN",
+  "category": "dry fruits & nuts",
+  "reason": "no_nutrition"
  },
  {
   "asin": "B01DLPQJD2",
@@ -1858,6 +2153,116 @@
   "asin": "B0D7BVX8XQ",
   "category": "noodles & pasta",
   "reason": "no_images"
+ },
+ {
+  "asin": "B0FTT4ZFJS",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B00U3RGQK8",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0CRKSD5L5",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B09QL2MZRF",
+  "category": "protein bars",
+  "reason": "no_images"
+ },
+ {
+  "asin": "B0FS77QJRR",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0D7HXPG4S",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0G2XX55D9",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B09R4JKPFX",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0FQ5NY21G",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0DT781W3V",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B015KUNMYA",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08ZNJBCWK",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0FZKR52W6",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B07PT7LQ2S",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B08BLH15W3",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08QFFXDCH",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B00FEKGO1A",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B0CBX3G9L2",
+  "category": "protein bars",
+  "reason": "low_confidence"
+ },
+ {
+  "asin": "B082SYYHZL",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B08295WSG7",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B0H3C9T2SQ",
+  "category": "protein bars",
+  "reason": "no_nutrition"
+ },
+ {
+  "asin": "B09THGSZPK",
+  "category": "protein bars",
+  "reason": "low_confidence"
  },
  {
   "asin": "B0GYPCW6ZP",
