@@ -4,6 +4,7 @@ import styles from "./TabBar.module.css";
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "home", label: "Home", icon: "⌂" },
   { id: "explore", label: "Explore", icon: "🔍" },
+  { id: "today", label: "Today", icon: "📊" },
   { id: "history", label: "History", icon: "🕘" },
 ];
 
