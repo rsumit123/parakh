@@ -34,6 +34,15 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
     };
   }, []);
 
+  // Re-attach the live stream to the <video> after it remounts (e.g. when `busy`
+  // cleared on a failed estimate, the LoadingOverlay early-return swapped the node out).
+  useEffect(() => {
+    if (!busy && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      void videoRef.current.play().catch(() => {});
+    }
+  }, [busy]);
+
   const runEstimate = async (blob: Blob) => {
     setBusy(true);
     setError(false);
@@ -41,6 +50,7 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
       const file = new File([blob], "meal.jpg", { type: "image/jpeg" });
       const est = await estimateMeal(token, file);
       streamRef.current?.getTracks().forEach((t) => t.stop());  // free the camera before leaving
+      streamRef.current = null;
       onEstimated(est);
     } catch {
       setError(true);
@@ -57,7 +67,7 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob((b) => { if (b) void runEstimate(b); }, "image/jpeg", 0.9);
+    canvas.toBlob((b) => { if (b) void runEstimate(b); else setError(true); }, "image/jpeg", 0.9);
   };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +94,7 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
         <button className={styles.shutter} onClick={capture} disabled={!camReady} data-testid="meal-capture">
           Capture meal
         </button>
-        <label className={styles.gallery}>
+        <label className={styles.gallery} aria-label="Choose a meal photo from gallery">
           🖼 Choose from gallery
           <input className={styles.hidden} type="file" accept="image/*" data-testid="meal-gallery" onChange={onFile} />
         </label>
