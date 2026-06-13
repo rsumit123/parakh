@@ -73,5 +73,6 @@ class ScanService:
             ingredients=data["ingredients"], nutrition=data["nutrition"],
             score=scored, source=source, image_url=data.get("image_url", ""),
             embedding=embed_one(data["name"], category),
+            serving_size_g=data.get("serving_size_g"),
         )
         return self._repo.get(barcode)

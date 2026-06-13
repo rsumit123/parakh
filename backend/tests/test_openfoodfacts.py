@@ -1,8 +1,17 @@
 import httpx
 import respx
-from app.clients.openfoodfacts import OpenFoodFactsClient
+from app.clients.openfoodfacts import OpenFoodFactsClient, _serving_grams
 
 URL = "https://world.openfoodfacts.org/api/v2/product/111.json"
+
+
+def test_serving_grams_parses_g_and_ml():
+    assert _serving_grams("30 g") == 30.0
+    assert _serving_grams("200ml") == 200.0
+    assert _serving_grams("1 biscuit (12.5 g)") == 12.5
+    assert _serving_grams("") is None
+    assert _serving_grams("a handful") is None
+
 
 @respx.mock
 def test_fetch_maps_fields_when_found():
@@ -72,3 +81,32 @@ def test_fetch_image_url_empty_when_absent():
                     "ingredients_text": "Potato", "nutriments": {"sugars_100g": 1}},
     }))
     assert OpenFoodFactsClient().fetch("111")["image_url"] == ""
+
+
+@respx.mock
+def test_fetch_includes_serving_size_g():
+    respx.get(URL).mock(return_value=httpx.Response(200, json={
+        "status": 1,
+        "product": {
+            "product_name": "Chana", "brands": "Tata",
+            "serving_size": "30 g",
+            "ingredients_text": "Chickpeas",
+            "nutriments": {"sugars_100g": 2},
+        },
+    }))
+    result = OpenFoodFactsClient().fetch("111")
+    assert result["serving_size_g"] == 30.0
+
+
+@respx.mock
+def test_fetch_serving_size_g_none_when_absent():
+    respx.get(URL).mock(return_value=httpx.Response(200, json={
+        "status": 1,
+        "product": {
+            "product_name": "X", "brands": "Y",
+            "ingredients_text": "Potato",
+            "nutriments": {"sugars_100g": 1},
+        },
+    }))
+    result = OpenFoodFactsClient().fetch("111")
+    assert result["serving_size_g"] is None
