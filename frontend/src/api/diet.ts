@@ -32,7 +32,7 @@ export function getDay(token: string, date = localDay()): Promise<DietDay> {
   return fetchJson<DietDay>(`/diet/day?date=${date}`, { token });
 }
 export function addLog(token: string, body: LogBody): Promise<{ entry: LogEntry } & DietDay> {
-  return fetchJson(`/diet/log`, { token, json: { day: localDay(), ...body } });
+  return fetchJson(`/diet/log`, { token, method: "POST", json: { day: localDay(), ...body } });
 }
 export function deleteLog(token: string, id: number): Promise<{ ok: boolean } & DietDay> {
   return fetchJson(`/diet/log/${id}?date=${localDay()}`, { token, method: "DELETE" });
@@ -46,6 +46,6 @@ export function getProfile(token: string): Promise<{ profile: Record<string, unk
   return fetchJson(`/diet/profile`, { token });
 }
 export function putProfile(token: string, body: Record<string, unknown>): Promise<{ profile: Record<string, unknown>; effective_targets: Macros }> {
-  return fetchJson(`/diet/profile`, { token, json: body });
+  return fetchJson(`/diet/profile`, { token, method: "PUT", json: body });
 }
 export { localDay };
