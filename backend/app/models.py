@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, JSON, DateTime, UniqueConstraint, Float
+from sqlalchemy import String, Integer, JSON, DateTime, UniqueConstraint, Float, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 
@@ -51,9 +51,10 @@ class FoodLogEntry(Base):
     """One logged food for one day. Immutable record: macros are a frozen snapshot
     (per-100g x quantity_g / 100), so editing a product never changes past days."""
     __tablename__ = "food_log"
+    __table_args__ = (Index("ix_food_log_identity_day", "identity", "day"),)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    identity: Mapped[str] = mapped_column(String, index=True)   # 'user:<n>'
-    day: Mapped[str] = mapped_column(String, index=True)        # local 'YYYY-MM-DD'
+    identity: Mapped[str] = mapped_column(String)   # 'user:<n>'
+    day: Mapped[str] = mapped_column(String)        # local 'YYYY-MM-DD'
     kind: Mapped[str] = mapped_column(String, default="packaged")  # packaged|unpackaged|manual
     barcode: Mapped[str | None] = mapped_column(String, nullable=True)
     name: Mapped[str] = mapped_column(String, default="")
@@ -79,3 +80,4 @@ class Profile(Base):
     activity: Mapped[str | None] = mapped_column(String, nullable=True)
     goal: Mapped[str | None] = mapped_column(String, nullable=True)
     target_overrides: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
