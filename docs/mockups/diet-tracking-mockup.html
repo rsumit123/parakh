@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parakh · Daily Diet Tracking — UX mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0f1512; --paper:#f6f5ef; --card:#ffffff; --muted:#7a8579; --line:#ecebe3;
+    --lime:#c7f94c; --green:#1fa463; --green-deep:#0b3d2c; --red:#e2574c; --amber:#f0a23b;
+    --font:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{font-family:var(--font);background:#e9e8e0;color:var(--ink);padding:34px 18px 70px;}
+  h1.title{font-size:24px;font-weight:800;text-align:center;color:var(--green-deep);}
+  p.sub{text-align:center;color:var(--muted);margin:6px 0 30px;font-size:14px;}
+  .grid{display:flex;flex-wrap:wrap;gap:34px 30px;justify-content:center;align-items:flex-start;max-width:1320px;margin:0 auto;}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .cap{font-size:12.5px;font-weight:700;color:var(--green-deep);letter-spacing:.01em;}
+  .cap small{display:block;font-weight:500;color:var(--muted);max-width:260px;text-align:center;margin-top:3px;}
+
+  /* phone frame */
+  .phone{width:300px;height:632px;background:var(--paper);border-radius:38px;
+    box-shadow:0 8px 26px rgba(11,61,44,.16),0 0 0 9px #11140f,0 0 0 10px #2a2e25;
+    position:relative;overflow:hidden;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:24px;background:#11140f;border-radius:0 0 16px 16px;z-index:40;}
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;}
+  .screen::-webkit-scrollbar{width:0;}
+  .pad{padding:30px 16px 14px;}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:30px 18px 8px;}
+  .topbar .ttl{font-size:21px;font-weight:800;color:var(--green-deep);}
+  .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-deep));color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;}
+  .gear{width:30px;height:30px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:15px;}
+
+  /* generic card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;}
+  .muted{color:var(--muted);}
+
+  /* headline flag */
+  .flag{margin:14px 16px 8px;background:linear-gradient(135deg,#10402f,#0b3d2c);color:#eafff2;border-radius:18px;padding:15px 16px;}
+  .flag .k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lime);opacity:.9;}
+  .flag .v{font-size:16px;font-weight:700;margin-top:4px;line-height:1.32;}
+  .flag .v b{color:var(--lime);}
+
+  /* macro rows */
+  .macros{margin:6px 12px;}
+  .mrow{padding:11px 8px;border-bottom:1px solid var(--line);}
+  .mrow:last-child{border-bottom:0;}
+  .mtop{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;}
+  .mname{font-weight:700;}
+  .mval{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;}
+  .mval b{color:var(--ink);}
+  .bar{height:8px;border-radius:99px;background:var(--line);margin-top:7px;overflow:hidden;}
+  .fill{height:100%;border-radius:99px;}
+  .tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+  .tag.low{background:#fdeede;color:#a4631a;}
+  .tag.over{background:#fbe4e1;color:#b53127;}
+  .tag.ok{background:#e7f7ee;color:#13744a;}
+
+  /* logged list */
+  .sec{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:18px 18px 8px;}
+  .item{display:flex;align-items:center;gap:11px;margin:0 14px 9px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:10px 12px;}
+  .thumb{width:38px;height:38px;border-radius:10px;background:#eef3ee;display:grid;place-items:center;font-size:18px;flex:none;}
+  .iname{font-size:13.5px;font-weight:700;}
+  .imeta{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .ical{font-size:12.5px;font-weight:700;color:var(--green);margin-left:auto;white-space:nowrap;}
+  .del{color:var(--muted);font-size:15px;padding-left:4px;}
+
+  /* primary buttons */
+  .btn{display:block;width:calc(100% - 32px);margin:14px 16px;padding:15px;border-radius:16px;font-size:15.5px;font-weight:700;text-align:center;}
+  .btn.primary{background:var(--green-deep);color:#eafff2;}
+  .btn.lime{background:var(--lime);color:#16341f;}
+  .btn.ghost{background:var(--card);border:1px solid var(--line);color:var(--ink);}
+
+  /* bottom nav */
+  .nav{display:flex;border-top:1px solid var(--line);background:rgba(246,245,239,.96);backdrop-filter:blur(6px);}
+  .nav a{flex:1;text-align:center;padding:9px 0 11px;font-size:10.5px;font-weight:600;color:var(--muted);text-decoration:none;}
+  .nav a .ic{font-size:19px;display:block;margin-bottom:2px;}
+  .nav a.on{color:var(--green-deep);}
+  .nav a.on .ic{filter:none;}
+  .nav a.cta{position:relative;}
+  .nav a.cta .ic{background:var(--lime);color:#16341f;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;margin:-14px auto 2px;box-shadow:0 4px 12px rgba(31,164,99,.34);font-weight:800;}
+
+  /* result screen bits */
+  .hero{margin:10px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;text-align:center;}
+  .pimg{width:74px;height:74px;border-radius:16px;background:#eef3ee;margin:0 auto 10px;display:grid;place-items:center;font-size:34px;}
+  .pname{font-size:16px;font-weight:800;}
+  .pbrand{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .ring{width:88px;height:88px;border-radius:50%;margin:14px auto 6px;display:grid;place-items:center;
+    background:conic-gradient(var(--green) 0 65%,var(--line) 65% 100%);position:relative;}
+  .ring::before{content:"";position:absolute;inset:8px;background:var(--card);border-radius:50%;}
+  .ring .g{position:relative;text-align:center;}
+  .ring .g b{font-size:26px;font-weight:800;color:var(--green);}
+  .ring .g span{display:block;font-size:10px;color:var(--muted);font-weight:600;}
+  .glance{margin:12px 16px;}
+  .glance .gt{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:99px;background:var(--card);border:1px solid var(--line);}
+  .chip.bad{background:#fbe4e1;color:#b53127;border-color:#f6cfc9;}
+  .chip.good{background:#e7f7ee;color:#13744a;border-color:#cdeddb;}
+
+  /* bottom sheet */
+  .sheetwrap{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end;}
+  .scrim{position:absolute;inset:0;background:rgba(8,20,14,.34);}
+  .sheet{position:relative;background:var(--paper);border-radius:24px 24px 0 0;padding:8px 16px 18px;box-shadow:0 -8px 30px rgba(0,0,0,.18);}
+  .grab{width:38px;height:4px;border-radius:99px;background:#d9d8cf;margin:6px auto 12px;}
+  .sheet h3{font-size:17px;font-weight:800;}
+  .sheet .ssub{font-size:12.5px;color:var(--muted);margin:2px 0 14px;}
+  .seg{display:flex;gap:8px;margin-bottom:12px;}
+  .seg button{flex:1;padding:11px 0;border-radius:13px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:700;color:var(--ink);}
+  .seg button.on{background:var(--green-deep);color:#eafff2;border-color:var(--green-deep);}
+  .gramrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:14px;}
+  .gramrow input{flex:1;border:0;background:transparent;font-family:inherit;font-size:15px;font-weight:700;width:100%;}
+  .gramrow .u{color:var(--muted);font-size:13px;font-weight:600;}
+  .preview{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:13px;padding:10px 13px;margin-bottom:14px;}
+  .preview > span{flex:none;white-space:nowrap;}
+  .preview b{color:var(--ink);font-size:13px;text-align:right;}
+
+  /* estimate confirm */
+  .estcard{margin:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;}
+  .estphoto{height:120px;background:linear-gradient(135deg,#dfe9dd,#cfe0d2);display:grid;place-items:center;font-size:44px;}
+  .estbody{padding:14px;}
+  .conf{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:#fdeede;color:#a4631a;margin-top:8px;}
+  .editname{display:flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:9px 12px;margin-top:10px;font-size:14px;font-weight:700;}
+  .editname .pen{margin-left:auto;color:var(--muted);font-size:13px;}
+
+  .legend{max-width:1000px;margin:30px auto 0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 20px;font-size:13px;color:#3a463c;line-height:1.6;}
+  .legend b{color:var(--green-deep);}
+</style>
+</head>
+<body>
+  <h1 class="title">Parakh — Daily Diet Tracking (v1 mockup)</h1>
+  <p class="sub">Where the buttons & the new “Today” page live. Static review mock — not the real app.</p>
+
+  <div class="grid">
+
+    <!-- 1. RESULT SCREEN with Add-to-today -->
+    <div class="col">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="topbar"><span class="ttl">&larr;</span><span class="muted" style="font-size:12px">Scan result</span><span class="av">SK</span></div>
+        <div class="hero">
+          <div class="pimg">🥛</div>
+          <div class="pname">Amul Lassi 200ml</div>
+          <div class="pbrand">Amul · Dairy</div>
+          <div class="ring"><div class="g"><b>B</b><span>65/100</span></div></div>
+        </div>
+        <div class="glance">
+          <div class="gt">At a glance · per 100ml</div>
+          <div class="chips">
+            <span class="chip bad">High sugar 14.5g</span>
+            <span class="chip good">Protein 2.1g</span>
+            <span class="chip">Sat fat 1.25g</span>
+          </div>
+        </div>
+        <button class="btn lime" onclick="document.getElementById('sheet1').style.display='flex'">＋ Add to today</button>
+        <button class="btn ghost" style="margin-top:0">Healthier options ›</button>
+        <div style="height:8px"></div>
+      </div>
+      <!-- portion sheet overlay -->
+      <div class="sheetwrap" id="sheet1" style="display:none">
+        <div class="scrim" onclick="this.parentElement.style.display='none'"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>How much did you have?</h3>
+          <div class="ssub">Amul Lassi 200ml · 14.5g sugar / 100ml</div>
+          <div class="seg"><button>½</button><button class="on">1 serving</button><button>2</button></div>
+          <div class="gramrow"><input value="200" /><span class="u">grams (1 bottle)</span></div>
+          <div class="preview"><span>This counts</span><b>130 kcal · 29g sugar · 4.2g protein</b></div>
+          <button class="btn lime" style="width:100%;margin:0" onclick="document.getElementById('sheet1').style.display='none'">Add to today ✓</button>
+        </div>
+      </div>
+      </div>
+      <div class="cap">1 · Scan result → “Add to today”<small>Primary lime button right under the score. Tapping opens the portion sheet.</small></div>
+    </div>
+
+    <!-- 2. PORTION SHEET (shown standalone) -->
+    <div class="col">
+      <div class="phone"><div class="notch"></div><div class="screen" style="filter:brightness(.97)">
+        <div class="topbar"><span class="ttl">&larr;</span><span class="muted" style="font-size:12px">Scan result</span><span class="av">SK</span></div>
+        <div class="hero" style="opacity:.5">
+          <div class="pimg">🥛</div><div class="pname">Amul Lassi 200ml</div><div class="pbrand">Amul · Dairy</div>
+        </div>
+        <div style="height:120px"></div>
+        <div class="sheetwrap" style="position:absolute">
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h3>How much did you have?</h3>
+            <div class="ssub">Amul Lassi 200ml · 14.5g sugar / 100ml</div>
+            <div class="seg"><button>½</button><button class="on">1 serving</button><button>2</button></div>
+            <div class="gramrow"><input value="200" /><span class="u">grams (1 bottle)</span></div>
+            <div class="preview"><span>This counts</span><b>130 kcal · 29g sugar · 4.2g protein</b></div>
+            <button class="btn lime" style="width:100%;margin:0">Add to today ✓</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="cap">2 · Portion sheet<small>Serving + ½ / 1 / 2 chips + editable grams. Live preview of what it adds.</small></div>
+    </div>
+
+    <!-- 3. TODAY DASHBOARD -->
+    <div class="col">
+      <div class="phone"><div class="notch"></div>
+      <div class="screen">
+        <div class="topbar"><span class="ttl">Today</span><span class="gear">⚙︎</span></div>
+        <div class="flag">
+          <div class="k">Today’s gaps</div>
+          <div class="v">You’re low on <b>fibre</b> &amp; <b>protein</b>, and over on <b>sugar</b>.</div>
+        </div>
+        <div class="card macros">
+          <div class="mrow"><div class="mtop"><span class="mname">Energy</span><span class="mval"><b>1,450</b> / 2,000 kcal</span></div><div class="bar"><div class="fill" style="width:72%;background:var(--green)"></div></div></div>
+          <div class="mrow"><div class="mtop"><span class="mname">Protein <span class="tag low">low</span></span><span class="mval"><b>38</b> / 50 g</span></div><div class="bar"><div class="fill" style="width:76%;background:var(--amber)"></div></div></div>
+          <div class="mrow"><div class="mtop"><span class="mname">Fibre <span class="tag low">low</span></span><span class="mval"><b>11</b> / 30 g</span></div><div class="bar"><div class="fill" style="width:37%;background:var(--amber)"></div></div></div>
+          <div class="mrow"><div class="mtop"><span class="mname">Sugar <span class="tag over">over</span></span><span class="mval"><b>61</b> / 50 g</span></div><div class="bar"><div class="fill" style="width:100%;background:var(--red)"></div></div></div>
+          <div class="mrow"><div class="mtop"><span class="mname">Sat fat <span class="tag ok">ok</span></span><span class="mval"><b>14</b> / 20 g</span></div><div class="bar"><div class="fill" style="width:70%;background:var(--green)"></div></div></div>
+          <div class="mrow"><div class="mtop"><span class="mname">Salt <span class="tag ok">ok</span></span><span class="mval"><b>4.1</b> / 5 g</span></div><div class="bar"><div class="fill" style="width:82%;background:var(--green)"></div></div></div>
+        </div>
+        <div class="sec">Logged today · 4</div>
+        <div class="item"><div class="thumb">🥛</div><div><div class="iname">Amul Lassi 200ml</div><div class="imeta">1 bottle · 200g</div></div><span class="ical">130</span><span class="del">🗑</span></div>
+        <div class="item"><div class="thumb">🍛</div><div><div class="iname">Dal + rice <span class="muted" style="font-weight:600;font-size:11px">est.</span></div><div class="imeta">1 plate · ~350g</div></div><span class="ical">420</span><span class="del">🗑</span></div>
+        <div class="item"><div class="thumb">🍪</div><div><div class="iname">Mom’s Magic Cookies</div><div class="imeta">3 biscuits · 45g</div></div><span class="ical">230</span><span class="del">🗑</span></div>
+        <div class="item"><div class="thumb">🍌</div><div><div class="iname">Banana <span class="muted" style="font-weight:600;font-size:11px">est.</span></div><div class="imeta">1 medium · ~120g</div></div><span class="ical">105</span><span class="del">🗑</span></div>
+        <button class="btn primary" onclick="document.getElementById('menu3').style.display='flex'">＋ Add food</button>
+        <div style="height:6px"></div>
+      </div>
+      <div class="nav">
+        <a href="#"><span class="ic">🏠</span>Home</a>
+        <a href="#"><span class="ic">🧭</span>Explore</a>
+        <a href="#" class="on"><span class="ic">📊</span>Today</a>
+        <a href="#"><span class="ic">🕘</span>History</a>
+      </div>
+      <!-- add-food menu -->
+      <div class="sheetwrap" id="menu3" style="display:none">
+        <div class="scrim" onclick="this.parentElement.style.display='none'"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h3>Add food</h3>
+          <div class="ssub">Log what you’re eating right now</div>
+          <button class="btn lime" style="width:100%;margin:0 0 9px">📷 Scan a packaged product</button>
+          <button class="btn primary" style="width:100%;margin:0 0 9px">🍽 Snap a meal</button>
+          <button class="btn ghost" style="width:100%;margin:0">✏️ Add manually</button>
+        </div>
+      </div>
+      </div>
+      <div class="cap">3 · “Today” tab — the new page<small>Headline gaps → macro bars vs targets → today’s log → Add food. ⚙︎ = edit targets.</small></div>
+    </div>
+
+    <!-- 4. ADD-FOOD MENU standalone -->
+    <div class="col">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="topbar"><span class="ttl">Today</span><span class="gear">⚙︎</span></div>
+        <div class="flag" style="opacity:.5"><div class="k">Today’s gaps</div><div class="v">You’re low on <b>fibre</b> &amp; <b>protein</b>…</div></div>
+        <div style="height:150px"></div>
+        <div class="sheetwrap" style="position:absolute">
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h3>Add food</h3>
+            <div class="ssub">Log what you’re eating right now</div>
+            <button class="btn lime" style="width:100%;margin:0 0 9px">📷 Scan a packaged product</button>
+            <button class="btn primary" style="width:100%;margin:0 0 9px">🍽 Snap a meal</button>
+            <button class="btn ghost" style="width:100%;margin:0">✏️ Add manually</button>
+          </div>
+        </div>
+      </div></div>
+      <div class="cap">4 · “Add food” chooser<small>Three inputs: packaged scan · AI meal snap · manual. Same target everywhere.</small></div>
+    </div>
+
+    <!-- 5. SNAP-A-MEAL ESTIMATE CONFIRM -->
+    <div class="col">
+      <div class="phone"><div class="notch"></div><div class="screen">
+        <div class="topbar"><span class="ttl">&larr;</span><span class="muted" style="font-size:12px">Confirm meal</span><span class="av">SK</span></div>
+        <div class="estcard">
+          <div class="estphoto">🍛</div>
+          <div class="estbody">
+            <div class="editname">Dal + rice <span class="pen">✏️ edit</span></div>
+            <span class="conf">✏︎ Check the name &amp; portion below</span>
+          </div>
+        </div>
+        <div class="sheet" style="position:static;box-shadow:none;background:transparent;padding:0 16px">
+          <div class="ssub" style="margin:4px 0 10px;font-weight:700;color:var(--ink)">Portion</div>
+          <div class="seg"><button>Small</button><button class="on">1 plate</button><button>Large</button></div>
+          <div class="gramrow"><input value="350" /><span class="u">grams (est.)</span></div>
+          <div class="preview"><span>Estimated</span><b>420 kcal · 6g sugar · 14g protein</b></div>
+        </div>
+        <div class="glance" style="margin-top:2px">
+          <div class="chips"><span class="chip good">Fibre 7g</span><span class="chip good">Protein 14g</span><span class="chip">Grade B</span></div>
+        </div>
+        <button class="btn lime">Add to today ✓</button>
+        <button class="btn ghost" style="margin-top:0">Retake photo</button>
+        <div style="height:8px"></div>
+      </div></div>
+      <div class="cap">5 · Snap-a-meal → confirm<small>Dish name + portion & macros pre-filled. Editable name, portion re-scales live before it counts.</small></div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <b>UX rationale (what to react to):</b><br>
+    • <b>Entry from scans:</b> the lime “＋ Add to today” sits directly under the score on the existing result screen — no new step to reach it.<br>
+    • <b>The new home base:</b> a dedicated <b>“Today” tab</b> in the bottom nav (Home · Explore · <b>Today</b> · History) is the daily destination. Open question below.<br>
+    • <b>One “Add food” button, three inputs</b> (packaged scan / meal snap / manual) so there’s a single mental model for logging.<br>
+    • <b>Trust (quietly):</b> meal snaps pre-fill name + portion + macros, and always give an <b>editable name + adjustable portion</b> before they hit your totals — the correction step is there without ever saying “AI guessed this.”<br>
+    • <b>Targets:</b> smart defaults; the ⚙︎ on Today opens overrides.<br>
+    <span class="muted">Alt nav idea: make “Add food” a center floating ＋ in the nav (like the 2nd row dimmed CTA) instead of a button inside Today — tell me if you prefer that.</span>
+  </div>
+</body>
+</html>
