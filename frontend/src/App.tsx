@@ -8,12 +8,16 @@ import { CompareScreen } from "./screens/CompareScreen";
 import { HistoryScreen } from "./screens/HistoryScreen";
 import { ExploreScreen } from "./screens/ExploreScreen";
 import { CategoryScreen } from "./screens/CategoryScreen";
+import { TodayScreen } from "./screens/TodayScreen";
 import { TabBar } from "./components/TabBar";
 import { ProfileMenu } from "./components/ProfileMenu";
+import { PortionSheet } from "./components/PortionSheet";
 import {
   push, selectTab, pushResultFromScan, top, activeTab, type Stack, type Tab,
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
+import { defaultServingG } from "./diet/portion";
+import { addLog, type Macros } from "./api/diet";
 import type { Product, ScanResult } from "./api/types";
 
 function Shell() {
@@ -21,6 +25,7 @@ function Shell() {
   const [stack, setStack] = useState<Stack>([{ t: "home" }]);
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
+  const [portionFor, setPortionFor] = useState<Product | null>(null);
 
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
@@ -47,6 +52,22 @@ function Shell() {
   };
   const showProduct = (product: Product) => {
     go(push(stack, { t: "result", result: { source: product.source, remaining: remaining ?? 0, product } }));
+  };
+
+  const requireUser = (): boolean => {
+    if (isGuest) { signOut(); return false; }
+    return true;
+  };
+  const startAddToday = (product: Product) => { if (requireUser()) setPortionFor(product); };
+  const confirmPortion = async (grams: number) => {
+    const p = portionFor;
+    if (!p || !token) return;
+    setPortionFor(null);
+    try {
+      await addLog(token, { kind: "packaged", barcode: p.barcode, name: p.name,
+        brand: p.brand, quantity_g: grams });
+      go(selectTab(stack, "today"));
+    } catch { /* surfaced on Today refetch */ }
   };
 
   if (!token) return <AuthScreen onGuest={guest} onGoogleLogin={loginGoogle} />;
@@ -79,7 +100,14 @@ function Shell() {
           alternatives={r.alternatives ?? []}
           onCompare={(alt) => go(push(stack, { t: "compare", a: r.product, b: alt }))}
           onScanAgain={back}
+          onAddToday={startAddToday}
         />
+        {portionFor && (
+          <PortionSheet title={`${portionFor.name} · ${portionFor.brand}`}
+            per100g={portionFor.nutrition as unknown as Macros}
+            defaultGrams={defaultServingG((portionFor as { serving_size_g?: number }).serving_size_g, portionFor.category ?? "")}
+            onCancel={() => setPortionFor(null)} onConfirm={confirmPortion} />
+        )}
       </div>
     );
   }
@@ -102,6 +130,16 @@ function Shell() {
     return tabbed(
       <HistoryScreen entries={history} onBack={back} onOpen={showProduct}
         onClear={() => { clearHistory(); setHistory([]); }} />, "light");
+  }
+  if (cur.t === "today") {
+    if (isGuest) { signOut(); return null; }
+    return tabbed(
+      <TodayScreen token={token}
+        onAddFood={() => go(push(stack, { t: "mealCapture" }))}
+        onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
+  }
+  if (cur.t === "mealCapture" || cur.t === "confirmMeal" || cur.t === "targets") {
+    return <div style={{ padding: 40 }}>Coming up next… <button onClick={back}>Back</button></div>;
   }
   return tabbed(
     <HomeScreen remaining={remaining} isGuest={isGuest} history={history}
