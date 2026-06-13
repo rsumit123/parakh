@@ -20,4 +20,12 @@ describe("ConfirmMealScreen", () => {
     render(<ConfirmMealScreen estimate={null} onConfirm={() => {}} onBack={() => {}} />);
     expect(screen.getByPlaceholderText(/dish name/i)).toBeInTheDocument();
   });
+
+  it("clicking Small re-scales the logged quantity", () => {
+    const onConfirm = vi.fn();
+    render(<ConfirmMealScreen estimate={est} onConfirm={onConfirm} onBack={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Small" }));
+    fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ quantity_g: 175 }));
+  });
 });

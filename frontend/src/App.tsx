@@ -141,15 +141,16 @@ function Shell() {
         onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
   }
   if (cur.t === "mealCapture") {
+    const replaceBase = stack.length > 1 ? stack.slice(0, -1) : stack;
     const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file || !token) return;
       setEstimating(true);
       try {
         const est = await estimateMeal(token, file);
-        go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: est }), "replace");
+        go(push(replaceBase, { t: "confirmMeal", estimate: est }), "replace");
       } catch {
-        go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: null }), "replace");
+        go(push(replaceBase, { t: "confirmMeal", estimate: null }), "replace");
       } finally { setEstimating(false); }
     };
     return (
@@ -159,7 +160,7 @@ function Shell() {
           📷 Take / choose photo
           <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={onFile} />
         </label>
-        <button onClick={() => go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: null }))}
+        <button onClick={() => go(push(replaceBase, { t: "confirmMeal", estimate: null }))}
           style={{ background: "transparent", color: "var(--muted)", border: 0 }}>or enter manually</button>
         <button onClick={back} style={{ background: "transparent", color: "var(--muted)", border: 0 }}>Cancel</button>
       </div>
