@@ -1,0 +1,16 @@
+.wrap { position: fixed; inset: 0; z-index: 80; display: flex; flex-direction: column; justify-content: flex-end; }
+.scrim { position: absolute; inset: 0; background: rgba(8,20,14,.34); }
+.sheet { position: relative; background: var(--paper); border-radius: 24px 24px 0 0; padding: 8px 16px 20px; box-shadow: 0 -8px 30px rgba(0,0,0,.18); }
+.grab { width: 38px; height: 4px; border-radius: 99px; background: #d9d8cf; margin: 6px auto 12px; }
+.h { font-size: 17px; font-weight: 800; }
+.sub { font-size: 12.5px; color: var(--muted); margin: 2px 0 14px; }
+.seg { display: flex; gap: 8px; margin-bottom: 12px; }
+.seg button { flex: 1; padding: 11px 0; border-radius: 13px; background: var(--card); border: 1px solid var(--line); font-size: 14px; font-weight: 700; color: var(--ink); }
+.seg button.on { background: var(--green-deep); color: #eafff2; border-color: var(--green-deep); }
+.grams { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 11px 13px; margin-bottom: 14px; }
+.grams input { flex: 1; border: 0; background: transparent; font-family: inherit; font-size: 15px; font-weight: 700; width: 100%; }
+.grams span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.preview { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 10px 13px; margin-bottom: 14px; }
+.preview > span { flex: none; white-space: nowrap; }
+.preview b { color: var(--ink); font-size: 13px; text-align: right; }
+.add { display: block; width: 100%; padding: 15px; border-radius: 16px; font-size: 15.5px; font-weight: 700; background: var(--lime); color: #16341f; }
