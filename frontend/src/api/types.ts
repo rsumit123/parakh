@@ -54,6 +54,7 @@ export interface Product {
   source: Source;
   score: Score;
   image_url?: string;
+  serving_size_g?: number | null;
 }
 
 export interface CategoryCount {

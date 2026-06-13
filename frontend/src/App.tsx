@@ -104,8 +104,8 @@ function Shell() {
         />
         {portionFor && (
           <PortionSheet title={`${portionFor.name} · ${portionFor.brand}`}
-            per100g={portionFor.nutrition as unknown as Macros}
-            defaultGrams={defaultServingG((portionFor as { serving_size_g?: number }).serving_size_g, portionFor.category ?? "")}
+            per100g={portionFor.nutrition as Macros}
+            defaultGrams={defaultServingG(portionFor.serving_size_g, portionFor.category ?? "")}
             onCancel={() => setPortionFor(null)} onConfirm={confirmPortion} />
         )}
       </div>
