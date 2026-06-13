@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, JSON, DateTime, UniqueConstraint
+from sqlalchemy import String, Integer, JSON, DateTime, UniqueConstraint, Float
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 
@@ -22,6 +22,7 @@ class Product(Base):
     source: Mapped[str] = mapped_column(String, default="db")  # db|off|photo|amazon
     image_url: Mapped[str] = mapped_column(String, default="")  # front/display image
     embedding: Mapped[list] = mapped_column(JSON, default=list)  # vector for similar-product search
+    serving_size_g: Mapped[float | None] = mapped_column(Float, nullable=True)  # for portion default
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
@@ -44,3 +45,37 @@ class DailyScan(Base):
     identity: Mapped[str] = mapped_column(String, index=True)
     day: Mapped[str] = mapped_column(String)  # ISO date "YYYY-MM-DD"
     count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class FoodLogEntry(Base):
+    """One logged food for one day. Immutable record: macros are a frozen snapshot
+    (per-100g x quantity_g / 100), so editing a product never changes past days."""
+    __tablename__ = "food_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    identity: Mapped[str] = mapped_column(String, index=True)   # 'user:<n>'
+    day: Mapped[str] = mapped_column(String, index=True)        # local 'YYYY-MM-DD'
+    kind: Mapped[str] = mapped_column(String, default="packaged")  # packaged|unpackaged|manual
+    barcode: Mapped[str | None] = mapped_column(String, nullable=True)
+    name: Mapped[str] = mapped_column(String, default="")
+    brand: Mapped[str] = mapped_column(String, default="")
+    quantity_g: Mapped[float] = mapped_column(Float, default=0.0)
+    energy_kj: Mapped[float] = mapped_column(Float, default=0.0)
+    sugars_g: Mapped[float] = mapped_column(Float, default=0.0)
+    sat_fat_g: Mapped[float] = mapped_column(Float, default=0.0)
+    salt_g: Mapped[float] = mapped_column(Float, default=0.0)
+    fibre_g: Mapped[float] = mapped_column(Float, default=0.0)
+    protein_g: Mapped[float] = mapped_column(Float, default=0.0)
+    image_url: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Profile(Base):
+    """Optional per-user profile + explicit target overrides. Absence = smart defaults."""
+    __tablename__ = "profiles"
+    identity: Mapped[str] = mapped_column(String, primary_key=True)
+    sex: Mapped[str | None] = mapped_column(String, nullable=True)
+    age: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    activity: Mapped[str | None] = mapped_column(String, nullable=True)
+    goal: Mapped[str | None] = mapped_column(String, nullable=True)
+    target_overrides: Mapped[dict] = mapped_column(JSON, default=dict)
