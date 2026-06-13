@@ -35,3 +35,10 @@ describe("nav stack", () => {
     expect(isTabRoot({ t: "home" })).toBe(true);
   });
 });
+
+describe("today tab", () => {
+  it("today is a tab root", () => {
+    expect(isTabRoot({ t: "today" })).toBe(true);
+    expect(activeTab(selectTab([{ t: "home" }], "today"))).toBe("today");
+  });
+});
