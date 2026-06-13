@@ -17,8 +17,9 @@ import {
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
 import { defaultServingG } from "./diet/portion";
-import { addLog, estimateMeal, type Macros, type LogBody } from "./api/diet";
+import { addLog, type Macros, type LogBody } from "./api/diet";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
+import { MealCaptureScreen } from "./screens/MealCaptureScreen";
 import { TargetsScreen } from "./screens/TargetsScreen";
 import type { Product, ScanResult } from "./api/types";
 
@@ -28,9 +29,6 @@ function Shell() {
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [portionFor, setPortionFor] = useState<Product | null>(null);
-  const [estimating, setEstimating] = useState(false);
-  const [mealError, setMealError] = useState(false);
-
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
     window.history.replaceState({ stack: [{ t: "home" }] }, "");
@@ -143,34 +141,14 @@ function Shell() {
         onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
   }
   if (cur.t === "mealCapture") {
-    const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !token) return;
-      setMealError(false);
-      setEstimating(true);
-      try {
-        const est = await estimateMeal(token, file);
-        const replaceBase = stack.length > 1 ? stack.slice(0, -1) : stack;
-        go(push(replaceBase, { t: "confirmMeal", estimate: est }), "replace");
-      } catch {
-        setMealError(true);
-      } finally {
-        setEstimating(false);
-      }
-    };
+    if (!token) return null;
+    const replaceBase = stack.length > 1 ? stack.slice(0, -1) : stack;
     return (
-      <div style={{ minHeight: "100dvh", display: "grid", placeItems: "center", gap: 16, padding: 24 }}>
-        <p style={{ color: mealError ? "var(--red)" : "var(--muted)", textAlign: "center" }}>
-          {estimating ? "Reading your meal…"
-            : mealError ? "Couldn't read that photo — try another."
-            : "Snap or choose a photo of your meal"}
-        </p>
-        <label style={{ background: "var(--lime)", color: "#16341f", padding: "14px 22px", borderRadius: 16, fontWeight: 700 }}>
-          📷 Take / choose photo
-          <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={onFile} />
-        </label>
-        <button onClick={back} style={{ background: "transparent", color: "var(--muted)", border: 0 }}>Cancel</button>
-      </div>
+      <MealCaptureScreen
+        token={token}
+        onEstimated={(est) => go(push(replaceBase, { t: "confirmMeal", estimate: est }), "replace")}
+        onBack={back}
+      />
     );
   }
   if (cur.t === "confirmMeal") {
@@ -189,7 +167,8 @@ function Shell() {
     <HomeScreen remaining={remaining} isGuest={isGuest} history={history}
       onOpenCamera={() => go(push(stack, { t: "scan" }))}
       onOpenProduct={showProduct} onSeeHistory={() => go(selectTab(stack, "history"))}
-      onSignIn={signOut} />, "light");
+      onSignIn={signOut}
+      onSnapMeal={() => { if (requireUser()) go(push(stack, { t: "mealCapture" })); }} />, "light");
 }
 
 export default function App() {

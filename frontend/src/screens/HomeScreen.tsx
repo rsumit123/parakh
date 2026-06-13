@@ -13,10 +13,11 @@ interface Props {
   onOpenProduct: (p: Product) => void;
   onSeeHistory: () => void;
   onSignIn: () => void;
+  onSnapMeal: () => void;
 }
 
 export function HomeScreen({
-  remaining, isGuest, history, onOpenCamera, onOpenProduct, onSeeHistory, onSignIn,
+  remaining, isGuest, history, onOpenCamera, onOpenProduct, onSeeHistory, onSignIn, onSnapMeal,
 }: Props) {
   const [showLimit, setShowLimit] = useState(false);
   const atLimit = remaining === 0;
@@ -24,6 +25,11 @@ export function HomeScreen({
   const startScan = () => {
     if (atLimit) { setShowLimit(true); return; }
     onOpenCamera();
+  };
+
+  const startSnapMeal = () => {
+    if (atLimit) { setShowLimit(true); return; }
+    onSnapMeal();
   };
 
   return (
@@ -45,6 +51,13 @@ export function HomeScreen({
           <span className={styles.cardText}>
             <span className={styles.cardTitle}>Scan a product</span>
             <span className={styles.cardSub}>Barcode or label — we figure it out</span>
+          </span>
+        </button>
+        <button className={styles.card} onClick={startSnapMeal}>
+          <span className={styles.icon}>🍽</span>
+          <span className={styles.cardText}>
+            <span className={styles.cardTitle}>Snap a meal</span>
+            <span className={styles.cardSub}>Cooked or fresh food, no barcode needed</span>
           </span>
         </button>
       </div>

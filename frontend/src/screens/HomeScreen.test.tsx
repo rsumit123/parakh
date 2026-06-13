@@ -23,6 +23,7 @@ function setup(overrides = {}) {
     onOpenProduct: vi.fn(),
     onSeeHistory: vi.fn(),
     onSignIn: vi.fn(),
+    onSnapMeal: vi.fn(),
     ...overrides,
   };
   render(<HomeScreen {...props} />);
@@ -77,5 +78,11 @@ describe("HomeScreen", () => {
     expect(screen.getByText("Recent scans")).toBeInTheDocument();
     await userEvent.click(screen.getByText("Kurkure"));
     expect(props.onOpenProduct).toHaveBeenCalledOnce();
+  });
+
+  it("snap-a-meal button calls onSnapMeal", async () => {
+    const props = setup();
+    await userEvent.click(screen.getByRole("button", { name: /snap a meal/i }));
+    expect(props.onSnapMeal).toHaveBeenCalledOnce();
   });
 });
