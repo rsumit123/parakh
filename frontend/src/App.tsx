@@ -29,6 +29,7 @@ function Shell() {
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [portionFor, setPortionFor] = useState<Product | null>(null);
   const [estimating, setEstimating] = useState(false);
+  const [mealError, setMealError] = useState(false);
 
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
@@ -142,27 +143,32 @@ function Shell() {
         onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
   }
   if (cur.t === "mealCapture") {
-    const replaceBase = stack.length > 1 ? stack.slice(0, -1) : stack;
     const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file || !token) return;
+      setMealError(false);
       setEstimating(true);
       try {
         const est = await estimateMeal(token, file);
+        const replaceBase = stack.length > 1 ? stack.slice(0, -1) : stack;
         go(push(replaceBase, { t: "confirmMeal", estimate: est }), "replace");
       } catch {
-        go(push(replaceBase, { t: "confirmMeal", estimate: null }), "replace");
-      } finally { setEstimating(false); }
+        setMealError(true);
+      } finally {
+        setEstimating(false);
+      }
     };
     return (
       <div style={{ minHeight: "100dvh", display: "grid", placeItems: "center", gap: 16, padding: 24 }}>
-        <p style={{ color: "var(--muted)" }}>{estimating ? "Reading your meal…" : "Snap or choose a photo of your meal"}</p>
+        <p style={{ color: mealError ? "var(--red)" : "var(--muted)", textAlign: "center" }}>
+          {estimating ? "Reading your meal…"
+            : mealError ? "Couldn't read that photo — try another."
+            : "Snap or choose a photo of your meal"}
+        </p>
         <label style={{ background: "var(--lime)", color: "#16341f", padding: "14px 22px", borderRadius: 16, fontWeight: 700 }}>
           📷 Take / choose photo
           <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={onFile} />
         </label>
-        <button onClick={() => go(push(replaceBase, { t: "confirmMeal", estimate: null }))}
-          style={{ background: "transparent", color: "var(--muted)", border: 0 }}>or enter manually</button>
         <button onClick={back} style={{ background: "transparent", color: "var(--muted)", border: 0 }}>Cancel</button>
       </div>
     );
