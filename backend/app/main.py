@@ -147,6 +147,16 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         _consume(identity)
         return {**est, "grade": scored["grade"]}
 
+    @app.get("/diet/profile")
+    def diet_get_profile(identity: dict = Depends(current_user)):
+        profile = diet.get_profile(identity["id"])
+        return {"profile": profile, "effective_targets": compute_targets(profile)}
+
+    @app.put("/diet/profile")
+    def diet_put_profile(req: ProfileRequest, identity: dict = Depends(current_user)):
+        profile = diet.upsert_profile(identity["id"], req.model_dump(exclude_unset=True))
+        return {"profile": profile, "effective_targets": compute_targets(profile)}
+
     @app.get("/diet/day")
     def diet_day(date: str = "", identity: dict = Depends(current_user)):
         return _day_payload(identity["id"], date or _today())
