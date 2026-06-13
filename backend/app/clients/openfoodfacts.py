@@ -1,6 +1,15 @@
+import re
 import httpx
 
 _BASE = "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+
+
+def _serving_grams(serving_size: str):
+    """Pull a gram/ml quantity out of an OFF serving_size string. Returns float or None."""
+    if not serving_size:
+        return None
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(g|ml)\b", str(serving_size).lower())
+    return float(m.group(1)) if m else None
 
 
 def _split_ingredients(text: str) -> list[str]:
@@ -68,4 +77,5 @@ class OpenFoodFactsClient:
             "ingredients": _split_ingredients(p.get("ingredients_text", "")),
             "nutrition": nutrition,
             "image_url": _image_url(p),
+            "serving_size_g": _serving_grams(p.get("serving_size", "")),
         }

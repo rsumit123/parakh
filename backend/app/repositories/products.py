@@ -30,7 +30,8 @@ class ProductRepository:
 
     def save(self, *, barcode: str, name: str, brand: str,
              ingredients: list, nutrition: dict, score: dict, source: str,
-             category: str = "", image_url: str = "", embedding: list | None = None) -> None:
+             category: str = "", image_url: str = "", embedding: list | None = None,
+             serving_size_g: float | None = None) -> None:
         with self._Session() as s:
             p = s.get(Product, barcode)
             if p is None:
@@ -46,6 +47,8 @@ class ProductRepository:
             p.score_json = score
             p.source = source
             p.image_url = image_url
+            if serving_size_g is not None:
+                p.serving_size_g = serving_size_g
             if embedding is not None:  # preserve an existing embedding when not provided
                 p.embedding = embedding
             s.commit()
@@ -201,4 +204,5 @@ class ProductRepository:
             "score": p.score_json,
             "source": p.source,
             "image_url": p.image_url,
+            "serving_size_g": p.serving_size_g,
         }
