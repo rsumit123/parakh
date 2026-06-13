@@ -11,6 +11,7 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
 }) {
   const [name, setName] = useState(estimate?.name ?? "");
   const [grams, setGrams] = useState(Math.round(estimate?.portion_g ?? 100));
+  const [seg, setSeg] = useState<"s" | "m" | "l" | null>("m");
   const per100 = estimate?.per100g ?? BLANK;
   const m = portionMacros(per100, grams);
   const base = estimate?.portion_g || 100;
@@ -31,13 +32,13 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
       </div>
       <div className={styles.label}>Portion</div>
       <div className={styles.seg}>
-        <button onClick={() => setGrams(Math.round(base * 0.5))}>Small</button>
-        <button className={styles.on} onClick={() => setGrams(Math.round(base))}>1 plate</button>
-        <button onClick={() => setGrams(Math.round(base * 1.5))}>Large</button>
+        <button className={seg === "s" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base * 0.5)); setSeg("s"); }}>Small</button>
+        <button className={seg === "m" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base)); setSeg("m"); }}>1 plate</button>
+        <button className={seg === "l" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base * 1.5)); setSeg("l"); }}>Large</button>
       </div>
       <div className={styles.grams}>
         <input type="number" min={0} value={grams} aria-label="Portion in grams"
-          onChange={(e) => setGrams(Math.max(0, Number(e.target.value) || 0))} />
+          onChange={(e) => { setGrams(Math.max(0, Number(e.target.value) || 0)); setSeg(null); }} />
         <span>grams</span>
       </div>
       <div className={styles.preview}><span>Counts</span>
