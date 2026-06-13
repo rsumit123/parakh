@@ -8,6 +8,8 @@ from app.db import make_engine, make_session_factory, init_db
 from app.repositories.products import ProductRepository
 from app.clients.openfoodfacts import OpenFoodFactsClient
 from app.clients.label_extractor import LabelExtractor, ExtractionError
+from app.services.meal_estimator import MealEstimator, MealEstimateError
+from app.scoring.scorer import score as score_fn
 from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
@@ -129,6 +131,22 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
                                macros=macros, barcode=req.barcode, image_url=req.image_url)
         return {"entry": entry, **_day_payload(identity["id"], day)}
 
+    @app.post("/diet/estimate")
+    async def diet_estimate(image: UploadFile = File(...),
+                            identity: dict = Depends(current_user)):
+        if meal_estimator is None:
+            raise HTTPException(status_code=503, detail={"error": "estimator unavailable"})
+        _ensure_quota(identity)
+        image_bytes = await image.read()
+        try:
+            est = meal_estimator.estimate(image_bytes)
+        except MealEstimateError:
+            raise HTTPException(status_code=422,
+                                detail={"error": "could not read the meal, retake photo"})
+        scored = score_fn([], {**est["per100g"], "fruit_veg_nuts_pct": 0}, "")
+        _consume(identity)
+        return {**est, "grade": scored["grade"]}
+
     @app.get("/diet/day")
     def diet_day(date: str = "", identity: dict = Depends(current_user)):
         return _day_payload(identity["id"], date or _today())
@@ -174,7 +192,9 @@ def app_from_settings() -> FastAPI:
         label_extractor=LabelExtractor(
             api_key=settings.openrouter_api_key, model=settings.vision_model,
             url=settings.openrouter_url),
-        meal_estimator=None,   # replaced in Task 10
+        meal_estimator=MealEstimator(
+            api_key=settings.openrouter_api_key, model=settings.vision_model,
+            url=settings.openrouter_url),
         secret=settings.secret_key,
         google_client_id=settings.google_client_id,
         guest_limit=settings.guest_daily_limit,
