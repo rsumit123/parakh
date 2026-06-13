@@ -12,11 +12,13 @@ from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
 from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
-                         TokenResponse, BarcodeRequest)
+                         TokenResponse, BarcodeRequest, DietLogRequest, ProfileRequest)
+from app.repositories.diet import DietRepository
+from app.nutrition.targets import compute_targets, summarize_day, MACRO_KEYS
 
 
-def create_app(*, session_factory, off_client, label_extractor, secret,
-               guest_limit, free_limit, google_client_id="", today=None):
+def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
+               secret, guest_limit, free_limit, google_client_id="", today=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
     app = FastAPI(title="Parakh API")
@@ -27,6 +29,7 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
     limiter = RateLimiter(session_factory, guest_limit=guest_limit, free_limit=free_limit)
     scanner = ScanService(ProductRepository(session_factory), off_client, label_extractor)
     catalog = ProductRepository(session_factory)
+    diet = DietRepository(session_factory)
 
     def _today() -> str:
         if today is not None:
@@ -40,6 +43,29 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
             return auth.identify(authorization[len("Bearer "):])
         except AuthError as e:
             raise HTTPException(status_code=401, detail=str(e))
+
+    def current_user(identity: dict = Depends(current_identity)) -> dict:
+        """Diet tracking is for signed-in users only; reject guest tokens."""
+        if identity["tier"] == "guest" or identity["id"].startswith("guest:"):
+            raise HTTPException(status_code=401, detail={"error": "sign in to track"})
+        return identity
+
+    def _day_payload(identity_id: str, day: str) -> dict:
+        entries = diet.day_entries(identity_id, day)
+        targets = compute_targets(diet.get_profile(identity_id))
+        summary = summarize_day(entries, targets)
+        return {"date": day, "entries": entries, "targets": targets,
+                "totals": summary["totals"], "status": summary["status"],
+                "headline": summary["headline"]}
+
+    def _entry_macros(req: DietLogRequest) -> dict:
+        if req.kind == "packaged" and req.barcode:
+            product = catalog.get(req.barcode)
+            per100g = (product or {}).get("nutrition", {}) if product else {}
+        else:
+            per100g = req.per100g or {}
+        q = req.quantity_g
+        return {k: float(per100g.get(k, 0) or 0) * q / 100.0 for k in MACRO_KEYS}
 
     def _ensure_quota(identity: dict) -> None:
         # Read-only check up front so an over-quota user is blocked before any work,
@@ -94,6 +120,26 @@ def create_app(*, session_factory, off_client, label_extractor, secret,
         remaining = _consume(identity)
         return {**result, "remaining": remaining}
 
+    @app.post("/diet/log")
+    def diet_log(req: DietLogRequest, identity: dict = Depends(current_user)):
+        day = req.day or _today()
+        macros = _entry_macros(req)
+        entry = diet.add_entry(identity=identity["id"], day=day, kind=req.kind,
+                               name=req.name, brand=req.brand, quantity_g=req.quantity_g,
+                               macros=macros, barcode=req.barcode, image_url=req.image_url)
+        return {"entry": entry, **_day_payload(identity["id"], day)}
+
+    @app.get("/diet/day")
+    def diet_day(date: str = "", identity: dict = Depends(current_user)):
+        return _day_payload(identity["id"], date or _today())
+
+    @app.delete("/diet/log/{entry_id}")
+    def diet_delete(entry_id: int, date: str = "", identity: dict = Depends(current_user)):
+        ok = diet.delete_entry(identity["id"], entry_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail={"error": "entry not found"})
+        return {"ok": True, **_day_payload(identity["id"], date or _today())}
+
     @app.get("/catalog/categories")
     def catalog_categories(identity: dict = Depends(current_identity)):
         return {"categories": catalog.category_counts()}
@@ -128,6 +174,7 @@ def app_from_settings() -> FastAPI:
         label_extractor=LabelExtractor(
             api_key=settings.openrouter_api_key, model=settings.vision_model,
             url=settings.openrouter_url),
+        meal_estimator=None,   # replaced in Task 10
         secret=settings.secret_key,
         google_client_id=settings.google_client_id,
         guest_limit=settings.guest_daily_limit,
