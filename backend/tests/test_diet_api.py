@@ -69,6 +69,17 @@ def test_log_packaged_computes_macros_from_product(client_and_sf):
     assert "headline" in body
 
 
+def test_estimate_returns_dish_and_per100g(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    r = c.post("/diet/estimate", headers=h,
+               files={"image": ("m.jpg", b"jpegbytes", "image/jpeg")})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["name"] == "Dal rice" and body["per100g"]["protein_g"] == 4
+    assert "grade" in body
+
+
 def test_log_unpackaged_uses_supplied_per100g_then_day_and_delete(client_and_sf):
     c, _ = client_and_sf
     h = _user_headers()
