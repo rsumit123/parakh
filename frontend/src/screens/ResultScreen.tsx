@@ -39,9 +39,10 @@ interface Props {
   alternatives?: Product[];
   onScanAgain: () => void;
   onCompare?: (p: Product) => void;
+  onAddToday?: (product: Product) => void;
 }
 
-export function ResultScreen({ product, alternatives = [], onScanAgain, onCompare }: Props) {
+export function ResultScreen({ product, alternatives = [], onScanAgain, onCompare, onAddToday }: Props) {
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const { score } = product;
@@ -86,6 +87,18 @@ export function ResultScreen({ product, alternatives = [], onScanAgain, onCompar
           <div className={styles.novaPill}>NOVA {nova.group} · {nova.label}</div>
         )}
       </div>
+
+      {onAddToday && (
+        <button
+          type="button"
+          onClick={() => onAddToday(product)}
+          style={{ display: "block", width: "calc(100% - 32px)", margin: "14px 16px",
+            padding: 15, borderRadius: 16, fontSize: 15.5, fontWeight: 700,
+            background: "var(--lime)", color: "#16341f", border: 0 }}
+        >
+          ＋ Add to today
+        </button>
+      )}
 
       <div className={styles.prod}>
         {product.image_url && (

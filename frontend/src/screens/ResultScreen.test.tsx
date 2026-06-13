@@ -142,3 +142,16 @@ describe("ResultScreen", () => {
     expect(screen.queryByText(/healthier options/i)).not.toBeInTheDocument();
   });
 });
+
+describe("ResultScreen add-to-today", () => {
+  it("shows the button when onAddToday is provided", () => {
+    const lassiProduct = {
+      barcode: "b1", name: "Amul Lassi", brand: "Amul", category: "dairy", ingredients: ["milk"],
+      source: "amazon", image_url: "",
+      nutrition: { energy_kj: 360, sugars_g: 14.5, sat_fat_g: 1.25, salt_g: 0.075, fibre_g: 0, protein_g: 2.1, fruit_veg_nuts_pct: 0 },
+      score: { overall: 65, grade: "B", verdict: "", positives: [], negatives: [], breakdown: { nutrients: [], india_flags: [] } },
+    } as unknown as Product;
+    render(<ResultScreen product={lassiProduct} alternatives={[]} onCompare={() => {}} onScanAgain={() => {}} onAddToday={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /add to today/i })).toBeInTheDocument();
+  });
+});
