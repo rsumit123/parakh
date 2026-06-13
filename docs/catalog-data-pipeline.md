@@ -54,13 +54,23 @@ Stage 8  dedupe_products.py  → collapse same name+brand
 Stage 9  backfill_embeddings.py → embed for "Healthier options"
 ```
 
-**Current state (2026-06-06):** `catalog_extracted.json` holds **824** records;
-`catalog_skipped.json` holds **422** (reasons: no_images 252, no_nutrition 118,
-low_confidence 25, no_extraction 20, non_food 7). 13 live categories.
+**Current state (2026-06-09):** `catalog_extracted.json` holds **1034** records;
+`catalog_skipped.json` holds **503**. **14 categories**: spreads & sauces, protein
+bars, dry fruits & nuts, bread, dairy, biscuits, chips, drinks, noodles & pasta,
+namkeen, health drinks, breakfast cereal, ice cream, chocolate.
+
+> **Stage 4 now has a cheaper default.** The original extractor was a Claude
+> *Workflow* (fleet of subagents) that burned session tokens. There is now a direct
+> **OpenRouter vision** script — `_batch_extract.py` — that does the same job for a
+> fraction of the cost (one Gemini API call per product, no Claude tokens). **Prefer
+> it.** The Workflow remains as a fallback. See Stage 4 below.
 
 ---
 
 ## 1. Stage 1 — Rehost images to S3 (`~/work/video-upload-s3/rehoster/`)
+
+> **Detailed runbook:** `~/work/video-upload-s3/docs/rehoster-runbook.md` (creds,
+> preflight, resume/incremental behavior). The summary below is enough for re-runs.
 
 **Why:** the scraper's `image_urls` point at Amazon's CDN, which blocks hotlinking
 and rotates URLs. We copy every image to our own public S3 bucket so (a) the app can
@@ -166,11 +176,41 @@ reads only its own product (keeps agent context tiny and parallel-safe).
 
 ---
 
-## 4. Stage 4 — Extract from images (`catalog_extract.workflow.js`) ⚠️ EXPENSIVE
+## 4. Stage 4 — Extract from images (vision) ⚠️ the only AI step
 
-**This is the only AI/token-heavy stage.** It runs as a **Workflow** (fleet of
-subagents), one agent per product, each reading the product's images and transcribing
-the nutrition table + ingredients.
+This is the only AI stage. Each product's images are read by a vision model that
+transcribes the **nutrition table** and **ingredients list**, picks the best
+display/nutrition/ingredients image indices, derives a clean name, and assigns a
+confidence. There are **two implementations** that write the identical
+`extractions/<asin>.json` — **prefer the cheap one (4A)**.
+
+### 4A — `_batch_extract.py` (PREFERRED — OpenRouter vision, cheap) ✅
+
+Calls OpenRouter's vision model (`google/gemini-2.5-flash` by default) directly — one
+API call per product, all its images base64-inlined, `response_format: json_object`.
+**No Claude session tokens**, so it's the right default and what addresses the "this
+wastes tokens" problem. It auto-skips products that already have an extraction file,
+so it doubles as the **backfill** tool.
+
+```bash
+cd ~/work/video-upload-s3
+export PARAKH_OPENROUTER_API_KEY=sk-or-...        # or OPENROUTER_API_KEY
+.venv/bin/python _batch_extract.py --limit 5      # smoke test
+.venv/bin/python _batch_extract.py                # all products still missing an extraction
+.venv/bin/python _batch_extract.py --category "protein bars"   # one category
+# flags: --limit N, --category "<bucket>", --delay <seconds between calls>
+```
+- Only processes asins in `items_index.json` that have own images **and no existing
+  `extractions/<asin>.json`** → safe to re-run; it only fills gaps.
+- Retries 429/errors (3 attempts, backoff). Model overridable via `PARAKH_VISION_MODEL`.
+- ⚠️ OpenRouter periodically retires vision models — if every call 4xx's, update
+  `PARAKH_VISION_MODEL` (see the vision-model notes in project memory / backend config).
+
+### 4B — `catalog_extract.workflow.js` (FALLBACK — Claude Workflow, token-heavy)
+
+The original: a **Workflow** of subagents, one Claude agent per product. Same output,
+but it spends session tokens and can hit the session usage limit on big runs. Use only
+if OpenRouter is unavailable or you specifically want Claude's vision.
 
 **Run** (from a Claude session in `~/work/video-upload-s3`, via the `Workflow` tool):
 ```js
@@ -202,7 +242,11 @@ Workflow({ scriptPath: "/Users/rsumit123/work/video-upload-s3/catalog_extract.wo
      **schema-validated** structured output (`SCHEMA` in the script — the model is
      forced to conform, retrying on mismatch).
 
-**Output `extractions/<asin>.json`:**
+> Both 4A and 4B share the **same extraction contract** — identical output keys and
+> the same Indian-label conversions (kcal→kJ, sodium→salt, per-serving→100 g). 4A
+> encodes them in its `SYSTEM_PROMPT`; 4B in the agent prompt + JSON `SCHEMA`.
+
+**Output `extractions/<asin>.json`** (identical from 4A and 4B):
 ```jsonc
 {
   "asin": "B08L4HDPRK",
@@ -367,8 +411,9 @@ curl -s -X POST https://parakh-api.skdev.one/scan/barcode -H "Authorization: Bea
 cd ~/work/video-upload-s3
 .venv/bin/python _build_worklist.py        # 2: barcodes + own-image filter
 .venv/bin/python _make_items.py            # 3: per-product inputs
-#   4: EXPENSIVE — run the Workflow (vision subagents):
-#      Workflow({ scriptPath: ".../catalog_extract.workflow.js" })   (args:{limit:5} to smoke-test)
+export PARAKH_OPENROUTER_API_KEY=sk-or-... # 4: PREFERRED cheap vision extractor (no Claude tokens)
+.venv/bin/python _batch_extract.py         #    (auto-skips already-extracted; --limit 5 to smoke-test)
+#   4 fallback: Workflow({ scriptPath: ".../catalog_extract.workflow.js" })  (Claude subagents, token-heavy)
 .venv/bin/python _assemble.py              # 5: validate + write catalog_extracted.json
 
 # --- this repo (~/work/nutri-content) ---
@@ -389,10 +434,11 @@ ssh ssh-social 'docker exec parakh-backend python -m scripts.backfill_embeddings
 **Build repo `~/work/video-upload-s3/` (git-ignores images/, source/, *_sumits_private.json, *.log):**
 | File | Stage | Role |
 |---|---|---|
-| `rehoster/` | 1 | Fetch images → S3, rewrite URLs (needs AWS creds) |
+| `rehoster/` | 1 | Fetch images → S3, rewrite URLs (needs AWS creds). Runbook: `docs/rehoster-runbook.md` |
 | `_build_worklist.py` | 2 | Own-image filter + zxing barcode decode → `worklist.json` |
 | `_make_items.py` | 3 | `items/<asin>.json` + `items_index.json` |
-| `catalog_extract.workflow.js` | 4 | Vision-subagent extraction → `extractions/<asin>.json` |
+| **`_batch_extract.py`** | 4A | **PREFERRED** OpenRouter-vision extraction (cheap, no Claude tokens); auto-skips done → `extractions/<asin>.json` |
+| `catalog_extract.workflow.js` | 4B | Fallback Claude-Workflow extraction (same output, token-heavy) |
 | `_assemble.py` | 5 | Validate + join → writes catalog_extracted/skipped into the app repo |
 | `worklist.json`, `items/`, `extractions/` | — | Intermediate artifacts (regenerable) |
 
