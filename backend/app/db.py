@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 # plain SQLite-compatible ADD COLUMN clause; applied only if the column is absent.
 _ADDED_COLUMNS: dict[str, dict[str, str]] = {
     "products": {"category": "VARCHAR DEFAULT ''", "image_url": "VARCHAR DEFAULT ''",
-                 "embedding": "JSON"},
+                 "embedding": "JSON", "serving_size_g": "FLOAT"},
     "users": {
         "google_id": "VARCHAR",
         "display_name": "VARCHAR",
