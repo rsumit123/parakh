@@ -38,9 +38,13 @@ def _status_for(macro: str, consumed: float, target: float) -> str:
 
 
 def _join(names: list[str]) -> str:
-    if len(names) <= 1:
-        return names[0] if names else ""
-    return " & ".join([", ".join(names[:-1]), names[-1]]) if len(names) > 2 else f"{names[0]} & {names[1]}"
+    if not names:
+        return ""
+    if len(names) == 1:
+        return names[0]
+    if len(names) == 2:
+        return f"{names[0]} & {names[1]}"
+    return ", ".join(names[:-1]) + " & " + names[-1]
 
 
 def _headline(lows: list[str], overs: list[str], has_entries: bool) -> str:
