@@ -92,3 +92,14 @@ def test_log_unpackaged_uses_supplied_per100g_then_day_and_delete(client_and_sf)
     assert len(day["entries"]) == 1 and day["targets"]["protein_g"] == 50.0
     d = c.delete(f"/diet/log/{eid}", headers=h)
     assert d.status_code == 200 and d.json()["totals"]["protein_g"] == 0
+
+
+def test_profile_get_then_override_changes_targets(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    r0 = c.get("/diet/profile", headers=h).json()
+    assert r0["effective_targets"]["protein_g"] == 50.0
+    c.put("/diet/profile", headers=h, json={"target_overrides": {"protein_g": 90}})
+    r1 = c.get("/diet/profile", headers=h).json()
+    assert r1["effective_targets"]["protein_g"] == 90.0
+    assert c.get("/diet/day?date=2026-06-13", headers=h).json()["targets"]["protein_g"] == 90.0

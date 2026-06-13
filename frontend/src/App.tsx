@@ -19,6 +19,7 @@ import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./se
 import { defaultServingG } from "./diet/portion";
 import { addLog, estimateMeal, type Macros, type LogBody } from "./api/diet";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
+import { TargetsScreen } from "./screens/TargetsScreen";
 import type { Product, ScanResult } from "./api/types";
 
 function Shell() {
@@ -175,7 +176,8 @@ function Shell() {
       onConfirm={logMeal} onBack={back} />;
   }
   if (cur.t === "targets") {
-    return <div style={{ padding: 40 }}>Coming up next… <button onClick={back}>Back</button></div>;
+    if (!token) return null;
+    return <TargetsScreen token={token} onBack={back} />;
   }
   return tabbed(
     <HomeScreen remaining={remaining} isGuest={isGuest} history={history}
