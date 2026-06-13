@@ -12,6 +12,9 @@ export function PortionSheet({
   const [grams, setGrams] = useState(Math.round(defaultGrams));
   const m = portionMacros(per100g, grams);
   const mult = (factor: number) => setGrams(Math.round(defaultGrams * factor));
+  const activeFactor = grams === Math.round(defaultGrams * 0.5) ? 0.5
+    : grams === Math.round(defaultGrams * 2) ? 2
+    : grams === Math.round(defaultGrams * 1) ? 1 : 0;
   return (
     <div className={styles.wrap} role="dialog" aria-label="Portion">
       <div className={styles.scrim} onClick={onCancel} />
@@ -20,12 +23,12 @@ export function PortionSheet({
         <h3 className={styles.h}>How much did you have?</h3>
         <p className={styles.sub}>{title}</p>
         <div className={styles.seg}>
-          <button onClick={() => mult(0.5)}>½</button>
-          <button className={styles.on} onClick={() => mult(1)}>1 serving</button>
-          <button onClick={() => mult(2)}>2</button>
+          <button className={activeFactor === 0.5 ? styles.on : ""} onClick={() => mult(0.5)}>½</button>
+          <button className={activeFactor === 1 ? styles.on : ""} onClick={() => mult(1)}>1 serving</button>
+          <button className={activeFactor === 2 ? styles.on : ""} onClick={() => mult(2)}>2</button>
         </div>
         <div className={styles.grams}>
-          <input type="number" min={0} value={grams}
+          <input type="number" min={0} value={grams} aria-label="Portion in grams"
             onChange={(e) => setGrams(Math.max(0, Number(e.target.value) || 0))} />
           <span>grams</span>
         </div>
