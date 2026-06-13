@@ -17,7 +17,8 @@ import {
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
 import { defaultServingG } from "./diet/portion";
-import { addLog, type Macros } from "./api/diet";
+import { addLog, estimateMeal, type Macros, type LogBody } from "./api/diet";
+import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
 import type { Product, ScanResult } from "./api/types";
 
 function Shell() {
@@ -26,6 +27,7 @@ function Shell() {
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [portionFor, setPortionFor] = useState<Product | null>(null);
+  const [estimating, setEstimating] = useState(false);
 
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
@@ -138,7 +140,40 @@ function Shell() {
         onAddFood={() => go(push(stack, { t: "mealCapture" }))}
         onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
   }
-  if (cur.t === "mealCapture" || cur.t === "confirmMeal" || cur.t === "targets") {
+  if (cur.t === "mealCapture") {
+    const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !token) return;
+      setEstimating(true);
+      try {
+        const est = await estimateMeal(token, file);
+        go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: est }), "replace");
+      } catch {
+        go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: null }), "replace");
+      } finally { setEstimating(false); }
+    };
+    return (
+      <div style={{ minHeight: "100dvh", display: "grid", placeItems: "center", gap: 16, padding: 24 }}>
+        <p style={{ color: "var(--muted)" }}>{estimating ? "Reading your meal…" : "Snap or choose a photo of your meal"}</p>
+        <label style={{ background: "var(--lime)", color: "#16341f", padding: "14px 22px", borderRadius: 16, fontWeight: 700 }}>
+          📷 Take / choose photo
+          <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={onFile} />
+        </label>
+        <button onClick={() => go(push(stack.slice(0, -1), { t: "confirmMeal", estimate: null }))}
+          style={{ background: "transparent", color: "var(--muted)", border: 0 }}>or enter manually</button>
+        <button onClick={back} style={{ background: "transparent", color: "var(--muted)", border: 0 }}>Cancel</button>
+      </div>
+    );
+  }
+  if (cur.t === "confirmMeal") {
+    const logMeal = async (body: LogBody) => {
+      if (!token) return;
+      try { await addLog(token, body); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
+    };
+    return <ConfirmMealScreen estimate={cur.estimate} imageUrl={cur.imageUrl}
+      onConfirm={logMeal} onBack={back} />;
+  }
+  if (cur.t === "targets") {
     return <div style={{ padding: 40 }}>Coming up next… <button onClick={back}>Back</button></div>;
   }
   return tabbed(
