@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getDay, deleteLog, type DietDay, type MacroKey } from "../api/diet";
-import { kcal } from "../diet/portion";
+import { kcal, isLiquid } from "../diet/portion";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -62,7 +62,7 @@ export function TodayScreen({ token, onAddFood, onOpenTargets }: {
               <div className={styles.thumb}>{e.kind === "packaged" ? "🛒" : "🍽"}</div>
               <div>
                 <div className={styles.iname}>{e.name}</div>
-                <div className={styles.imeta}>{Math.round(e.quantity_g)}g</div>
+                <div className={styles.imeta}>{Math.round(e.quantity_g)}{isLiquid(e.name) ? "ml" : "g"}</div>
               </div>
               <span className={styles.ical}>{kcal(e.energy_kj)}</span>
               <button className={styles.del} onClick={() => remove(e.id)} aria-label="Remove">🗑</button>

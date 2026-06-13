@@ -23,3 +23,9 @@ export function defaultServingG(servingSizeG: number | null | undefined, categor
 export function kcal(energyKj: number): number {
   return Math.round(energyKj / 4.184);
 }
+
+// Beverage detection from a dish name, so portion UI reads "glass/ml" not "plate/g".
+const LIQUID_RE = /\b(juice|lassi|shake|milkshake|smoothie|coffee|latte|cappuccino|espresso|frappe|tea|chai|soda|cola|drink|water|buttermilk|chaas|milk|lemonade|sharbat|nimbu|kombucha|mocktail|cocktail|sherbet)\b/i;
+export function isLiquid(name: string): boolean {
+  return LIQUID_RE.test(name || "");
+}

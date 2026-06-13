@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { MealEstimate, Macros, LogBody } from "../api/diet";
-import { portionMacros, kcal } from "../diet/portion";
+import { portionMacros, kcal, isLiquid } from "../diet/portion";
 import styles from "./ConfirmMealScreen.module.css";
 
 const BLANK: Macros = { energy_kj: 0, sugars_g: 0, sat_fat_g: 0, salt_g: 0, fibre_g: 0, protein_g: 0 };
@@ -10,6 +10,7 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
   onConfirm: (body: LogBody) => void; onBack: () => void;
 }) {
   const [name, setName] = useState(estimate?.name ?? "");
+  const liquid = isLiquid(name);
   const [grams, setGrams] = useState(Math.round(estimate?.portion_g ?? 100));
   const [seg, setSeg] = useState<"s" | "m" | "l" | null>("m");
   const per100 = estimate?.per100g ?? BLANK;
@@ -33,13 +34,13 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
       <div className={styles.label}>Portion</div>
       <div className={styles.seg}>
         <button className={seg === "s" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base * 0.5)); setSeg("s"); }}>Small</button>
-        <button className={seg === "m" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base)); setSeg("m"); }}>1 plate</button>
+        <button className={seg === "m" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base)); setSeg("m"); }}>{liquid ? "1 glass" : "1 plate"}</button>
         <button className={seg === "l" ? styles.on : undefined} onClick={() => { setGrams(Math.round(base * 1.5)); setSeg("l"); }}>Large</button>
       </div>
       <div className={styles.grams}>
-        <input type="number" min={0} value={grams} aria-label="Portion in grams"
+        <input type="number" min={0} value={grams} aria-label={`Portion in ${liquid ? "millilitres" : "grams"}`}
           onChange={(e) => { setGrams(Math.max(0, Number(e.target.value) || 0)); setSeg(null); }} />
-        <span>grams</span>
+        <span>{liquid ? "ml" : "grams"}</span>
       </div>
       <div className={styles.preview}><span>Counts</span>
         <b>{kcal(m.energy_kj)} kcal · {m.sugars_g.toFixed(1)}g sugar · {m.protein_g.toFixed(1)}g protein</b></div>
