@@ -47,3 +47,11 @@ def test_on_track_headline():
     s = summarize_day(entries, targets)
     assert s["status"]["protein_g"] == "ok" and s["status"]["fibre_g"] == "ok"
     assert "On track" in s["headline"]
+
+
+def test_headline_multiple_lows_and_overs():
+    targets = compute_targets(None)
+    entries = [_entry(protein_g=10, fibre_g=5, sugars_g=80, sat_fat_g=40, salt_g=9, energy_kj=9000)]
+    s = summarize_day(entries, targets)
+    assert "low on fibre & protein" in s["headline"]
+    assert "over on sugar, sat fat & salt" in s["headline"]
