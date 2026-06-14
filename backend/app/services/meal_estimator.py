@@ -8,15 +8,18 @@ import httpx
 
 _MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
 _PROMPT = (
-    "You are looking at a photo of a prepared Indian meal. Return ONLY a JSON object with keys: "
-    "name (the SPECIFIC dish name, e.g. 'Gulab Jamun', 'Chana Masala', 'Masala Dosa' - NOT a generic "
-    "description; name only the MAIN dish, ignore side chutneys/garnish/raita unless they ARE the dish), "
-    "portion_g (number = ONE typical single-person serving of that dish, NOT the whole platter/jug/"
-    "quantity visible in the photo), and nutrition (numeric PER-100g keys: energy_kj, sugars_g, "
-    "sat_fat_g, salt_g, fibre_g, protein_g).\n"
-    "Anchor portion_g to ONE serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass of "
-    "lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
-    "rasmalai) ~90 g; a fried snack (samosa/vada/pakora) ~60 g per piece (so 2 pieces ~120 g).\n"
+    "You are looking at a photo of an Indian meal that may contain ONE OR SEVERAL dishes "
+    "(e.g. a thali or combo plate). Identify EVERY distinct dish. Return ONLY a JSON object "
+    "of the form {\"items\": [ ... ]} where each item is "
+    "{\"name\": str, \"portion_g\": number, \"nutrition\": {...}}.\n"
+    "- name: the SPECIFIC dish name (e.g. 'Dal Tadka', 'Jeera Rice', 'Gulab Jamun'), NOT a generic "
+    "description.\n"
+    "- portion_g: ONE typical single-person serving of THAT dish (NOT the whole platter).\n"
+    "- nutrition: PER-100g numbers: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g.\n"
+    "If only one dish is present, return a single-item list.\n"
+    "Anchor each portion_g to one serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass "
+    "of lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
+    "rasmalai) ~90 g; a fried snack (samosa/vada/pakora) ~60 g per piece.\n"
     "energy_kj in kilojoules (kcal*4.184). Use 0 only when truly negligible. No prose, JSON only."
 )
 
@@ -58,6 +61,13 @@ def _clamp_portion(name: str, portion: float) -> float:
     return portion
 
 
+def _one_item(d: dict) -> dict:
+    name = str(d.get("name", "") or "").strip() or "Item"
+    portion = float(d.get("portion_g", 0) or 0) or 200.0
+    return {"name": name, "portion_g": _clamp_portion(name, portion),
+            "per100g": _per100g(d.get("nutrition", {}))}
+
+
 class MealEstimator:
     def __init__(self, api_key: str, model: str, url: str, timeout: float = 30.0):
         self._api_key = api_key
@@ -89,10 +99,11 @@ class MealEstimator:
             raise MealEstimateError("model did not return JSON") from e
         if not isinstance(data, dict):
             raise MealEstimateError("model did not return a JSON object")
-        name = str(data.get("name", "") or "").strip() or "Meal"
-        portion = float(data.get("portion_g", 0) or 0) or 200.0
-        return {
-            "name": name,
-            "portion_g": _clamp_portion(name, portion),
-            "per100g": _per100g(data.get("nutrition", {})),
-        }
+        raw = data.get("items")
+        if not isinstance(raw, list) or not raw:
+            # tolerate a legacy single-object response {name, portion_g, nutrition}
+            raw = [data] if (data.get("name") or isinstance(data.get("nutrition"), dict)) else []
+        items = [_one_item(d) for d in raw if isinstance(d, dict)]
+        if not items:
+            items = [{"name": "Meal", "portion_g": 200.0, "per100g": _per100g({})}]
+        return {"items": items}
