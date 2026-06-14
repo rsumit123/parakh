@@ -9,7 +9,6 @@ from app.repositories.products import ProductRepository
 from app.clients.openfoodfacts import OpenFoodFactsClient
 from app.clients.label_extractor import LabelExtractor, ExtractionError
 from app.services.meal_estimator import MealEstimator, MealEstimateError
-from app.scoring.scorer import score as score_fn
 from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
@@ -143,9 +142,8 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         except MealEstimateError:
             raise HTTPException(status_code=422,
                                 detail={"error": "could not read the meal, retake photo"})
-        scored = score_fn([], {**est["per100g"], "fruit_veg_nuts_pct": 0}, "")
         _consume(identity)
-        return {**est, "grade": scored["grade"]}
+        return est  # {"items": [{name, portion_g, per100g}, ...]}
 
     @app.get("/diet/profile")
     def diet_get_profile(identity: dict = Depends(current_user)):

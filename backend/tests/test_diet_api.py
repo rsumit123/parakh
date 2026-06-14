@@ -16,9 +16,14 @@ class _Extractor:
 
 class _Estimator:
     def estimate(self, image_bytes):
-        return {"name": "Dal rice", "portion_g": 350.0,
-                "per100g": {"energy_kj": 500, "sugars_g": 2, "sat_fat_g": 1,
-                            "salt_g": 0.3, "fibre_g": 2, "protein_g": 4}}
+        return {"items": [
+            {"name": "Dal Tadka", "portion_g": 200.0,
+             "per100g": {"energy_kj": 480, "sugars_g": 1, "sat_fat_g": 2, "salt_g": 0.5,
+                         "fibre_g": 8, "protein_g": 9}},
+            {"name": "Jeera Rice", "portion_g": 250.0,
+             "per100g": {"energy_kj": 540, "sugars_g": 0, "sat_fat_g": 1, "salt_g": 0.3,
+                         "fibre_g": 2, "protein_g": 4}},
+        ]}
 
 
 @pytest.fixture
@@ -69,15 +74,16 @@ def test_log_packaged_computes_macros_from_product(client_and_sf):
     assert "headline" in body
 
 
-def test_estimate_returns_dish_and_per100g(client_and_sf):
+def test_estimate_returns_items(client_and_sf):
     c, _ = client_and_sf
     h = _user_headers()
     r = c.post("/diet/estimate", headers=h,
                files={"image": ("m.jpg", b"jpegbytes", "image/jpeg")})
     assert r.status_code == 200
-    body = r.json()
-    assert body["name"] == "Dal rice" and body["per100g"]["protein_g"] == 4
-    assert "grade" in body
+    items = r.json()["items"]
+    assert len(items) == 2
+    assert items[0]["name"] == "Dal Tadka" and items[1]["portion_g"] == 250.0
+    assert items[0]["per100g"]["protein_g"] == 9
 
 
 def test_log_unpackaged_uses_supplied_per100g_then_day_and_delete(client_and_sf):
