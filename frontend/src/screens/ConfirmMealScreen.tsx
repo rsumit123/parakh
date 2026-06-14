@@ -5,13 +5,13 @@ import styles from "./ConfirmMealScreen.module.css";
 
 const MK: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"];
 
-interface Row { name: string; grams: number; per100g: Macros; base: number; }
+interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
 
 export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
   estimate: MealEstimate; onConfirm: (body: LogBody) => void; onBack: () => void;
 }) {
-  const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i) => ({
-    name: i.name, grams: Math.round(i.portion_g), per100g: i.per100g, base: i.portion_g || 100,
+  const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i, idx) => ({
+    id: idx, name: i.name, grams: Math.round(i.portion_g), per100g: i.per100g, base: i.portion_g || 100,
   })));
   const multi = rows.length > 1;
   const [mealName, setMealName] = useState(multi ? "Thali" : (rows[0]?.name ?? "Meal"));
@@ -60,7 +60,7 @@ export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
         const liquid = isLiquid(r.name);
         const m = portionMacros(r.per100g, r.grams);
         const active = r.grams === Math.round(r.base * 0.5) ? 0.5
-          : r.grams === Math.round(r.base * 2) ? 2
+          : r.grams === Math.round(r.base * 1.5) ? 1.5
           : r.grams === Math.round(r.base) ? 1 : 0;
         return (
           <>
@@ -68,7 +68,7 @@ export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
             <div className={styles.seg}>
               <button className={active === 0.5 ? styles.on : undefined} onClick={() => setRow(0, { grams: Math.round(r.base * 0.5) })}>Small</button>
               <button className={active === 1 ? styles.on : undefined} onClick={() => setRow(0, { grams: Math.round(r.base) })}>{liquid ? "1 glass" : "1 plate"}</button>
-              <button className={active === 2 ? styles.on : undefined} onClick={() => setRow(0, { grams: Math.round(r.base * 2) })}>Large</button>
+              <button className={active === 1.5 ? styles.on : undefined} onClick={() => setRow(0, { grams: Math.round(r.base * 1.5) })}>Large</button>
             </div>
             <div className={styles.grams}>
               <input type="number" min={0} value={r.grams} aria-label={`Portion in ${liquid ? "millilitres" : "grams"}`}
@@ -87,7 +87,7 @@ export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
           {rows.map((r, idx) => {
             const liquid = isLiquid(r.name);
             return (
-              <div key={idx} className={styles.row}>
+              <div key={r.id} className={styles.row}>
                 <input className={styles.rowName} value={r.name} aria-label="Dish name"
                   onChange={(e) => setRow(idx, { name: e.target.value })} />
                 <input className={styles.rowGrams} type="number" min={0} value={r.grams}
