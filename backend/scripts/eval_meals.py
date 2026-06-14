@@ -79,6 +79,7 @@ def main() -> None:
         return
 
     print(f"model: {settings.vision_model} | {len(files)} images\n")
+    _MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
     results, hits, errs = [], 0, 0
     for f in files:
         truth = true_label(f)
@@ -89,17 +90,25 @@ def main() -> None:
             errs += 1
             print(f"ERR  | {truth:24} | {e}")
             continue
-        per = r["per100g"]
-        grade = score_fn([], {**per, "fruit_veg_nuts_pct": 0}, "")["grade"]
-        ok = name_matches(truth, r["name"])
+        items = r["items"]
+        combined_name = ", ".join(i["name"] for i in items)
+        total_g = sum(i["portion_g"] for i in items)
+        total_kcal = sum(i["per100g"]["energy_kj"] / 4.184 * i["portion_g"] / 100 for i in items)
+        total_protein = sum(i["per100g"]["protein_g"] * i["portion_g"] / 100 for i in items)
+        combined_per100g = {
+            k: (sum(i["per100g"][k] * i["portion_g"] for i in items) / total_g if total_g else 0)
+            for k in _MACRO_KEYS
+        }
+        grade = score_fn([], {**combined_per100g, "fruit_veg_nuts_pct": 0}, "")["grade"]
+        ok = any(name_matches(truth, i["name"]) for i in items)
         hits += ok
-        kcal = round(per["energy_kj"] / 4.184)
-        print(f"{'OK  ' if ok else 'MISS'} | true: {truth:24} | pred: {r['name'][:30]:30} | "
-              f"{r['portion_g']:>4.0f}g | {kcal:>4}kcal "
-              f"s{per['sugars_g']:>4.0f} p{per['protein_g']:>4.0f} f{per['fibre_g']:>4.0f} | {grade}")
-        results.append({"file": os.path.basename(f), "truth": truth, "pred": r["name"],
-                        "match": ok, "portion_g": r["portion_g"], "kcal_100": kcal,
-                        "per100g": per, "grade": grade})
+        print(f"{'OK  ' if ok else 'MISS'} | true: {truth:24} | items: {combined_name[:40]:40} | "
+              f"n={len(items)} | {round(total_kcal):>4}kcal total p{total_protein:>4.0f}g | {grade}")
+        results.append({"file": os.path.basename(f), "truth": truth,
+                        "items": [{"name": i["name"], "portion_g": i["portion_g"]} for i in items],
+                        "n_items": len(items), "match": ok,
+                        "total_kcal": round(total_kcal, 1),
+                        "combined_per100g": combined_per100g, "grade": grade})
 
     n = len(results)
     print(f"\nname-match (loose): {hits}/{n} = {round(100 * hits / n) if n else 0}%"

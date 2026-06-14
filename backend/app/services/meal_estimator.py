@@ -1,6 +1,7 @@
 """Estimate nutrients for an unpackaged meal photo via an OpenRouter vision model.
-Mirrors LabelExtractor: returns {name, portion_g, per100g{6 macros}}. The macros are
-PER 100 g so the client can re-scale to any confirmed portion."""
+Returns {"items": [{name, portion_g, per100g{6 macros}}, ...]} — one item per distinct
+dish (single dish = one-item list). The macros are PER 100 g so the client can re-scale
+to any confirmed portion."""
 import base64
 import json
 import re
