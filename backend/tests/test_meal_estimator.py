@@ -8,17 +8,6 @@ class _Resp:
     def json(self): return {"choices": [{"message": {"content": self._c}}]}
 
 
-def test_parses_estimate(monkeypatch):
-    payload = json.dumps({"name": "Dal rice", "portion_g": 350,
-        "nutrition": {"energy_kj": 500, "sugars_g": 2, "sat_fat_g": 1, "salt_g": 0.3,
-                      "fibre_g": 2, "protein_g": 4}})
-    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
-    est = MealEstimator(api_key="k", model="m", url="u").estimate(b"jpegbytes")
-    assert est["name"] == "Dal rice" and est["portion_g"] == 350.0
-    assert est["per100g"]["protein_g"] == 4.0
-    assert set(est["per100g"]) == {"energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"}
-
-
 def test_raises_on_bad_json(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp("not json"))
     try:
@@ -28,19 +17,50 @@ def test_raises_on_bad_json(monkeypatch):
         pass
 
 
-def test_clamps_absurd_drink_portion(monkeypatch):
-    payload = json.dumps({"name": "Mango Lassi", "portion_g": 1000,
+def test_parses_single_item(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Dal Tadka", "portion_g": 200,
+        "nutrition": {"energy_kj": 480, "sugars_g": 1, "sat_fat_g": 2, "salt_g": 0.5,
+                      "fibre_g": 8, "protein_g": 9}}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert len(out["items"]) == 1
+    it = out["items"][0]
+    assert it["name"] == "Dal Tadka" and it["portion_g"] == 200
+    assert set(it["per100g"]) == {"energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"}
+
+
+def test_parses_multi_item_thali(monkeypatch):
+    payload = json.dumps({"items": [
+        {"name": "Dal", "portion_g": 200, "nutrition": {"energy_kj": 480, "sugars_g": 1,
+            "sat_fat_g": 2, "salt_g": 0.5, "fibre_g": 8, "protein_g": 9}},
+        {"name": "Jeera Rice", "portion_g": 250, "nutrition": {"energy_kj": 540, "sugars_g": 0,
+            "sat_fat_g": 1, "salt_g": 0.3, "fibre_g": 2, "protein_g": 4}},
+    ]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert [i["name"] for i in out["items"]] == ["Dal", "Jeera Rice"]
+    assert out["items"][1]["portion_g"] == 250
+
+
+def test_clamps_absurd_portion_per_item(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Mango Lassi", "portion_g": 1000,
         "nutrition": {"energy_kj": 300, "sugars_g": 13, "sat_fat_g": 2, "salt_g": 0.1,
-                      "fibre_g": 0, "protein_g": 4}})
+                      "fibre_g": 0, "protein_g": 4}}]})
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
-    est = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
-    assert est["portion_g"] == 250.0  # 1000 g jug -> typical glass
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert out["items"][0]["portion_g"] == 250.0  # drink clamp
 
 
-def test_keeps_reasonable_portion(monkeypatch):
-    payload = json.dumps({"name": "Chana Masala", "portion_g": 220,
-        "nutrition": {"energy_kj": 480, "sugars_g": 4, "sat_fat_g": 1, "salt_g": 0.6,
-                      "fibre_g": 8, "protein_g": 7}})
+def test_wraps_legacy_single_object(monkeypatch):
+    payload = json.dumps({"name": "Paneer Tikka", "portion_g": 180,
+        "nutrition": {"energy_kj": 900, "sugars_g": 3, "sat_fat_g": 6, "salt_g": 0.8,
+                      "fibre_g": 1, "protein_g": 20}})
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
-    est = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
-    assert est["portion_g"] == 220  # within curry bounds, untouched
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert len(out["items"]) == 1 and out["items"][0]["name"] == "Paneer Tikka"
+
+
+def test_empty_items_falls_back_to_one(monkeypatch):
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp('{"items": []}'))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert len(out["items"]) == 1 and out["items"][0]["name"] == "Meal"
