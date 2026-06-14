@@ -10,7 +10,7 @@ export type Screen =
   | { t: "home" } | { t: "explore" } | { t: "history" }
   | { t: "today" }
   | { t: "mealCapture" }
-  | { t: "confirmMeal"; estimate: MealEstimate | null; imageUrl?: string }
+  | { t: "confirmMeal"; estimate: MealEstimate }
   | { t: "targets" }
   | { t: "category"; category: string }
   | { t: "scan" }

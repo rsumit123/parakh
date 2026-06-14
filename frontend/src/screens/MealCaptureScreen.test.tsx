@@ -4,8 +4,8 @@ import { MealCaptureScreen } from "./MealCaptureScreen";
 
 vi.mock("../api/diet", async (orig) => ({
   ...(await orig()),
-  estimateMeal: vi.fn(() => Promise.resolve({ name: "Dal rice", portion_g: 350,
-    per100g: { energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: 4 } })),
+  estimateMeal: vi.fn(() => Promise.resolve({ items: [{ name: "Dal rice", portion_g: 350,
+    per100g: { energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: 4 } }] })),
 }));
 
 describe("MealCaptureScreen", () => {
@@ -14,7 +14,7 @@ describe("MealCaptureScreen", () => {
     render(<MealCaptureScreen token="t" onEstimated={onEstimated} onBack={() => {}} />);
     fireEvent.change(screen.getByTestId("meal-gallery"),
       { target: { files: [new File(["x"], "m.jpg", { type: "image/jpeg" })] } });
-    await waitFor(() => expect(onEstimated).toHaveBeenCalledWith(expect.objectContaining({ name: "Dal rice" })));
+    await waitFor(() => expect(onEstimated).toHaveBeenCalledWith(expect.objectContaining({ items: expect.any(Array) })));
   });
 
   it("offers a gallery option even when the camera is unavailable", () => {

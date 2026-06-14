@@ -14,9 +14,8 @@ export interface DietDay {
   date: string; entries: LogEntry[]; targets: Macros; totals: Macros;
   status: Record<MacroKey, MacroStatus>; headline: string;
 }
-export interface MealEstimate {
-  name: string; portion_g: number; per100g: Macros; grade?: string; image_url?: string;
-}
+export interface MealItem { name: string; portion_g: number; per100g: Macros; }
+export interface MealEstimate { items: MealItem[]; }
 export interface LogBody {
   kind: "packaged" | "unpackaged" | "manual";
   barcode?: string | null; name: string; brand?: string;

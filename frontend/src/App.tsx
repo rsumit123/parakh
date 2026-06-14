@@ -156,8 +156,7 @@ function Shell() {
       if (!token) return;
       try { await addLog(token, body); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
     };
-    return <ConfirmMealScreen estimate={cur.estimate} imageUrl={cur.imageUrl}
-      onConfirm={logMeal} onBack={back} />;
+    return <ConfirmMealScreen estimate={cur.estimate} onConfirm={logMeal} onBack={back} />;
   }
   if (cur.t === "targets") {
     if (!token) return null;
