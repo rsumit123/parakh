@@ -64,3 +64,12 @@ def test_empty_items_falls_back_to_one(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp('{"items": []}'))
     out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
     assert len(out["items"]) == 1 and out["items"][0]["name"] == "Meal"
+
+
+def test_small_thali_helping_not_inflated(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Aloo Sabzi", "portion_g": 70,
+        "nutrition": {"energy_kj": 400, "sugars_g": 2, "sat_fat_g": 2, "salt_g": 0.5,
+                      "fibre_g": 3, "protein_g": 3}}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert out["items"][0]["portion_g"] == 70  # survives (default min lowered to 15)

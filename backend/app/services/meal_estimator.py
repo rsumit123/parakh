@@ -9,18 +9,20 @@ import httpx
 
 _MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
 _PROMPT = (
-    "You are looking at a photo of an Indian meal that may contain ONE OR SEVERAL dishes "
-    "(e.g. a thali or combo plate). Identify EVERY distinct dish. Return ONLY a JSON object "
-    "of the form {\"items\": [ ... ]} where each item is "
-    "{\"name\": str, \"portion_g\": number, \"nutrition\": {...}}.\n"
+    "You are looking at a photo of an Indian meal that may contain ONE OR SEVERAL dishes (e.g. a thali "
+    "or combo plate). Identify EVERY distinct dish. Return ONLY a JSON object of the form "
+    "{\"items\": [ ... ]} where each item is {\"name\": str, \"portion_g\": number, \"nutrition\": {...}}.\n"
     "- name: the SPECIFIC dish name (e.g. 'Dal Tadka', 'Jeera Rice', 'Gulab Jamun'), NOT a generic "
     "description.\n"
     "- portion_g: ONE typical single-person serving of THAT dish (NOT the whole platter).\n"
     "- nutrition: PER-100g numbers: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g.\n"
     "If only one dish is present, return a single-item list.\n"
-    "Anchor each portion_g to one serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass "
-    "of lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
+    "Anchor each portion_g to one serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass of "
+    "lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
     "rasmalai) ~90 g; a fried snack (samosa/vada/pakora) ~60 g per piece.\n"
+    "BUT if SEVERAL dishes share one plate (a thali or combo), each dish is a smaller shared helping — "
+    "use about HALF those sizes, and skip trivial condiments (papad, pickle, chutney, raita) unless one "
+    "is the main dish.\n"
     "energy_kj in kilojoules (kcal*4.184). Use 0 only when truly negligible. No prose, JSON only."
 )
 
@@ -42,16 +44,16 @@ def _portion_bounds(name: str):
     if re.search(r"\b(juice|lassi|shake|smoothie|coffee|latte|tea|chai|soda|cola|drink|"
                  r"water|buttermilk|chaas|milk|lemonade|sharbat|nimbu|kombucha|mocktail|"
                  r"cocktail|sherbet)\b", n):
-        return (250.0, 100.0, 600.0)
+        return (250.0, 40.0, 600.0)
     if re.search(r"\b(barfi|burfi|gulab jamun|jamun|kulfi|rasmalai|rasgulla|halwa|ladoo|"
                  r"laddu|jalebi|kalakand|peda|sandesh|mithai|sweet|dessert)\b", n):
-        return (90.0, 30.0, 250.0)
+        return (90.0, 15.0, 250.0)
     if re.search(r"\b(naan|roti|chapati|chapathi|paratha|kulcha|bhatura|poori|puri|idli|"
-                 r"dosa|uttapam|bread)\b", n):
-        return (90.0, 25.0, 300.0)
+                 r"dosa|uttapam|bread|papad|papadum)\b", n):
+        return (55.0, 12.0, 300.0)
     if re.search(r"\b(samosa|vada|pakora|pakoda|bhaji|tikki|cutlet|bonda|kachori|chaat)\b", n):
-        return (120.0, 40.0, 350.0)
-    return (300.0, 80.0, 700.0)  # curries, dals, rice, biryani, everything else
+        return (60.0, 15.0, 350.0)
+    return (200.0, 15.0, 700.0)  # curries, dals, rice, biryani, everything else
 
 
 def _clamp_portion(name: str, portion: float) -> float:
