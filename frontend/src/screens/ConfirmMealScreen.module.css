@@ -17,3 +17,9 @@
 .preview > span { flex: none; white-space: nowrap; }
 .preview b { color: var(--ink); font-size: 13px; text-align: right; }
 .add { display: block; width: calc(100% - 32px); margin: 0 16px; padding: 15px; border-radius: 16px; font-size: 15.5px; font-weight: 700; background: var(--lime); color: #16341f; border: 0; }
+.row { display: flex; align-items: center; gap: 8px; margin: 0 16px 8px; }
+.rowName { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-family: inherit; font-size: 14px; font-weight: 700; background: var(--card); }
+.rowGrams { width: 64px; text-align: right; border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px; font-family: inherit; font-size: 14px; font-weight: 700; background: var(--card); }
+.unit { color: var(--muted); font-size: 12px; width: 18px; }
+.rm { background: transparent; color: var(--muted); font-size: 15px; width: 28px; flex: none; }
+.rm:disabled { opacity: 0.3; }
