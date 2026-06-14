@@ -26,3 +26,21 @@ def test_raises_on_bad_json(monkeypatch):
         assert False
     except MealEstimateError:
         pass
+
+
+def test_clamps_absurd_drink_portion(monkeypatch):
+    payload = json.dumps({"name": "Mango Lassi", "portion_g": 1000,
+        "nutrition": {"energy_kj": 300, "sugars_g": 13, "sat_fat_g": 2, "salt_g": 0.1,
+                      "fibre_g": 0, "protein_g": 4}})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    est = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert est["portion_g"] == 250.0  # 1000 g jug -> typical glass
+
+
+def test_keeps_reasonable_portion(monkeypatch):
+    payload = json.dumps({"name": "Chana Masala", "portion_g": 220,
+        "nutrition": {"energy_kj": 480, "sugars_g": 4, "sat_fat_g": 1, "salt_g": 0.6,
+                      "fibre_g": 8, "protein_g": 7}})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    est = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert est["portion_g"] == 220  # within curry bounds, untouched
