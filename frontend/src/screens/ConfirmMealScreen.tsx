@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MealEstimate, Macros, MacroKey, LogBody } from "../api/diet";
 import { portionMacros, kcal, isLiquid } from "../diet/portion";
 import styles from "./ConfirmMealScreen.module.css";
@@ -7,14 +7,20 @@ const MK: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g
 
 interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
 
-export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
-  estimate: MealEstimate; onConfirm: (body: LogBody) => void; onBack: () => void;
+export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
+  estimate: MealEstimate; imageUrl?: string; onConfirm: (body: LogBody) => void; onBack: () => void;
 }) {
   const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i, idx) => ({
     id: idx, name: i.name, grams: Math.round(i.portion_g), per100g: i.per100g, base: i.portion_g || 100,
   })));
   const multi = rows.length > 1;
   const [mealName, setMealName] = useState(multi ? "Thali" : (rows[0]?.name ?? "Meal"));
+
+  useEffect(() => () => {
+    if (imageUrl && imageUrl.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }, [imageUrl]);
 
   const setRow = (idx: number, patch: Partial<Row>) =>
     setRows(rows.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
@@ -42,7 +48,9 @@ export function ConfirmMealScreen({ estimate, onConfirm, onBack }: {
       </div>
 
       <div className={styles.card}>
-        <div className={styles.photo}>🍽</div>
+        {imageUrl
+          ? <img className={styles.photo} src={imageUrl} alt="Your meal" />
+          : <div className={styles.photo}>🍽</div>}
         <div className={styles.body}>
           {multi ? (
             <input className={styles.name} value={mealName} placeholder="Meal name"

@@ -32,6 +32,12 @@ describe("ConfirmMealScreen", () => {
     expect(Math.round(body.per100g.protein_g * body.quantity_g / 100)).toBe(28);
   });
 
+  it("shows the captured photo when imageUrl is provided", () => {
+    const est: MealEstimate = { items: [{ name: "Dal", portion_g: 200, per100g: macro(9) }] };
+    render(<ConfirmMealScreen estimate={est} imageUrl="blob:abc" onConfirm={() => {}} onBack={() => {}} />);
+    expect(screen.getByAltText("Your meal")).toBeInTheDocument();
+  });
+
   it("multi item: removing a dish drops it from the total", () => {
     const est: MealEstimate = { items: [
       { name: "Dal", portion_g: 200, per100g: macro(9) },

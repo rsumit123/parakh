@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MealCaptureScreen } from "./MealCaptureScreen";
 
@@ -9,12 +9,17 @@ vi.mock("../api/diet", async (orig) => ({
 }));
 
 describe("MealCaptureScreen", () => {
+  beforeEach(() => {
+    globalThis.URL.createObjectURL = vi.fn(() => "blob:mock");
+    globalThis.URL.revokeObjectURL = vi.fn();
+  });
+
   it("estimates from a chosen gallery photo and calls onEstimated", async () => {
     const onEstimated = vi.fn();
     render(<MealCaptureScreen token="t" onEstimated={onEstimated} onBack={() => {}} />);
     fireEvent.change(screen.getByTestId("meal-gallery"),
       { target: { files: [new File(["x"], "m.jpg", { type: "image/jpeg" })] } });
-    await waitFor(() => expect(onEstimated).toHaveBeenCalledWith(expect.objectContaining({ items: expect.any(Array) })));
+    await waitFor(() => expect(onEstimated).toHaveBeenCalledWith(expect.objectContaining({ items: expect.any(Array) }), "blob:mock"));
   });
 
   it("offers a gallery option even when the camera is unavailable", () => {

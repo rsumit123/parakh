@@ -4,7 +4,7 @@ import { LoadingOverlay } from "../components/LoadingOverlay";
 import styles from "./MealCaptureScreen.module.css";
 
 export function MealCaptureScreen({ token, onEstimated, onBack }: {
-  token: string; onEstimated: (est: MealEstimate) => void; onBack: () => void;
+  token: string; onEstimated: (est: MealEstimate, imageUrl: string) => void; onBack: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -46,13 +46,15 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
   const runEstimate = async (blob: Blob) => {
     setBusy(true);
     setError(false);
+    const url = URL.createObjectURL(blob);
     try {
       const file = new File([blob], "meal.jpg", { type: "image/jpeg" });
       const est = await estimateMeal(token, file);
       streamRef.current?.getTracks().forEach((t) => t.stop());  // free the camera before leaving
       streamRef.current = null;
-      onEstimated(est);
+      onEstimated(est, url);
     } catch {
+      URL.revokeObjectURL(url);
       setError(true);
       setBusy(false);
     }
