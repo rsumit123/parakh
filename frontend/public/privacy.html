@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="index, follow" />
+  <title>Privacy Policy · Parakh</title>
+  <style>
+    :root {
+      --ink: #0f1512; --paper: #f6f5ef; --lime: #c7f94c;
+      --green-deep: #0b3d2c; --muted: #5c6b63; --line: #e4e3db;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .hero {
+      background: radial-gradient(120% 140% at 25% 20%, #123a28 0%, #0b1c15 45%, #050907 100%);
+      color: var(--paper); padding: 48px 24px 40px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 11px; flex: none;
+      background: radial-gradient(120% 120% at 35% 30%, #123123, #060a08);
+      display: grid; place-items: center; color: var(--lime);
+      font-weight: 800; font-size: 24px; line-height: 1;
+    }
+    .brand b { font-size: 20px; letter-spacing: -0.3px; }
+    .hero h1 { margin: 0 0 6px; font-size: 34px; letter-spacing: -0.5px; }
+    .hero .meta { color: #9fb0a7; font-size: 14px; }
+    main { padding: 8px 24px 72px; }
+    h2 { font-size: 20px; margin: 34px 0 8px; letter-spacing: -0.2px; }
+    h3 { font-size: 16px; margin: 20px 0 4px; }
+    p, li { color: #26302b; }
+    a { color: var(--green-deep); }
+    ul { padding-left: 20px; }
+    li { margin: 4px 0; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      padding: 4px 20px 16px; margin-top: 16px;
+    }
+    .tag {
+      display: inline-block; background: var(--lime); color: #14311f;
+      font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+    }
+    footer { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 20px; color: var(--muted); font-size: 14px; }
+    code { background: #eef0ea; padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="brand"><span class="logo">P</span><b>Parakh</b></div>
+      <span class="tag">Privacy Policy</span>
+      <h1>Privacy Policy</h1>
+      <div class="meta">Last updated: 1 July 2026</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p>Parakh ("we", "us", or "the app") helps you scan packaged foods, estimate unpackaged
+      meals, and track your daily nutrition. This policy explains what we collect, why, who we
+      share it with, and the choices you have. By using Parakh you agree to this policy.</p>
+
+    <h2>1. Who we are</h2>
+    <p>Parakh is operated by an independent developer (SKDev). For any privacy question or
+      request, contact us at <a href="mailto:thetinkerer018@gmail.com">thetinkerer018@gmail.com</a>.</p>
+
+    <h2>2. Information we collect</h2>
+
+    <div class="card">
+      <h3>Account information</h3>
+      <p>When you sign in with Google to use diet tracking, we receive and store your
+        <b>email address</b>, a <b>Google account identifier</b>, and (if provided by Google)
+        your <b>display name</b> and <b>profile picture URL</b>. We do not receive your Google
+        password.</p>
+
+      <h3>Food &amp; health data you create</h3>
+      <ul>
+        <li><b>Logged foods</b> — the name, brand, portion size, and nutrient values (energy,
+          protein, fibre, sugar, saturated fat, salt) of items you add to your day.</li>
+        <li><b>Profile &amp; targets</b> — optional details you choose to enter, such as sex,
+          age, weight, activity level, dietary goal, and any custom nutrient targets, used to
+          personalise your daily targets.</li>
+      </ul>
+
+      <h3>Photos &amp; scans</h3>
+      <p>When you scan a barcode or product label, or snap a meal, the app processes the
+        <b>image and/or barcode</b> to read the label or estimate the meal. Images are sent to
+        our AI processing providers (see Section 4) solely to produce that result. Meal photos
+        used for estimation are <b>not stored</b> in your account after the estimate is returned.
+        We never use your images for advertising.</p>
+
+      <h3>Usage &amp; device data</h3>
+      <ul>
+        <li>A random <b>device identifier</b> stored locally on your device to operate the app.</li>
+        <li>A count of scans per day, used to enforce usage limits.</li>
+        <li>Standard technical logs (e.g. request timestamps, error diagnostics).</li>
+      </ul>
+    </div>
+
+    <h2>3. How we use your information</h2>
+    <ul>
+      <li>To provide the core features: scoring products, estimating meals, and tracking your
+        daily nutrition against targets.</li>
+      <li>To personalise your nutrient targets from the profile details you provide.</li>
+      <li>To authenticate you and keep your logged data tied to your account.</li>
+      <li>To operate, secure, debug, and improve the app.</li>
+    </ul>
+    <p>We do <b>not</b> sell your personal data, and we do <b>not</b> use it for advertising or
+      profiling.</p>
+
+    <h2>4. Third-party service providers</h2>
+    <p>We share the minimum data needed with the following processors:</p>
+    <ul>
+      <li><b>Google Sign-In</b> — authentication; provides us your email, account ID, name, and
+        avatar.</li>
+      <li><b>OpenRouter</b> and its underlying model provider (<b>Google Gemini</b>) — process
+        scanned label and meal images to extract nutrition or estimate meals.</li>
+      <li><b>OpenAI</b> — generates text embeddings used to suggest "healthier options"; it
+        receives product text, not your personal data.</li>
+      <li><b>Vercel</b> — hosts the app front-end.</li>
+      <li><b>Open Food Facts</b> — a public product database we query for product information; it
+        is a source of data, not a recipient of your personal data.</li>
+    </ul>
+    <p>These providers process data under their own privacy terms. We may also disclose
+      information if required by law.</p>
+
+    <h2>5. Where your data is stored</h2>
+    <p>Your account and food-log data are stored on our server infrastructure. Images sent for
+      processing may be transmitted to the providers above, which may operate outside your
+      country.</p>
+
+    <h2>6. Data retention</h2>
+    <p>We keep your account and logged data until you delete it or ask us to delete your account.
+      Meal-estimation photos are processed transiently and are not retained after the estimate.</p>
+
+    <h2>7. Your rights &amp; choices</h2>
+    <ul>
+      <li><b>Access &amp; correction</b> — view and edit your profile, targets, and logged foods
+        in the app.</li>
+      <li><b>Deletion</b> — delete individual log entries in the app, or request deletion of your
+        entire account and associated data by emailing us.</li>
+      <li><b>Withdraw</b> — stop using diet tracking at any time; you may sign out.</li>
+    </ul>
+    <p>To exercise any right, email
+      <a href="mailto:thetinkerer018@gmail.com">thetinkerer018@gmail.com</a> and we will respond
+      within a reasonable time.</p>
+
+    <h2>8. Children</h2>
+    <p>Parakh is not directed to children under 13 (or the minimum age in your jurisdiction), and
+      we do not knowingly collect their personal data.</p>
+
+    <h2>9. Security</h2>
+    <p>We use reasonable technical and organisational measures to protect your data. No method of
+      transmission or storage is completely secure, so we cannot guarantee absolute security.</p>
+
+    <h2>10. Medical disclaimer</h2>
+    <p>Parakh provides general nutrition information and estimates for informational purposes
+      only. It is not medical advice. Consult a qualified professional for dietary or health
+      decisions.</p>
+
+    <h2>11. Changes to this policy</h2>
+    <p>We may update this policy from time to time. Material changes will be reflected by updating
+      the "Last updated" date above.</p>
+
+    <footer>
+      <p>Contact: <a href="mailto:thetinkerer018@gmail.com">thetinkerer018@gmail.com</a><br />
+        Parakh · <a href="https://parakh.skdev.one">parakh.skdev.one</a></p>
+    </footer>
+  </main>
+</body>
+</html>
