@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="index, follow" />
+  <title>Delete your account &amp; data · Parakh</title>
+  <style>
+    :root {
+      --ink: #0f1512; --paper: #f6f5ef; --lime: #c7f94c;
+      --green-deep: #0b3d2c; --muted: #5c6b63; --line: #e4e3db;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .hero {
+      background: radial-gradient(120% 140% at 25% 20%, #123a28 0%, #0b1c15 45%, #050907 100%);
+      color: var(--paper); padding: 48px 24px 40px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 11px; flex: none;
+      background: radial-gradient(120% 120% at 35% 30%, #123123, #060a08);
+      display: grid; place-items: center; color: var(--lime);
+      font-weight: 800; font-size: 24px; line-height: 1;
+    }
+    .brand b { font-size: 20px; letter-spacing: -0.3px; }
+    .hero h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: -0.5px; }
+    .hero .meta { color: #9fb0a7; font-size: 14px; }
+    main { padding: 8px 24px 72px; }
+    h2 { font-size: 20px; margin: 34px 0 8px; letter-spacing: -0.2px; }
+    p, li { color: #26302b; }
+    a { color: var(--green-deep); }
+    ol, ul { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      padding: 4px 22px 18px; margin-top: 16px;
+    }
+    .mail {
+      display: inline-block; background: var(--lime); color: #14311f;
+      font-weight: 700; padding: 10px 18px; border-radius: 10px; text-decoration: none;
+      margin-top: 6px;
+    }
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 15px; }
+    th { color: var(--muted); font-weight: 600; }
+    footer { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 20px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="brand"><span class="logo">P</span><b>Parakh</b></div>
+      <h1>Delete your account &amp; data</h1>
+      <div class="meta">Parakh (developer: SKDev) · Last updated 3 July 2026</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p>This page explains how to delete your <b>Parakh</b> account and the data associated
+      with it. You can delete individual items yourself inside the app, or request full
+      deletion of your account and all associated data by email.</p>
+
+    <h2>Delete individual items in the app</h2>
+    <ul>
+      <li>Open the <b>Today</b> tab and tap the <b>🗑 (trash)</b> icon next to any logged food
+        to remove that entry immediately.</li>
+      <li>Edit your profile and targets any time from the profile / targets screen.</li>
+    </ul>
+
+    <h2>Delete your entire account and all data</h2>
+    <div class="card">
+      <p>Email us from the email address associated with your Parakh account:</p>
+      <a class="mail" href="mailto:thetinkerer018@gmail.com?subject=Delete%20my%20Parakh%20account">
+        thetinkerer018@gmail.com</a>
+      <ol>
+        <li>Send an email with the subject <b>"Delete my Parakh account"</b>.</li>
+        <li>Send it from the <b>same Google account email</b> you use to sign in to Parakh
+          (this lets us verify the request).</li>
+        <li>We confirm and permanently delete your account and associated data within
+          <b>30 days</b>.</li>
+      </ol>
+    </div>
+
+    <h2>What is deleted, and what is kept</h2>
+    <table>
+      <tr><th>Data</th><th>What happens</th></tr>
+      <tr><td>Account info (email, Google account ID, name, profile picture)</td><td><b>Deleted</b></td></tr>
+      <tr><td>Food log entries (foods, portions, nutrition, dates)</td><td><b>Deleted</b></td></tr>
+      <tr><td>Profile &amp; targets (sex, age, weight, activity, goals, custom targets)</td><td><b>Deleted</b></td></tr>
+      <tr><td>Meal photos used for estimates</td><td>Not stored — processed transiently and never retained</td></tr>
+    </table>
+    <p style="margin-top:14px;">We do not retain your personal data after deletion, except where a
+      short additional period is required to remove it from routine backups (no more than
+      <b>90 days</b>), or where retention is required by law.</p>
+
+    <h2>Public product catalog</h2>
+    <p>Parakh's catalog of packaged products and their health scores is general reference
+      information, not personal data, and is unaffected by account deletion.</p>
+
+    <footer>
+      <p>Questions about deletion? Contact
+        <a href="mailto:thetinkerer018@gmail.com">thetinkerer018@gmail.com</a>.<br />
+        See also our <a href="https://parakh.skdev.one/privacy.html">Privacy Policy</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>
