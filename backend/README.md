@@ -30,13 +30,20 @@ pytest -q
 
 ## Endpoints
 
-| Method | Path            | Purpose                                            |
-|--------|-----------------|----------------------------------------------------|
-| POST   | `/auth/guest`   | `{device_id}` → guest token (3 scans/day)          |
-| POST   | `/auth/login`   | `{email}` → free-user token (10 scans/day)         |
-| POST   | `/scan/barcode` | `{barcode}` → score (our DB → OpenFoodFacts)       |
-| POST   | `/scan/photo`   | multipart `barcode` + `image` → score (vision)     |
-| GET    | `/health`       | liveness                                           |
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/auth/guest` | `{device_id}` → guest token (3 scans/day) |
+| POST | `/auth/google` | Google ID token → user token (10 scans/day) |
+| POST | `/scan/barcode` | `{barcode}` → score (our DB → OpenFoodFacts) |
+| POST | `/scan/photo` | multipart `barcode` + `image` → score (vision) |
+| POST | `/diet/estimate` | meal photo → per-dish portions and macros |
+| POST | `/diet/log` | log a scanned product or confirmed meal |
+| GET | `/diet/day` | today's log against targets |
+| GET/PUT | `/diet/profile` | daily nutrition targets |
+| DELETE | `/diet/log/{entry_id}` | remove a log entry |
+| GET | `/catalog/categories` | catalog categories |
+| GET | `/catalog/products` | browse/search scored products |
+| GET | `/health` | liveness |
 
 All `/scan/*` calls require `Authorization: Bearer <token>`. Quota is consumed
 only on a successful scan — a 404 "needs photo" or a 422 "unreadable label" does
