@@ -1,5 +1,7 @@
 import { useState } from "react";
-import type { Macros, MacroKey } from "../api/diet";
+import type { Macros, MacroKey, Meal } from "../api/diet";
+import { mealForTime } from "../diet/meals";
+import { MealChips } from "./MealChips";
 import { isLiquid } from "../diet/portion";
 import styles from "./FoodSheet.module.css";
 
@@ -15,7 +17,7 @@ const FIELDS: { key: MacroKey; label: string; unit: string }[] = [
 ];
 const KJ_PER_KCAL = 4.184;
 
-export interface FoodValues { name: string; grams: number; macros: Macros; }
+export interface FoodValues { name: string; grams: number; macros: Macros; meal?: Meal; }
 
 // kcal reads best as a whole number; grams keep one decimal (salt, sat fat are small).
 const round = (k: MacroKey, v: number) => (k === "energy_kj" ? Math.round(v) : Math.round(v * 10) / 10);
@@ -32,8 +34,9 @@ const toForm = (m?: Macros): Record<MacroKey, string> => {
 /** Bottom sheet to enter a food by hand (mode "add") or correct a logged one
  * (mode "edit"). Nutrients are for the whole amount eaten, not per 100 g; changing
  * the amount rescales them so a portion fix is a single edit. */
-export function FoodSheet({ mode, initial, onSave, onDelete, onCancel }: {
+export function FoodSheet({ mode, initial, title, onSave, onDelete, onCancel }: {
   mode: "add" | "edit";
+  title?: string;
   initial?: FoodValues;
   onSave: (v: FoodValues) => void;
   onDelete?: () => void;
@@ -42,6 +45,7 @@ export function FoodSheet({ mode, initial, onSave, onDelete, onCancel }: {
   const [name, setName] = useState(initial?.name ?? "");
   const [grams, setGrams] = useState(String(Math.round(initial?.grams ?? 100)));
   const [vals, setVals] = useState(() => toForm(initial?.macros));
+  const [meal, setMeal] = useState<Meal>(initial?.meal ?? mealForTime());
 
   const changeGrams = (next: string) => {
     const oldG = Number(grams) || 0;
@@ -69,7 +73,7 @@ export function FoodSheet({ mode, initial, onSave, onDelete, onCancel }: {
       const v = Math.max(0, Number(vals[f.key]) || 0);
       macros[f.key] = f.key === "energy_kj" ? v * KJ_PER_KCAL : v;
     }
-    onSave({ name: name.trim(), grams: g, macros });
+    onSave({ name: name.trim(), grams: g, macros, meal });
   };
 
   return (
@@ -77,7 +81,8 @@ export function FoodSheet({ mode, initial, onSave, onDelete, onCancel }: {
       <div className={styles.scrim} onClick={onCancel} />
       <div className={styles.sheet}>
         <div className={styles.grab} />
-        <h3 className={styles.h}>{mode === "add" ? "Add food manually" : "Edit food"}</h3>
+        <h3 className={styles.h}>{title ?? (mode === "add" ? "Add food manually" : "Edit food")}</h3>
+        <div className={styles.meal}><MealChips value={meal} onChange={setMeal} /></div>
         <label className={styles.field}>
           <span>Name</span>
           <input value={name} placeholder="e.g. Poha" aria-label="Food name"

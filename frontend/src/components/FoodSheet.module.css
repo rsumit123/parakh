@@ -18,3 +18,4 @@
 .del { flex: none; padding: 15px 18px; border-radius: 16px; font-size: 15px; font-weight: 700; background: #fbe4e1; color: #b53127; }
 .save { flex: 1; padding: 15px; border-radius: 16px; font-size: 15.5px; font-weight: 700; background: var(--lime); color: #16341f; }
 .save:disabled { opacity: .45; }
+.meal { margin-bottom: 10px; }

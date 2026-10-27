@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import type { MealEstimate, Macros, MacroKey, LogBody } from "../api/diet";
+import type { MealEstimate, Macros, MacroKey, LogBody, Meal } from "../api/diet";
+import { mealForTime } from "../diet/meals";
+import { MealChips } from "../components/MealChips";
 import { portionMacros, kcal, isLiquid } from "../diet/portion";
 import { defaultMealName } from "../diet/mealName";
 import styles from "./ConfirmMealScreen.module.css";
@@ -18,6 +20,7 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
   const multi = rows.length > 1;
   const [mealName, setMealName] = useState(() => defaultMealName(estimate.items.map((i) => i.name)));
   const [zoom, setZoom] = useState(false);
+  const [meal, setMeal] = useState<Meal>(() => mealForTime());
 
   useEffect(() => () => {
     if (imageUrl && imageUrl.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
@@ -40,7 +43,7 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
     const per100g = {} as Macros;
     MK.forEach((k) => { per100g[k] = totalGrams > 0 ? (total[k] * 100) / totalGrams : 0; });
     const name = multi ? (mealName.trim() || "Meal") : (rows[0]?.name.trim() || "Meal");
-    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g });
+    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g, meal });
   };
 
   return (
@@ -118,6 +121,9 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
             <b>{kcal(total.energy_kj)} kcal · {total.protein_g.toFixed(0)}g protein · {total.sugars_g.toFixed(0)}g sugar</b></div>
         </>
       )}
+
+      <div className={styles.label}>Meal</div>
+      <div className={styles.meal}><MealChips value={meal} onChange={setMeal} /></div>
 
       <button className={styles.add} onClick={submit} disabled={rows.length === 0}>{addLabel} ✓</button>
 

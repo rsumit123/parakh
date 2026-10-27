@@ -1,0 +1,3 @@
+.row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.chip, .on { padding: 9px 0; border-radius: 11px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.on { background: var(--green-deep); border-color: var(--green-deep); color: #eafff2; }

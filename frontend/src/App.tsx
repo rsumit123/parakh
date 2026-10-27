@@ -20,6 +20,7 @@ import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./se
 import { defaultServingG } from "./diet/portion";
 import { addLog, localDay, type Macros, type LogBody } from "./api/diet";
 import { dayTitle } from "./diet/dates";
+import { mealForTime } from "./diet/meals";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
 import { MealCaptureScreen } from "./screens/MealCaptureScreen";
 import { TargetsScreen } from "./screens/TargetsScreen";
@@ -110,7 +111,7 @@ function Shell() {
     setPortionFor(null);
     try {
       await addLog(token, { kind: "packaged", barcode: p.barcode, name: p.name,
-        brand: p.brand, quantity_g: grams });
+        brand: p.brand, quantity_g: grams, meal: mealForTime() });
       go(selectTab(stack, "today"));
     } catch { /* surfaced on Today refetch */ }
   };

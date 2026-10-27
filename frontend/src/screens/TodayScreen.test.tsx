@@ -11,8 +11,9 @@ const DAY: DietDay = {
   targets: T,
   totals: { energy_kj: 6000, sugars_g: 61, sat_fat_g: 14, salt_g: 4.1, fibre_g: 11, protein_g: 38 },
   status: { energy_kj: "ok", sugars_g: "over", sat_fat_g: "ok", salt_g: "ok", fibre_g: "low", protein_g: "low" },
+  personalised: false,
   entries: [{ id: 1, day: "2026-06-13", kind: "packaged", barcode: "b1", name: "Amul Lassi",
-              brand: "Amul", quantity_g: 200, image_url: "", energy_kj: 260, sugars_g: 29,
+              brand: "Amul", quantity_g: 200, image_url: "", meal: "breakfast", created_at: null, energy_kj: 260, sugars_g: 29,
               sat_fat_g: 2, salt_g: 0.1, fibre_g: 0, protein_g: 4.2 }],
 };
 
@@ -22,7 +23,15 @@ vi.mock("../api/diet", async (orig) => ({
   getHistory: vi.fn(() => Promise.resolve({ targets: T, days: [] })),
   deleteLog: vi.fn(() => Promise.resolve({ ok: true, ...DAY, entries: [] })),
   editLog: vi.fn(() => Promise.resolve({ entry: DAY.entries[0], ...DAY })),
-  addLog: vi.fn(() => Promise.resolve({ entry: DAY.entries[0], ...DAY })),
+  addLog: vi.fn(() => Promise.resolve({ entry: { ...DAY.entries[0], id: 9 }, ...DAY })),
+  getRecent: vi.fn(() => Promise.resolve({ items: [
+    { name: "Poha", brand: "", kind: "unpackaged", barcode: null, quantity_g: 150, meal: "breakfast",
+      last_day: "2026-06-12", uses: 3,
+      per100g: { energy_kj: 600, sugars_g: 2, sat_fat_g: 1, salt_g: 0.5, fibre_g: 2, protein_g: 3 } },
+    { name: "Amul Lassi", brand: "Amul", kind: "packaged", barcode: "b1", quantity_g: 200, meal: null,
+      last_day: "2026-06-13", uses: 1,
+      per100g: { energy_kj: 130, sugars_g: 14.5, sat_fat_g: 1, salt_g: 0.05, fibre_g: 0, protein_g: 2.1 } },
+  ] })),
 }));
 
 const renderToday = (date = "2026-06-13") => render(
@@ -67,5 +76,43 @@ describe("TodayScreen", () => {
   it("can't step past today", async () => {
     renderToday();
     expect(await screen.findByRole("button", { name: "Next day" })).toBeDisabled();
+  });
+
+  it("groups entries under their meal and invites personalising", async () => {
+    renderToday();
+    expect(await screen.findByRole("region", { name: "Breakfast" })).toHaveTextContent("Amul Lassi");
+    expect(screen.getByText(/personalise your targets/i)).toBeInTheDocument();
+  });
+
+  it("re-logs a recent food in one tap, and Undo removes it", async () => {
+    renderToday();
+    fireEvent.click(await screen.findByRole("button", { name: /add food/i }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add Poha again" }));
+    await waitFor(() => expect(api.addLog).toHaveBeenCalled());
+    expect(vi.mocked(api.addLog).mock.calls[0][1]).toMatchObject({
+      kind: "unpackaged", name: "Poha", quantity_g: 150, day: "2026-06-13" });
+    fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(api.deleteLog).toHaveBeenCalledWith("t", 9));
+  });
+
+  it("re-logs packaged foods by barcode and lists frequent foods", async () => {
+    renderToday();
+    fireEvent.click(await screen.findByRole("button", { name: /add food/i }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add Amul Lassi again" }));
+    await waitFor(() => expect(api.addLog).toHaveBeenCalled());
+    expect(vi.mocked(api.addLog).mock.calls[0][1]).toMatchObject({ kind: "packaged", barcode: "b1", quantity_g: 200 });
+    fireEvent.click(await screen.findByRole("button", { name: /add food/i }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Frequent" }));
+    expect(screen.getByText(/3×/)).toBeInTheDocument();             // Poha, used 3 times
+    expect(screen.queryByRole("button", { name: "Add Amul Lassi again" })).not.toBeInTheDocument();
+  });
+
+  it("deleting shows Undo, which restores the entry", async () => {
+    renderToday();
+    fireEvent.click(await screen.findByRole("button", { name: "Remove Amul Lassi" }));
+    await waitFor(() => expect(api.deleteLog).toHaveBeenCalledWith("t", 1));
+    fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(api.addLog).toHaveBeenCalled());
+    expect(vi.mocked(api.addLog).mock.calls[0][1]).toMatchObject({ name: "Amul Lassi", quantity_g: 200, meal: "breakfast" });
   });
 });

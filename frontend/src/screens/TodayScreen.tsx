@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getDay, getHistory, deleteLog, editLog, addLog,
-  type DietDay, type HistoryDay, type LogEntry, type MacroKey,
+  type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type RecentFood,
 } from "../api/diet";
-import { kcal, isLiquid } from "../diet/portion";
+import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { addDays, dayTitle, shortDate } from "../diet/dates";
+import { MEALS, entryMeal, mealForTime } from "../diet/meals";
 import { WeekChart } from "../components/WeekChart";
 import { FoodSheet, type FoodValues } from "../components/FoodSheet";
+import { AddFoodSheet } from "../components/AddFoodSheet";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -27,7 +29,34 @@ function chartEnd(date: string, today: string): string {
   return end > today ? today : end;
 }
 
-type Sheet = { t: "choose" } | { t: "manual" } | { t: "edit"; entry: LogEntry } | null;
+type Sheet = { t: "choose" } | { t: "manual" } | { t: "again"; food: RecentFood }
+  | { t: "edit"; entry: LogEntry } | null;
+
+const per100 = (m: Macros, grams: number): Macros => {
+  const out = { ...m };
+  (Object.keys(out) as MacroKey[]).forEach((k) => { out[k] = grams > 0 ? (m[k] * 100) / grams : 0; });
+  return out;
+};
+
+/** Body to log a remembered food again. Packaged foods go by barcode, so the server
+ * recomputes from the catalog; everything else carries its per-100 g macros. */
+function relogBody(f: RecentFood, grams: number, macros?: Macros): LogBody {
+  if (f.kind === "packaged" && f.barcode) {
+    return { kind: "packaged", barcode: f.barcode, name: f.name, brand: f.brand, quantity_g: grams };
+  }
+  return { kind: f.kind === "manual" ? "manual" : "unpackaged", name: f.name, quantity_g: grams,
+           per100g: macros ? per100(macros, grams) : f.per100g };
+}
+
+/** Body that re-creates a deleted entry (for Undo). */
+function restoreBody(e: LogEntry): LogBody {
+  const macros = {} as Macros;
+  (["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"] as MacroKey[])
+    .forEach((k) => { macros[k] = e[k]; });
+  return { kind: e.kind as LogBody["kind"], barcode: e.barcode, name: e.name, brand: e.brand,
+           quantity_g: e.quantity_g, per100g: per100(macros, e.quantity_g), day: e.day,
+           meal: entryMeal(e) };
+}
 
 export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOpenTargets }: {
   token: string; date: string; today: string;
@@ -37,6 +66,14 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   const [week, setWeek] = useState<{ targets: DietDay["targets"]; days: HistoryDay[] } | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [version, setVersion] = useState(0);  // bumps after any change, to refresh the chart
+  const [toast, setToast] = useState<{ text: string; undo: () => void } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const showToast = (text: string, undo: () => void) => {
+    clearTimeout(toastTimer.current);
+    setToast({ text, undo });
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
+  };
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
   const end = chartEnd(date, today);
 
   useEffect(() => {
@@ -48,22 +85,36 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   }, [token, end, version]);
 
   const apply = (d: DietDay) => { setDay(d); setVersion((v) => v + 1); };
-  const remove = async (id: number) => {
+  // Deletes are instant (no "are you sure?"); the toast offers Undo instead.
+  const remove = async (entry: LogEntry) => {
     setSheet(null);
-    try { apply(await deleteLog(token, id)); } catch { /* ignore */ }
+    try {
+      apply(await deleteLog(token, entry.id));
+      showToast(`Removed ${entry.name}`, async () => {
+        try { const r = await addLog(token, restoreBody(entry)); if (r.date === date) apply(r); } catch { /* ignore */ }
+      });
+    } catch { /* ignore */ }
   };
   const saveEdit = async (entry: LogEntry, v: FoodValues) => {
     setSheet(null);
-    try { apply(await editLog(token, entry.id, { name: v.name, quantity_g: v.grams, macros: v.macros })); }
+    try { apply(await editLog(token, entry.id, { name: v.name, quantity_g: v.grams, macros: v.macros, meal: v.meal })); }
     catch { /* ignore */ }
   };
-  const addManual = async (v: FoodValues) => {
+  const log = async (body: LogBody, label: string) => {
     setSheet(null);
-    const per100g = { ...v.macros };
-    (Object.keys(per100g) as MacroKey[]).forEach((k) => { per100g[k] = (v.macros[k] * 100) / v.grams; });
-    try { apply(await addLog(token, { kind: "manual", name: v.name, quantity_g: v.grams, per100g, day: date })); }
-    catch { /* ignore */ }
+    try {
+      const r = await addLog(token, { ...body, day: date });
+      apply(r);
+      showToast(`Added ${label}`, async () => {
+        try { apply(await deleteLog(token, r.entry.id)); } catch { /* ignore */ }
+      });
+    } catch { /* ignore */ }
   };
+  const addManual = (v: FoodValues) =>
+    log({ kind: "manual", name: v.name, quantity_g: v.grams, per100g: per100(v.macros, v.grams), meal: v.meal }, v.name);
+  const quickAdd = (f: RecentFood) => log({ ...relogBody(f, f.quantity_g), meal: mealForTime() }, f.name);
+  const addAgain = (f: RecentFood, v: FoodValues) =>
+    log({ ...relogBody({ ...f, name: v.name }, v.grams, v.macros), meal: v.meal }, v.name);
 
   const isToday = date === today;
   return (
@@ -86,6 +137,16 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
       {!day && <div className={`skeleton ${styles.skel}`} />}
       {day && (
         <>
+          {day.personalised === false && (
+            <button className={styles.personal} onClick={onOpenTargets}>
+              <span className={styles.pIcon}>🎯</span>
+              <span className={styles.pText}>
+                <b>Personalise your targets</b>
+                <em>These are generic. Add your age, height & goal — 30 seconds.</em>
+              </span>
+              <span className={styles.pGo}>›</span>
+            </button>
+          )}
           <div className={styles.flag}>
             <div className={styles.k}>{isToday ? "Today's gaps" : "That day's gaps"}</div>
             <div className={styles.v}>{day.headline}</div>
@@ -111,49 +172,65 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
               );
             })}
           </div>
-          <div className={styles.sec}>Logged · {day.entries.length}</div>
-          {day.entries.map((e) => (
-            <div key={e.id} className={styles.item}>
-              <button className={styles.itemMain} onClick={() => setSheet({ t: "edit", entry: e })}
-                aria-label={`Edit ${e.name}`}>
-                <span className={styles.thumb}>{e.kind === "packaged" ? "🛒" : e.kind === "manual" ? "✍️" : "🍽"}</span>
-                <span className={styles.itext}>
-                  <span className={styles.iname}>{e.name}</span>
-                  <span className={styles.imeta}>{Math.round(e.quantity_g)}{isLiquid(e.name) ? "ml" : "g"} · tap to edit</span>
-                </span>
-                <span className={styles.ical}>{kcal(e.energy_kj)}</span>
-              </button>
-              <button className={styles.del} onClick={() => remove(e.id)} aria-label={`Remove ${e.name}`}>🗑</button>
-            </div>
-          ))}
+          {MEALS.map((m) => {
+            const items = day.entries.filter((e) => entryMeal(e) === m.key);
+            if (items.length === 0) return null;
+            const total = kcal(items.reduce((s, e) => s + e.energy_kj, 0));
+            return (
+              <section key={m.key} aria-label={m.label}>
+                <div className={styles.sec}><span>{m.icon} {m.label}</span><span>{total} kcal</span></div>
+                {items.map((e) => (
+                  <div key={e.id} className={styles.item}>
+                    <button className={styles.itemMain} onClick={() => setSheet({ t: "edit", entry: e })}
+                      aria-label={`Edit ${e.name}`}>
+                      <span className={styles.thumb}>{e.kind === "packaged" ? "🛒" : e.kind === "manual" ? "✍️" : "🍽"}</span>
+                      <span className={styles.itext}>
+                        <span className={styles.iname}>{e.name}</span>
+                        <span className={styles.imeta}>{Math.round(e.quantity_g)}{isLiquid(e.name) ? "ml" : "g"} · tap to edit</span>
+                      </span>
+                      <span className={styles.ical}>{kcal(e.energy_kj)}</span>
+                    </button>
+                    <button className={styles.del} onClick={() => remove(e)} aria-label={`Remove ${e.name}`}>🗑</button>
+                  </div>
+                ))}
+              </section>
+            );
+          })}
           {day.entries.length === 0 && <div className={styles.empty}>Nothing logged {isToday ? "yet" : "that day"}.</div>}
           <button className={styles.add} onClick={() => setSheet({ t: "choose" })}>＋ Add food</button>
         </>
       )}
 
       {sheet?.t === "choose" && (
-        <div className={styles.chooseWrap} role="dialog" aria-label="Add food">
-          <div className={styles.scrim} onClick={() => setSheet(null)} />
-          <div className={styles.choose}>
-            <div className={styles.grab} />
-            <button onClick={() => { setSheet(null); onSnapMeal(); }}>
-              <span>📷</span><b>Snap a meal</b><em>AI estimates the dishes</em>
-            </button>
-            <button onClick={() => setSheet({ t: "manual" })}>
-              <span>✍️</span><b>Enter manually</b><em>Type the name and nutrients</em>
-            </button>
-          </div>
-        </div>
+        <AddFoodSheet token={token}
+          onSnap={() => { setSheet(null); onSnapMeal(); }}
+          onManual={() => setSheet({ t: "manual" })}
+          onQuickAdd={quickAdd}
+          onPick={(food) => setSheet({ t: "again", food })}
+          onClose={() => setSheet(null)} />
+      )}
+      {sheet?.t === "again" && (
+        <FoodSheet mode="add" title="Add again"
+          initial={{ name: sheet.food.name, grams: sheet.food.quantity_g,
+                     macros: portionMacros(sheet.food.per100g, sheet.food.quantity_g) }}
+          onSave={(v) => addAgain(sheet.food, v)} onCancel={() => setSheet(null)} />
       )}
       {sheet?.t === "manual" && (
         <FoodSheet mode="add" onSave={addManual} onCancel={() => setSheet(null)} />
       )}
       {sheet?.t === "edit" && (
         <FoodSheet mode="edit"
-          initial={{ name: sheet.entry.name, grams: sheet.entry.quantity_g, macros: sheet.entry }}
+          initial={{ name: sheet.entry.name, grams: sheet.entry.quantity_g, macros: sheet.entry,
+                     meal: entryMeal(sheet.entry) }}
           onSave={(v) => saveEdit(sheet.entry, v)}
-          onDelete={() => remove(sheet.entry.id)}
+          onDelete={() => remove(sheet.entry)}
           onCancel={() => setSheet(null)} />
+      )}
+      {toast && (
+        <div className={styles.toast} role="status">
+          <span>{toast.text}</span>
+          <button onClick={() => { toast.undo(); setToast(null); }}>Undo</button>
+        </div>
       )}
     </div>
   );

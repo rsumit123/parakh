@@ -29,3 +29,4 @@ div.photo { background: linear-gradient(135deg,#dfe9dd,#cfe0d2); }
 .unit { color: var(--muted); font-size: 12px; width: 18px; }
 .rm { background: transparent; color: var(--muted); font-size: 15px; width: 28px; flex: none; }
 .rm:disabled { opacity: 0.3; }
+.meal { margin: 0 16px 14px; }
