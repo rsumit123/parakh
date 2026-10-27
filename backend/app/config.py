@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     embedding_dims: int = 256
     embedding_url: str = "https://api.openai.com/v1/embeddings"
     alt_min_similarity: float = 0.4  # cosine floor for a like-for-like suggestion
+    # Meal photos: a private S3 bucket; photos are shown via short-lived signed URLs.
+    # Empty bucket = feature off (logging still works, just without photos).
+    s3_bucket: str = ""
+    s3_region: str = "us-east-1"
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
 
 
 def get_settings() -> Settings:

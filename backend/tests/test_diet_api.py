@@ -234,3 +234,77 @@ def test_profile_rejects_bad_values(client_and_sf):
     assert c.put("/diet/profile", headers=h, json={"sex": "x"}).status_code == 422
     assert c.put("/diet/profile", headers=h, json={"age": 5}).status_code == 422
     assert c.put("/diet/profile", headers=h, json={"activity": "extreme"}).status_code == 422
+
+
+# ---- meal photos -------------------------------------------------------------
+
+class _FakeS3:
+    def __init__(self): self.objects, self.deleted = {}, []
+    def put_object(self, Bucket, Key, Body, **kw): self.objects[Key] = Body
+    def generate_presigned_url(self, op, Params, ExpiresIn): return f"https://signed/{Params['Key']}?exp={ExpiresIn}"
+    def delete_object(self, Bucket, Key): self.deleted.append(Key); self.objects.pop(Key, None)
+
+
+def _jpeg_with_gps() -> bytes:
+    import io
+    from PIL import Image
+    img = Image.new("RGB", (3000, 2000), (200, 150, 50))
+    exif = Image.Exif()
+    exif[0x8825] = {1: "N", 2: (12.0, 58.0, 0.0)}   # GPSInfo: a latitude
+    out = io.BytesIO(); img.save(out, format="JPEG", exif=exif.tobytes()); return out.getvalue()
+
+
+@pytest.fixture
+def photo_client():
+    from app.services.photos import PhotoStore
+    engine = make_engine("sqlite://"); sf = make_session_factory(engine); init_db(engine)
+    s3 = _FakeS3()
+    app = create_app(session_factory=sf, off_client=_OFF(), label_extractor=_Extractor(),
+                     meal_estimator=_Estimator(), secret="s", guest_limit=3, free_limit=10,
+                     today="2026-06-13", photo_store=PhotoStore(s3, "bucket"))
+    return TestClient(app), s3
+
+
+def test_photo_upload_is_resized_stripped_and_private(photo_client):
+    import io
+    from PIL import Image
+    c, s3 = photo_client
+    r = c.post("/diet/photo", headers=_user_headers(), files={"image": ("m.jpg", _jpeg_with_gps(), "image/jpeg")})
+    assert r.status_code == 200
+    key = r.json()["photo_key"]
+    assert key.startswith("meals/user-1/") and key.endswith(".jpg")
+    assert r.json()["url"].startswith("https://signed/" + key)
+    stored = Image.open(io.BytesIO(s3.objects[key]))
+    assert max(stored.size) == 1280                 # downscaled
+    assert 0x8825 not in stored.getexif()           # GPS gone
+    bad = c.post("/diet/photo", headers=_user_headers(), files={"image": ("x.jpg", b"not an image", "image/jpeg")})
+    assert bad.status_code == 422
+
+
+def test_log_with_photo_shows_signed_url_and_delete_removes_photo(photo_client):
+    c, s3 = photo_client
+    h = _user_headers()
+    key = c.post("/diet/photo", headers=h, files={"image": ("m.jpg", _jpeg_with_gps(), "image/jpeg")}).json()["photo_key"]
+    r = c.post("/diet/log", headers=h, json={"kind": "unpackaged", "name": "Thali", "quantity_g": 300,
+                                              "per100g": _PER, "photo_key": key}).json()
+    assert r["entry"]["image_url"].startswith("https://signed/" + key)
+    day = c.get("/diet/day?date=2026-06-13", headers=h).json()
+    assert day["entries"][0]["image_url"].startswith("https://signed/")
+    c.delete(f"/diet/log/{r['entry']['id']}", headers=h)
+    assert s3.deleted == [key]
+
+
+def test_cannot_attach_someone_elses_photo(photo_client):
+    c, _ = photo_client
+    r = c.post("/diet/log", headers=_user_headers(), json={"kind": "manual", "name": "x", "quantity_g": 1,
+               "per100g": _PER, "photo_key": "meals/user-2/abc.jpg"})
+    assert r.status_code == 422
+    r = c.post("/diet/log", headers=_user_headers(), json={"kind": "manual", "name": "x", "quantity_g": 1,
+               "per100g": _PER, "photo_key": "meals/user-1/../user-2/abc.jpg"})
+    assert r.status_code == 422
+
+
+def test_photo_endpoint_off_without_bucket(client_and_sf):
+    c, _ = client_and_sf
+    r = c.post("/diet/photo", headers=_user_headers(), files={"image": ("m.jpg", b"x", "image/jpeg")})
+    assert r.status_code == 503

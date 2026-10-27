@@ -9,6 +9,7 @@ from app.repositories.products import ProductRepository
 from app.clients.openfoodfacts import OpenFoodFactsClient
 from app.clients.label_extractor import LabelExtractor, ExtractionError
 from app.services.meal_estimator import MealEstimator, MealEstimateError
+from app.services.photos import PhotoStore, PhotoError, KEY_PREFIX, user_prefix
 from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
@@ -20,7 +21,8 @@ from app.nutrition.targets import compute_targets, summarize_day, is_personalise
 
 
 def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
-               secret, guest_limit, free_limit, google_client_id="", today=None):
+               secret, guest_limit, free_limit, google_client_id="", today=None,
+               photo_store=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
     app = FastAPI(title="Parakh API")
@@ -52,8 +54,19 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
             raise HTTPException(status_code=401, detail={"error": "sign in to track"})
         return identity
 
+    def _present(entry: dict) -> dict:
+        """Stored meal-photo keys become short-lived signed URLs (bucket is private)."""
+        img = entry.get("image_url") or ""
+        if img.startswith(KEY_PREFIX):
+            try:
+                url = photo_store.url(img) if photo_store else ""
+            except Exception:  # signing is local; never fail a day view over a photo
+                url = ""
+            return {**entry, "image_url": url}
+        return entry
+
     def _day_payload(identity_id: str, day: str) -> dict:
-        entries = diet.day_entries(identity_id, day)
+        entries = [_present(e) for e in diet.day_entries(identity_id, day)]
         profile = diet.get_profile(identity_id)
         targets = compute_targets(profile)
         summary = summarize_day(entries, targets)
@@ -128,11 +141,30 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     def diet_log(req: DietLogRequest, identity: dict = Depends(current_user)):
         day = req.day or _today()
         macros = _entry_macros(req)
+        image = ""
+        if req.photo_key:
+            # Only a key this user uploaded; never a client-supplied URL.
+            if not req.photo_key.startswith(user_prefix(identity["id"])) or ".." in req.photo_key:
+                raise HTTPException(status_code=422, detail={"error": "bad photo key"})
+            image = req.photo_key
         entry = diet.add_entry(identity=identity["id"], day=day, kind=req.kind,
                                name=req.name, brand=req.brand, quantity_g=req.quantity_g,
-                               macros=macros, barcode=req.barcode, image_url=req.image_url,
+                               macros=macros, barcode=req.barcode, image_url=image,
                                meal=req.meal)
-        return {"entry": entry, **_day_payload(identity["id"], day)}
+        return {"entry": _present(entry), **_day_payload(identity["id"], day)}
+
+    @app.post("/diet/photo")
+    async def diet_photo(image: UploadFile = File(...), identity: dict = Depends(current_user)):
+        if photo_store is None:
+            raise HTTPException(status_code=503, detail={"error": "photos unavailable"})
+        data = await image.read()
+        if len(data) > 15 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail={"error": "photo too large"})
+        try:
+            key = photo_store.save(identity["id"], data)
+        except PhotoError:
+            raise HTTPException(status_code=422, detail={"error": "not an image"})
+        return {"photo_key": key, "url": photo_store.url(key)}
 
     @app.post("/diet/estimate")
     async def diet_estimate(image: UploadFile = File(...),
@@ -180,13 +212,19 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
                                   quantity_g=req.quantity_g, macros=req.macros, meal=req.meal)
         if entry is None:
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
-        return {"entry": entry, **_day_payload(identity["id"], entry["day"])}
+        return {"entry": _present(entry), **_day_payload(identity["id"], entry["day"])}
 
     @app.delete("/diet/log/{entry_id}")
     def diet_delete(entry_id: int, date: str = "", identity: dict = Depends(current_user)):
         entry = diet.get_entry(identity["id"], entry_id)
         if entry is None or not diet.delete_entry(identity["id"], entry_id):
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
+        # Deleting a meal deletes its photo too (Undo restores the entry without it).
+        if photo_store and (entry.get("image_url") or "").startswith(KEY_PREFIX):
+            try:
+                photo_store.delete(entry["image_url"])
+            except Exception:
+                pass  # the entry is gone either way; an orphaned private object is harmless
         return {"ok": True, **_day_payload(identity["id"], entry["day"])}
 
     @app.get("/diet/history")
@@ -245,6 +283,7 @@ def app_from_settings() -> FastAPI:
         meal_estimator=MealEstimator(
             api_key=settings.openrouter_api_key, model=settings.vision_model,
             url=settings.openrouter_url),
+        photo_store=PhotoStore.from_settings(settings),
         secret=settings.secret_key,
         google_client_id=settings.google_client_id,
         guest_limit=settings.guest_daily_limit,

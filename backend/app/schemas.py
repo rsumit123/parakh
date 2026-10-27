@@ -39,6 +39,7 @@ class DietLogRequest(BaseModel):
     image_url: str = ""
     day: str | None = None               # client-local YYYY-MM-DD; defaults to server today
     meal: Meal | None = None
+    photo_key: str | None = None         # from POST /diet/photo
 
 
 class DietEditRequest(BaseModel):
