@@ -11,6 +11,11 @@
   --red: #e2574c;
   --amber: #f0a23b;
   --font: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  /* Safe-area insets. Android WebView often reports env(safe-area-inset-*) as 0 under
+     edge-to-edge, so prefer the --safe-area-inset-* values Capacitor's SystemBars
+     injects on native; env() covers iOS and the web. */
+  --inset-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --inset-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }

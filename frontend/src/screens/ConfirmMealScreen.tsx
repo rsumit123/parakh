@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
 import type { MealEstimate, Macros, MacroKey, LogBody } from "../api/diet";
 import { portionMacros, kcal, isLiquid } from "../diet/portion";
+import { defaultMealName } from "../diet/mealName";
 import styles from "./ConfirmMealScreen.module.css";
 
 const MK: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"];
 
 interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
 
-export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
+export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLabel = "Add to today" }: {
   estimate: MealEstimate; imageUrl?: string; onConfirm: (body: LogBody) => void; onBack: () => void;
+  addLabel?: string;
 }) {
   const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i, idx) => ({
     id: idx, name: i.name, grams: Math.round(i.portion_g), per100g: i.per100g, base: i.portion_g || 100,
   })));
   const multi = rows.length > 1;
-  const [mealName, setMealName] = useState(multi ? "Thali" : (rows[0]?.name ?? "Meal"));
+  const [mealName, setMealName] = useState(() => defaultMealName(estimate.items.map((i) => i.name)));
+  const [zoom, setZoom] = useState(false);
 
   useEffect(() => () => {
     if (imageUrl && imageUrl.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
@@ -49,7 +52,12 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
 
       <div className={styles.card}>
         {imageUrl
-          ? <img className={styles.photo} src={imageUrl} alt="Your meal" />
+          ? (
+            <button className={styles.photoBtn} onClick={() => setZoom(true)} aria-label="View photo full size">
+              <img className={styles.photo} src={imageUrl} alt="Your meal" />
+              <span className={styles.expand}>⤢</span>
+            </button>
+          )
           : <div className={styles.photo}>🍽</div>}
         <div className={styles.body}>
           {multi ? (
@@ -111,7 +119,13 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack }: {
         </>
       )}
 
-      <button className={styles.add} onClick={submit} disabled={rows.length === 0}>Add to today ✓</button>
+      <button className={styles.add} onClick={submit} disabled={rows.length === 0}>{addLabel} ✓</button>
+
+      {zoom && imageUrl && (
+        <button className={styles.viewer} onClick={() => setZoom(false)} aria-label="Close photo">
+          <img src={imageUrl} alt="Your meal, full size" />
+        </button>
+      )}
     </div>
   );
 }

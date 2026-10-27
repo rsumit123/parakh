@@ -26,7 +26,7 @@ describe("ConfirmMealScreen", () => {
     expect(screen.getByDisplayValue("Jeera Rice")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
     const body = onConfirm.mock.calls[0][0];
-    expect(body.name).toBe("Thali");
+    expect(body.name).toBe("Dal + Jeera Rice");          // named after its dishes, not "Thali"
     expect(body.quantity_g).toBe(450);                    // 200 + 250
     // summed protein = 9*2 + 4*2.5 = 28g; synthesized per100g must reproduce it
     expect(Math.round(body.per100g.protein_g * body.quantity_g / 100)).toBe(28);

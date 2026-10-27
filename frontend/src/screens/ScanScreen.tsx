@@ -32,6 +32,9 @@ export function ScanScreen({
   // Manual barcode entry (moved here from Home) — for packs the camera can't read.
   const [showManual, setShowManual] = useState(false);
   const [manual, setManual] = useState("");
+  // The camera takes ~1-2s to lazy-load zxing + warm up; cover the <video> until it
+  // actually plays so the WebView's native media placeholder isn't shown.
+  const [camPlaying, setCamPlaying] = useState(false);
 
   const { busy, error, limitReached, runBarcode, runPhoto, clearLimit } = useScan({
     token, onResult, onAuthError, scanByBarcode, scanByPhoto,
@@ -59,7 +62,12 @@ export function ScanScreen({
 
       {!needsPhoto && (
         <div className={styles.viewfinder}>
-          <video ref={videoRef} muted playsInline />
+          <video ref={videoRef} onPlaying={() => setCamPlaying(true)} autoPlay muted playsInline />
+          {!camPlaying && (
+            <div className={styles.camLoading}>
+              <span className={styles.spin} /> Starting camera…
+            </div>
+          )}
           <div className={styles.frame} />
           <div className={styles.hint}>Line up the barcode to scan</div>
         </div>

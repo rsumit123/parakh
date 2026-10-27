@@ -2,7 +2,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 26px 28px 30px;
+  padding: calc(26px + var(--inset-top)) 28px 30px;
   text-align: center;
   color: #fff;
   background: linear-gradient(177deg, #11231b 0%, #0d1512 60%, #0b0f0d 100%);
@@ -49,6 +49,15 @@
 
 .auth { margin-top: 40px; }
 .gbtnWrap { display: flex; justify-content: center; min-height: 44px; }
+/* Native build: the web GIS button isn't available, so we render our own that
+   matches Google's outline/pill spec and triggers the native sign-in plugin. */
+.gbtnNative {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 280px; padding: 11px 18px; border-radius: 999px;
+  background: #fff; color: #1f1f1f; font-size: 14px; font-weight: 600;
+  border: 1px solid #dadce0; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.gbtnNative:disabled { opacity: 0.55; }
 .divider {
   display: flex; align-items: center; gap: 12px; margin: 22px 4px 0;
   color: #5d6b5f; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;

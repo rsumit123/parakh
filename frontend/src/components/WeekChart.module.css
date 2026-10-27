@@ -1,0 +1,14 @@
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin: 6px 14px 8px; padding: 12px 12px 6px; }
+.head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 4px; }
+.title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.note { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.svg { display: block; width: 100%; height: auto; max-height: 170px; }
+.axis { stroke: var(--line); stroke-width: 1; }
+.target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.col { cursor: pointer; outline: none; }
+.col:focus-visible .bar, .col:focus-visible .barOn { stroke: var(--ink); stroke-width: 1.5; }
+.bar { fill: var(--green); opacity: .38; }
+.barOn { fill: var(--green-deep); }
+.val { font-size: 11px; font-weight: 800; fill: var(--ink); text-anchor: middle; }
+.day { font-size: 11px; font-weight: 600; fill: var(--muted); text-anchor: middle; }
+.dayOn { font-size: 11px; font-weight: 800; fill: var(--ink); text-anchor: middle; }

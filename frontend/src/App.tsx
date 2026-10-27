@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { Capacitor } from "@capacitor/core";
 import { SessionProvider, useSession } from "./session/SessionContext";
 import { AuthScreen } from "./screens/AuthScreen";
 import { HomeScreen } from "./screens/HomeScreen";
@@ -17,7 +18,8 @@ import {
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
 import { defaultServingG } from "./diet/portion";
-import { addLog, type Macros, type LogBody } from "./api/diet";
+import { addLog, localDay, type Macros, type LogBody } from "./api/diet";
+import { dayTitle } from "./diet/dates";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
 import { MealCaptureScreen } from "./screens/MealCaptureScreen";
 import { TargetsScreen } from "./screens/TargetsScreen";
@@ -29,6 +31,9 @@ function Shell() {
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [portionFor, setPortionFor] = useState<Product | null>(null);
+  // Day shown on the Today tab; snapped/manual meals are logged to it, so past days
+  // can be filled in. Opening the tab from elsewhere goes back to today.
+  const [dietDate, setDietDate] = useState(localDay);
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
     window.history.replaceState({ stack: [{ t: "home" }] }, "");
@@ -40,7 +45,45 @@ function Shell() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // Android hardware back: unwind the screen stack via history, exit at the root.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let remove: (() => void) | undefined;
+    void import("@capacitor/app").then(({ App: CapApp }) => {
+      CapApp.addListener("backButton", ({ canGoBack }) => {
+        if (canGoBack) window.history.back();
+        else void CapApp.exitApp();
+      }).then((handle) => {
+        remove = () => void handle.remove();
+      });
+    });
+    return () => remove?.();
+  }, []);
+
+  // Android edge-to-edge (targetSdk 36 forces it): let the WebView draw under the
+  // transparent status bar; screens add var(--inset-top) padding so nothing
+  // overlaps. Done once on mount.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    void import("@capacitor/status-bar").then(({ StatusBar }) => {
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: "#00000000" }).catch(() => {});
+    });
+  }, []);
+
+  // Match status-bar icon contrast to the active screen's background (dark screens
+  // get light icons, light screens get dark icons).
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const screen = token ? top(stack).t : "auth";
+    const darkBg = new Set(["auth", "home", "scan", "mealCapture"]);
+    void import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
+      StatusBar.setStyle({ style: darkBg.has(screen) ? Style.Dark : Style.Light }).catch(() => {});
+    });
+  }, [stack, token]);
+
   const go = (next: Stack, mode: "push" | "replace" = "push") => {
+    if (next.length === 1 && next[0].t === "today" && top(stack).t !== "confirmMeal") setDietDate(localDay());
     setStack(next);
     if (mode === "replace") window.history.replaceState({ stack: next }, "");
     else window.history.pushState({ stack: next }, "");
@@ -76,7 +119,7 @@ function Shell() {
 
   const cur = top(stack);
   const profile = (variant: "light" | "dark") => (
-    <div style={{ position: "absolute", top: 16, right: 16, zIndex: 60 }}>
+    <div style={{ position: "absolute", top: "calc(16px + var(--inset-top))", right: 16, zIndex: 60 }}>
       <ProfileMenu label={email ?? "Guest"} isGuest={isGuest} variant={variant}
         onHistory={() => go(selectTab(stack, "history"))} onSignOut={signOut} />
     </div>
@@ -136,8 +179,8 @@ function Shell() {
   if (cur.t === "today") {
     if (isGuest) { signOut(); return null; }
     return tabbed(
-      <TodayScreen token={token}
-        onAddFood={() => go(push(stack, { t: "mealCapture" }))}
+      <TodayScreen token={token} date={dietDate} today={localDay()} onChangeDate={setDietDate}
+        onSnapMeal={() => go(push(stack, { t: "mealCapture" }))}
         onOpenTargets={() => go(push(stack, { t: "targets" }))} />, "light");
   }
   if (cur.t === "mealCapture") {
@@ -154,9 +197,11 @@ function Shell() {
   if (cur.t === "confirmMeal") {
     const logMeal = async (body: LogBody) => {
       if (!token) return;
-      try { await addLog(token, body); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
+      try { await addLog(token, { ...body, day: dietDate }); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
     };
-    return <ConfirmMealScreen estimate={cur.estimate} imageUrl={cur.imageUrl} onConfirm={logMeal} onBack={back} />;
+    const isToday = dietDate === localDay();
+    return <ConfirmMealScreen estimate={cur.estimate} imageUrl={cur.imageUrl} onConfirm={logMeal} onBack={back}
+      addLabel={isToday ? "Add to today" : `Add to ${dayTitle(dietDate, localDay())}`} />;
   }
   if (cur.t === "targets") {
     if (!token) return null;

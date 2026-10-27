@@ -34,7 +34,16 @@ export function addLog(token: string, body: LogBody): Promise<{ entry: LogEntry 
   return fetchJson(`/diet/log`, { token, method: "POST", json: { day: localDay(), ...body } });
 }
 export function deleteLog(token: string, id: number): Promise<{ ok: boolean } & DietDay> {
-  return fetchJson(`/diet/log/${id}?date=${localDay()}`, { token, method: "DELETE" });
+  // The server answers with the deleted entry's own day.
+  return fetchJson(`/diet/log/${id}`, { token, method: "DELETE" });
+}
+export interface LogEdit { name?: string; quantity_g?: number; macros?: Macros; }
+export function editLog(token: string, id: number, edit: LogEdit): Promise<{ entry: LogEntry } & DietDay> {
+  return fetchJson(`/diet/log/${id}`, { token, method: "PATCH", json: edit });
+}
+export interface HistoryDay { date: string; count: number; totals: Macros; }
+export function getHistory(token: string, days: number, end: string): Promise<{ targets: Macros; days: HistoryDay[] }> {
+  return fetchJson(`/diet/history?days=${days}&end=${end}`, { token });
 }
 export function estimateMeal(token: string, file: File): Promise<MealEstimate> {
   const fd = new FormData();

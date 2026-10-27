@@ -1,4 +1,5 @@
 .screen { min-height: 100dvh; background: var(--paper); color: var(--ink);
+  padding-top: var(--inset-top);
   display: flex; flex-direction: column; }
 .topbar { display: flex; align-items: center; gap: 8px; padding: 14px 14px 6px; }
 .back { font-size: 24px; line-height: 1; color: var(--ink); background: transparent; padding: 0 6px; }

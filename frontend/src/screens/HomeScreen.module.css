@@ -4,7 +4,7 @@
   flex-direction: column;
   background: linear-gradient(180deg, #10211a 0%, #0e1311 100%);
   color: #fff;
-  padding: 0 0 28px;
+  padding: var(--inset-top) 0 28px;
 }
 
 .top { padding: 26px 22px 18px; }

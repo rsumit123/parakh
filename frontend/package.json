@@ -6,17 +6,28 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:native": "CAPACITOR=true tsc -b && CAPACITOR=true vite build",
+    "sync:android": "npm run build:native && cap sync android",
+    "open:android": "cap open android",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/status-bar": "^8.0.2",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.1",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",

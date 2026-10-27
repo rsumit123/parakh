@@ -1,4 +1,4 @@
-.screen { min-height: 100dvh; display: flex; flex-direction: column; background: linear-gradient(180deg, #0e1311 0%, #10211a 100%); color: #fff; }
+.screen { min-height: 100dvh; display: flex; flex-direction: column; padding-top: var(--inset-top); background: linear-gradient(180deg, #0e1311 0%, #10211a 100%); color: #fff; }
 .bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 6px; }
 .back { width: 34px; height: 34px; border-radius: 11px; background: rgba(255,255,255,0.1); color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; border: 0; }
 .logo { font-weight: 800; font-size: 17px; }
