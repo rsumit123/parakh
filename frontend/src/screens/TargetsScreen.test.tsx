@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TargetsScreen } from "./TargetsScreen";
 import * as api from "../api/diet";
 
-const DEF = { energy_kj: 8368, sugars_g: 50, sat_fat_g: 22, salt_g: 5, fibre_g: 30, protein_g: 50 };
+const DEF = { energy_kj: 8368, sugars_g: 50, sat_fat_g: 22, salt_g: 5, fibre_g: 30, protein_g: 50 , carbs_g: 0, fat_g: 0};
 const EMPTY = { sex: null, age: null, weight_kg: null, height_cm: null, activity: null, goal: null };
 
 vi.mock("../api/diet", async (orig) => ({

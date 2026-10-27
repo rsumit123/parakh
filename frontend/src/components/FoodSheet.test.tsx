@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { FoodSheet } from "./FoodSheet";
 
-const M = { energy_kj: 4184, sugars_g: 10, sat_fat_g: 2, salt_g: 1, fibre_g: 4, protein_g: 20 };
+const M = { energy_kj: 4184, sugars_g: 10, sat_fat_g: 2, salt_g: 1, fibre_g: 4, protein_g: 20 , carbs_g: 0, fat_g: 0};
 
 describe("FoodSheet", () => {
   it("add mode: needs a name, then returns nutrients for the amount (kcal -> kJ)", () => {
@@ -38,4 +38,15 @@ describe("FoodSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalled();
   });
+
+  it("blank carbs/fat mean unknown (null), not zero", () => {
+    const onSave = vi.fn();
+    render(<FoodSheet mode="add" onSave={onSave} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText("Food name"), { target: { value: "Upma" } });
+    fireEvent.change(screen.getByLabelText("Carbs in g"), { target: { value: "30" } });
+    fireEvent.click(screen.getByRole("button", { name: /add/i }));
+    expect(onSave.mock.calls[0][0].macros.carbs_g).toBe(30);
+    expect(onSave.mock.calls[0][0].macros.fat_g).toBeNull();
+  });
 });
+

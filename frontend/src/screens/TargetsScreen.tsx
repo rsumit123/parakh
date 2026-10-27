@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  getProfile, putProfile, type Macros, type MacroKey, type Activity, type Goal, type Sex,
+  getProfile, putProfile, type Totals, type MacroKey, type Activity, type Goal, type Sex,
 } from "../api/diet";
 import { kcal } from "../diet/portion";
 import { computeTargets, isComplete, sameTarget, type AboutYou } from "../diet/targets";
@@ -9,6 +9,8 @@ import styles from "./TargetsScreen.module.css";
 const FIELDS: { key: MacroKey; label: string; unit: string }[] = [
   { key: "energy_kj", label: "Energy", unit: "kcal" },
   { key: "protein_g", label: "Protein", unit: "g" },
+  { key: "carbs_g", label: "Carbs", unit: "g" },
+  { key: "fat_g", label: "Fat", unit: "g" },
   { key: "fibre_g", label: "Fibre", unit: "g" },
   { key: "sugars_g", label: "Sugar", unit: "g" },
   { key: "sat_fat_g", label: "Sat fat", unit: "g" },
@@ -35,7 +37,7 @@ const num = (s: string) => (s.trim() === "" ? null : Number(s));
  * targets keep following the profile unless you pin one. */
 export function TargetsScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [about, setAbout] = useState<AboutYou | null>(null);
-  const [custom, setCustom] = useState<Partial<Macros>>({});
+  const [custom, setCustom] = useState<Partial<Totals>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
       const calc = computeTargets(a);
       // Older app versions saved every target as an override; drop the ones that
       // just repeat the calculated value so they don't pin anything.
-      const keep: Partial<Macros> = {};
+      const keep: Partial<Totals> = {};
       for (const f of FIELDS) {
         const v = target_overrides?.[f.key];
         if (typeof v === "number" && v > 0 && !sameTarget(f.key, v, calc[f.key])) keep[f.key] = v;
@@ -63,7 +65,7 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
 
   const save = async () => {
     setSaving(true);
-    const overrides: Partial<Macros> = {};
+    const overrides: Partial<Totals> = {};
     for (const f of FIELDS) {
       const v = custom[f.key];
       if (v !== undefined && v > 0 && !sameTarget(f.key, v, calc[f.key])) overrides[f.key] = v;
@@ -134,8 +136,9 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
           </div>
         );
       })}
-      <p className={styles.fine}>Energy: Mifflin-St Jeor × activity. Protein by body weight. Fibre 15 g per 1000 kcal.
-        Sugar and sat fat under 10% of energy, salt 5 g (WHO). General guidance, not medical advice.</p>
+      <p className={styles.fine}>Energy: Mifflin-St Jeor × activity. Protein by body weight. Carbs ~50% and fat ~30% of
+        energy (for reference). Fibre 15 g per 1000 kcal. Sugar and sat fat under 10% of energy, salt 5 g (WHO).
+        General guidance, not medical advice.</p>
       <button className={styles.save} onClick={save} disabled={saving}>Save</button>
     </div>
   );

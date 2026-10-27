@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  getDay, getHistory, deleteLog, editLog, addLog,
-  type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type RecentFood,
+  getDay, getHistory, deleteLog, editLog, addLog, MACRO_KEYS,
+  type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
 } from "../api/diet";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { addDays, dayTitle, shortDate } from "../diet/dates";
@@ -14,6 +14,8 @@ import styles from "./TodayScreen.module.css";
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
   { key: "energy_kj", label: "Energy", unit: "kcal", toDisplay: kcal },
   { key: "protein_g", label: "Protein", unit: "g" },
+  { key: "carbs_g", label: "Carbs", unit: "g" },
+  { key: "fat_g", label: "Fat", unit: "g" },
   { key: "fibre_g", label: "Fibre", unit: "g" },
   { key: "sugars_g", label: "Sugar", unit: "g" },
   { key: "sat_fat_g", label: "Sat fat", unit: "g" },
@@ -32,11 +34,8 @@ function chartEnd(date: string, today: string): string {
 type Sheet = { t: "choose" } | { t: "manual" } | { t: "again"; food: RecentFood }
   | { t: "edit"; entry: LogEntry } | null;
 
-const per100 = (m: Macros, grams: number): Macros => {
-  const out = { ...m };
-  (Object.keys(out) as MacroKey[]).forEach((k) => { out[k] = grams > 0 ? (m[k] * 100) / grams : 0; });
-  return out;
-};
+// Back to per-100 g (what /diet/log takes). Unknown carbs/fat stay unknown.
+const per100 = (m: Macros, grams: number): Macros => portionMacros(m, grams > 0 ? 10000 / grams : 0);
 
 /** Body to log a remembered food again. Packaged foods go by barcode, so the server
  * recomputes from the catalog; everything else carries its per-100 g macros. */
@@ -50,11 +49,10 @@ function relogBody(f: RecentFood, grams: number, macros?: Macros): LogBody {
 
 /** Body that re-creates a deleted entry (for Undo). */
 function restoreBody(e: LogEntry): LogBody {
-  const macros = {} as Macros;
-  (["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"] as MacroKey[])
-    .forEach((k) => { macros[k] = e[k]; });
+  const macros = {} as Record<MacroKey, number | null>;
+  MACRO_KEYS.forEach((k) => { macros[k] = e[k]; });
   return { kind: e.kind as LogBody["kind"], barcode: e.barcode, name: e.name, brand: e.brand,
-           quantity_g: e.quantity_g, per100g: per100(macros, e.quantity_g), day: e.day,
+           quantity_g: e.quantity_g, per100g: per100(macros as Macros, e.quantity_g), day: e.day,
            meal: entryMeal(e) };
 }
 
@@ -65,6 +63,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   const [day, setDay] = useState<DietDay | null>(null);
   const [week, setWeek] = useState<{ targets: DietDay["targets"]; days: HistoryDay[] } | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [metric, setMetric] = useState<MacroKey>("energy_kj");  // which nutrient the chart shows
   const [version, setVersion] = useState(0);  // bumps after any change, to refresh the chart
   const [toast, setToast] = useState<{ text: string; undo: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -130,8 +129,8 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
       </div>
 
       {week && week.days.length > 0 && (
-        <WeekChart days={week.days} targetKj={week.targets.energy_kj} selected={date}
-          today={today} onSelect={onChangeDate} />
+        <WeekChart days={week.days} targets={week.targets} metric={metric} onMetric={setMetric}
+          selected={date} today={today} onSelect={onChangeDate} />
       )}
 
       {!day && <div className={`skeleton ${styles.skel}`} />}
@@ -165,13 +164,19 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
                     <span className={styles.mname}>{r.label}
                       {st !== "ok" && <span className={`${styles.tag} ${styles[st]}`}>{st}</span>}
                     </span>
-                    <span className={styles.mval}><b>{consumed}</b> / {target} {r.unit}</span>
+                    <span className={styles.mval}>
+                      <b>{consumed}{(day.partial ?? []).includes(r.key as OptKey) ? "*" : ""}</b> / {target} {r.unit}
+                    </span>
                   </div>
                   <div className={styles.bar}><div className={styles.fill} style={{ width: `${pct}%`, background: color }} /></div>
                 </div>
               );
             })}
           </div>
+          {(day.partial ?? []).length > 0 && (
+            <p className={styles.partial}>* Some foods here have no {day.partial!.map((k) => (k === "carbs_g" ? "carb" : "fat")).join(" or ")} data
+              (logged before it was tracked, or not on the label), so these totals are a minimum.</p>
+          )}
           {MEALS.map((m) => {
             const items = day.entries.filter((e) => entryMeal(e) === m.key);
             if (items.length === 0) return null;

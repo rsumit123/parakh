@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ConfirmMealScreen } from "./ConfirmMealScreen";
 import type { MealEstimate } from "../api/diet";
 
-const macro = (p: number) => ({ energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: p });
+const macro = (p: number) => ({ energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: p , carbs_g: 0, fat_g: 0});
 
 describe("ConfirmMealScreen", () => {
   it("single item: confirms with that item's grams + edited name", () => {

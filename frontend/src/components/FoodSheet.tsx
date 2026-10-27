@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Macros, MacroKey, Meal } from "../api/diet";
+import { OPT_KEYS, type Macros, type MacroKey, type Meal } from "../api/diet";
 import { mealForTime } from "../diet/meals";
 import { MealChips } from "./MealChips";
 import { isLiquid } from "../diet/portion";
@@ -10,6 +10,8 @@ import styles from "./FoodSheet.module.css";
 const FIELDS: { key: MacroKey; label: string; unit: string }[] = [
   { key: "energy_kj", label: "Energy", unit: "kcal" },
   { key: "protein_g", label: "Protein", unit: "g" },
+  { key: "carbs_g", label: "Carbs", unit: "g" },
+  { key: "fat_g", label: "Fat", unit: "g" },
   { key: "fibre_g", label: "Fibre", unit: "g" },
   { key: "sugars_g", label: "Sugar", unit: "g" },
   { key: "sat_fat_g", label: "Sat fat", unit: "g" },
@@ -25,7 +27,8 @@ const round = (k: MacroKey, v: number) => (k === "energy_kj" ? Math.round(v) : M
 const toForm = (m?: Macros): Record<MacroKey, string> => {
   const out = {} as Record<MacroKey, string>;
   for (const f of FIELDS) {
-    const v = m ? (f.key === "energy_kj" ? m[f.key] / KJ_PER_KCAL : m[f.key]) : 0;
+    const raw = m ? m[f.key] : null;
+    const v = raw == null ? 0 : f.key === "energy_kj" ? raw / KJ_PER_KCAL : raw;
     out[f.key] = v ? String(round(f.key, v)) : "";
   }
   return out;
@@ -70,12 +73,14 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
 
   const save = () => {
     if (!valid) return;
-    const macros = {} as Macros;
+    const macros = {} as Record<MacroKey, number | null>;
     for (const f of FIELDS) {
+      // Blank carbs/fat = unknown (null), not 0; other blanks count as 0.
+      if ((OPT_KEYS as MacroKey[]).includes(f.key) && vals[f.key].trim() === "") { macros[f.key] = null; continue; }
       const v = Math.max(0, Number(vals[f.key]) || 0);
       macros[f.key] = f.key === "energy_kj" ? v * KJ_PER_KCAL : v;
     }
-    onSave({ name: name.trim(), grams: g, macros, meal });
+    onSave({ name: name.trim(), grams: g, macros: macros as Macros, meal });
   };
 
   return (
@@ -107,7 +112,8 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
             <label key={f.key} className={styles.cell}>
               <span>{f.label}</span>
               <div>
-                <input type="number" inputMode="decimal" min={0} value={vals[f.key]} placeholder="0"
+                <input type="number" inputMode="decimal" min={0} value={vals[f.key]}
+                  placeholder={(OPT_KEYS as MacroKey[]).includes(f.key) ? "?" : "0"}
                   aria-label={`${f.label} in ${f.unit}`}
                   onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} />
                 <em>{f.unit}</em>

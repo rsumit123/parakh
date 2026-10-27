@@ -17,8 +17,8 @@ import {
   push, selectTab, pushResultFromScan, top, activeTab, type Stack, type Tab,
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
-import { defaultServingG } from "./diet/portion";
-import { addLog, uploadMealPhoto, localDay, type Macros, type LogBody } from "./api/diet";
+import { defaultServingG, nutritionMacros } from "./diet/portion";
+import { addLog, uploadMealPhoto, localDay, type LogBody } from "./api/diet";
 import { dayTitle } from "./diet/dates";
 import { mealForTime } from "./diet/meals";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
@@ -150,7 +150,7 @@ function Shell() {
         />
         {portionFor && (
           <PortionSheet title={`${portionFor.name} · ${portionFor.brand}`}
-            per100g={portionFor.nutrition as Macros}
+            per100g={nutritionMacros(portionFor.nutrition)}
             defaultGrams={defaultServingG(portionFor.serving_size_g, portionFor.category ?? "")}
             onCancel={() => setPortionFor(null)} onConfirm={confirmPortion} />
         )}

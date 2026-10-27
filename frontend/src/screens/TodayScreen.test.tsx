@@ -4,17 +4,17 @@ import { TodayScreen } from "./TodayScreen";
 import * as api from "../api/diet";
 import type { DietDay } from "../api/diet";
 
-const T = { energy_kj: 8368, sugars_g: 50, sat_fat_g: 22, salt_g: 5, fibre_g: 30, protein_g: 50 };
+const T = { energy_kj: 8368, sugars_g: 50, sat_fat_g: 22, salt_g: 5, fibre_g: 30, protein_g: 50 , carbs_g: 0, fat_g: 0};
 const DAY: DietDay = {
   date: "2026-06-13",
   headline: "You're low on fibre & protein, and over on sugar.",
   targets: T,
-  totals: { energy_kj: 6000, sugars_g: 61, sat_fat_g: 14, salt_g: 4.1, fibre_g: 11, protein_g: 38 },
-  status: { energy_kj: "ok", sugars_g: "over", sat_fat_g: "ok", salt_g: "ok", fibre_g: "low", protein_g: "low" },
+  totals: { energy_kj: 6000, sugars_g: 61, sat_fat_g: 14, salt_g: 4.1, fibre_g: 11, protein_g: 38 , carbs_g: 0, fat_g: 0},
+  status: { energy_kj: "ok", sugars_g: "over", sat_fat_g: "ok", salt_g: "ok", fibre_g: "low", protein_g: "low", carbs_g: "ok", fat_g: "ok" },
   personalised: false,
   entries: [{ id: 1, day: "2026-06-13", kind: "packaged", barcode: "b1", name: "Amul Lassi",
               brand: "Amul", quantity_g: 200, image_url: "", meal: "breakfast", created_at: null, energy_kj: 260, sugars_g: 29,
-              sat_fat_g: 2, salt_g: 0.1, fibre_g: 0, protein_g: 4.2 }],
+              sat_fat_g: 2, salt_g: 0.1, fibre_g: 0, protein_g: 4.2 , carbs_g: 0, fat_g: 0}],
 };
 
 vi.mock("../api/diet", async (orig) => ({
@@ -27,10 +27,10 @@ vi.mock("../api/diet", async (orig) => ({
   getRecent: vi.fn(() => Promise.resolve({ items: [
     { name: "Poha", brand: "", kind: "unpackaged", barcode: null, quantity_g: 150, meal: "breakfast",
       last_day: "2026-06-12", uses: 3,
-      per100g: { energy_kj: 600, sugars_g: 2, sat_fat_g: 1, salt_g: 0.5, fibre_g: 2, protein_g: 3 } },
+      per100g: { energy_kj: 600, sugars_g: 2, sat_fat_g: 1, salt_g: 0.5, fibre_g: 2, protein_g: 3 , carbs_g: 0, fat_g: 0} },
     { name: "Amul Lassi", brand: "Amul", kind: "packaged", barcode: "b1", quantity_g: 200, meal: null,
       last_day: "2026-06-13", uses: 1,
-      per100g: { energy_kj: 130, sugars_g: 14.5, sat_fat_g: 1, salt_g: 0.05, fibre_g: 0, protein_g: 2.1 } },
+      per100g: { energy_kj: 130, sugars_g: 14.5, sat_fat_g: 1, salt_g: 0.05, fibre_g: 0, protein_g: 2.1 , carbs_g: 0, fat_g: 0} },
   ] })),
 }));
 
@@ -124,6 +124,14 @@ describe("TodayScreen", () => {
     expect(container.querySelector('img[src="https://signed/meals/user-1/a.jpg"]')).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Edit Amul Lassi" }));
     expect(screen.getByAltText("Your meal")).toHaveAttribute("src", "https://signed/meals/user-1/a.jpg");
+  });
+
+  it("shows carbs and fat, flagging totals that are missing data", async () => {
+    vi.mocked(api.getDay).mockResolvedValueOnce({ ...DAY, partial: ["carbs_g"] });
+    renderToday();
+    expect(await screen.findByText("Carbs")).toBeInTheDocument();
+    expect(screen.getByText("Fat")).toBeInTheDocument();
+    expect(screen.getByText(/no carb data/i)).toBeInTheDocument();
   });
 });
 

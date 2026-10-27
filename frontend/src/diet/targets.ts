@@ -1,11 +1,12 @@
-import type { Macros, MacroKey, Profile } from "../api/diet";
+import type { Totals, MacroKey, Profile } from "../api/diet";
 
 // Live preview of the server's target maths, so the Targets screen updates as you
 // type. Keep in sync with backend app/nutrition/targets.py (the server is the source
 // of truth for what the day view uses); targets.test.ts pins the same numbers.
 
-export const DEFAULT_TARGETS: Macros = {
+export const DEFAULT_TARGETS: Totals = {
   energy_kj: 8368, protein_g: 50, fibre_g: 30, sugars_g: 50, sat_fat_g: 22, salt_g: 5,
+  carbs_g: 250, fat_g: 67,
 };
 const ACTIVITY = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 } as const;
 const GOAL_KCAL = { lose: -500, maintain: 0, gain: 300 } as const;
@@ -19,7 +20,7 @@ export function isComplete(p: AboutYou): boolean {
 }
 
 /** Targets from the profile alone (no overrides), or the defaults if incomplete. */
-export function computeTargets(p: AboutYou): Macros {
+export function computeTargets(p: AboutYou): Totals {
   if (!isComplete(p)) return DEFAULT_TARGETS;
   const w = p.weight_kg!, h = p.height_cm!, age = p.age!;
   const bmr = 10 * w + 6.25 * h - 5 * age + (p.sex === "male" ? 5 : -161);
@@ -31,6 +32,8 @@ export function computeTargets(p: AboutYou): Macros {
     sugars_g: Math.round((kcalDay * 0.1) / 4),
     sat_fat_g: Math.round((kcalDay * 0.1) / 9),
     salt_g: 5,
+    carbs_g: Math.round((kcalDay * 0.5) / 4),   // ~50% of energy, for reference
+    fat_g: Math.round((kcalDay * 0.3) / 9),     // ~30% of energy, for reference
   };
 }
 

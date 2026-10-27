@@ -5,7 +5,7 @@ import { MealCaptureScreen } from "./MealCaptureScreen";
 vi.mock("../api/diet", async (orig) => ({
   ...(await orig()),
   estimateMeal: vi.fn(() => Promise.resolve({ items: [{ name: "Dal rice", portion_g: 350,
-    per100g: { energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: 4 } }] })),
+    per100g: { energy_kj: 500, sugars_g: 2, sat_fat_g: 1, salt_g: 0.3, fibre_g: 2, protein_g: 4 , carbs_g: 0, fat_g: 0} }] })),
 }));
 
 describe("MealCaptureScreen", () => {

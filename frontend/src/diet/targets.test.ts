@@ -10,6 +10,7 @@ describe("computeTargets", () => {
     const t = computeTargets(P);
     expect(kcal(t.energy_kj)).toBe(2556);
     expect([t.protein_g, t.fibre_g, t.sugars_g, t.sat_fat_g, t.salt_g]).toEqual([58, 38, 64, 28, 5]);
+    expect([t.carbs_g, t.fat_g]).toEqual([320, 85]);   // 50% / 30% of energy, as on the server
   });
   it("adjusts for sex and goal, with a calorie floor", () => {
     const lose = computeTargets({ ...P, sex: "female", goal: "lose" });

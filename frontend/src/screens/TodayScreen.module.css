@@ -45,3 +45,4 @@
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(76px + var(--inset-bottom)); z-index: 70; display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px); padding: 11px 14px 11px 16px; border-radius: 14px; background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 .toast span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toast button { flex: none; background: transparent; color: var(--lime); font-size: 13.5px; font-weight: 800; }
+.partial { font-size: 11.5px; color: var(--muted); margin: 6px 18px 0; line-height: 1.4; }

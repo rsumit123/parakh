@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import type { MealEstimate, Macros, MacroKey, LogBody, Meal } from "../api/diet";
+import { MACRO_KEYS, type MealEstimate, type Macros, type MacroKey, type LogBody, type Meal } from "../api/diet";
 import { mealForTime } from "../diet/meals";
 import { MealChips } from "../components/MealChips";
-import { portionMacros, kcal, isLiquid } from "../diet/portion";
+import { portionMacros, sumMacros, kcal, isLiquid } from "../diet/portion";
 import { defaultMealName } from "../diet/mealName";
 import styles from "./ConfirmMealScreen.module.css";
 
-const MK: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"];
+const MK: MacroKey[] = MACRO_KEYS;
 
 interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
 
@@ -41,23 +41,22 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUpl
     setRows(rows.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   const removeRow = (idx: number) => setRows(rows.filter((_, i) => i !== idx));
 
-  const total = rows.reduce((acc, r) => {
-    const m = portionMacros(r.per100g, r.grams);
-    MK.forEach((k) => { acc[k] = (acc[k] || 0) + m[k]; });
-    return acc;
-  }, {} as Macros);
+  const total = sumMacros(rows.map((r) => portionMacros(r.per100g, r.grams)));
   const totalGrams = rows.reduce((s, r) => s + r.grams, 0);
 
   const submit = async () => {
-    const per100g = {} as Macros;
-    MK.forEach((k) => { per100g[k] = totalGrams > 0 ? (total[k] * 100) / totalGrams : 0; });
+    const per100g = {} as Record<MacroKey, number | null>;
+    MK.forEach((k) => {
+      const v = total[k];
+      per100g[k] = v == null ? null : totalGrams > 0 ? (v * 100) / totalGrams : 0;
+    });
     const name = multi ? (mealName.trim() || "Meal") : (rows[0]?.name.trim() || "Meal");
     setSaving(true);
     // Don't hold the meal hostage to a slow upload: give it 15 s, then log without.
     const photoKey = upload.current
       ? await Promise.race([upload.current, new Promise<null>((res) => setTimeout(() => res(null), 15000))])
       : null;
-    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g, meal,
+    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g: per100g as Macros, meal,
                 ...(photoKey ? { photo_key: photoKey } : {}) });
   };
 

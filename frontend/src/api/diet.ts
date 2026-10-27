@@ -1,7 +1,14 @@
 import { fetchJson } from "./client";
 
-export type MacroKey = "energy_kj" | "sugars_g" | "sat_fat_g" | "salt_g" | "fibre_g" | "protein_g";
-export type Macros = Record<MacroKey, number>;
+export type CoreKey = "energy_kj" | "sugars_g" | "sat_fat_g" | "salt_g" | "fibre_g" | "protein_g";
+/** Added later; null = unknown (older entries, labels that don't print them). */
+export type OptKey = "carbs_g" | "fat_g";
+export type MacroKey = CoreKey | OptKey;
+export const OPT_KEYS: OptKey[] = ["carbs_g", "fat_g"];
+export const MACRO_KEYS: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g", "carbs_g", "fat_g"];
+export type Macros = Record<CoreKey, number> & Record<OptKey, number | null>;
+/** Targets and day totals: always numbers (unknown values just aren't added). */
+export type Totals = Record<MacroKey, number>;
 export type MacroStatus = "low" | "ok" | "over";
 export type Meal = "breakfast" | "lunch" | "snack" | "dinner";
 
@@ -10,12 +17,14 @@ export interface LogEntry {
   name: string; brand: string; quantity_g: number; image_url: string;
   meal: Meal | null; created_at: string | null;
   energy_kj: number; sugars_g: number; sat_fat_g: number; salt_g: number;
-  fibre_g: number; protein_g: number;
+  fibre_g: number; protein_g: number; carbs_g: number | null; fat_g: number | null;
 }
 export interface DietDay {
-  date: string; entries: LogEntry[]; targets: Macros; totals: Macros;
+  date: string; entries: LogEntry[]; targets: Totals; totals: Totals;
   status: Record<MacroKey, MacroStatus>; headline: string;
   personalised?: boolean;
+  /** Nutrients some of the day's items don't have (totals undercount them). */
+  partial?: OptKey[];
 }
 export interface MealItem { name: string; portion_g: number; per100g: Macros; }
 export interface MealEstimate { items: MealItem[]; }
@@ -45,8 +54,8 @@ export interface LogEdit { name?: string; quantity_g?: number; macros?: Macros; 
 export function editLog(token: string, id: number, edit: LogEdit): Promise<{ entry: LogEntry } & DietDay> {
   return fetchJson(`/diet/log/${id}`, { token, method: "PATCH", json: edit });
 }
-export interface HistoryDay { date: string; count: number; totals: Macros; }
-export function getHistory(token: string, days: number, end: string): Promise<{ targets: Macros; days: HistoryDay[] }> {
+export interface HistoryDay { date: string; count: number; totals: Totals; partial?: OptKey[]; }
+export function getHistory(token: string, days: number, end: string): Promise<{ targets: Totals; days: HistoryDay[] }> {
   return fetchJson(`/diet/history?days=${days}&end=${end}`, { token });
 }
 /** Stores a meal photo privately; returns the key to attach when logging. */
@@ -65,12 +74,12 @@ export type Activity = "sedentary" | "light" | "moderate" | "active";
 export type Goal = "lose" | "maintain" | "gain";
 export interface Profile {
   sex: Sex | null; age: number | null; weight_kg: number | null; height_cm: number | null;
-  activity: Activity | null; goal: Goal | null; target_overrides: Partial<Macros>;
+  activity: Activity | null; goal: Goal | null; target_overrides: Partial<Totals>;
 }
 export interface ProfileResponse {
   profile: Profile; personalised: boolean;
-  effective_targets: Macros;   // what the day view uses (overrides applied)
-  computed_targets: Macros;    // from the profile alone (or defaults)
+  effective_targets: Totals;   // what the day view uses (overrides applied)
+  computed_targets: Totals;    // from the profile alone (or defaults)
 }
 export function getProfile(token: string): Promise<ProfileResponse> {
   return fetchJson(`/diet/profile`, { token });

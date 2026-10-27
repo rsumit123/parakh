@@ -14,6 +14,8 @@ export interface Nutrition {
   fibre_g: number;
   protein_g: number;
   fruit_veg_nuts_pct: number;
+  carbs_g?: number | null;  // absent/null = unknown
+  fat_g?: number | null;
 }
 
 export interface NutrientBar {
