@@ -34,9 +34,10 @@ const toForm = (m?: Macros): Record<MacroKey, string> => {
 /** Bottom sheet to enter a food by hand (mode "add") or correct a logged one
  * (mode "edit"). Nutrients are for the whole amount eaten, not per 100 g; changing
  * the amount rescales them so a portion fix is a single edit. */
-export function FoodSheet({ mode, initial, title, onSave, onDelete, onCancel }: {
+export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, onCancel }: {
   mode: "add" | "edit";
   title?: string;
+  photoUrl?: string;
   initial?: FoodValues;
   onSave: (v: FoodValues) => void;
   onDelete?: () => void;
@@ -46,6 +47,7 @@ export function FoodSheet({ mode, initial, title, onSave, onDelete, onCancel }: 
   const [grams, setGrams] = useState(String(Math.round(initial?.grams ?? 100)));
   const [vals, setVals] = useState(() => toForm(initial?.macros));
   const [meal, setMeal] = useState<Meal>(initial?.meal ?? mealForTime());
+  const [zoom, setZoom] = useState(false);
 
   const changeGrams = (next: string) => {
     const oldG = Number(grams) || 0;
@@ -81,6 +83,11 @@ export function FoodSheet({ mode, initial, title, onSave, onDelete, onCancel }: 
       <div className={styles.scrim} onClick={onCancel} />
       <div className={styles.sheet}>
         <div className={styles.grab} />
+        {photoUrl && (
+          <button className={styles.photoBtn} onClick={() => setZoom(true)} aria-label="View photo full size">
+            <img className={styles.photo} src={photoUrl} alt="Your meal" />
+          </button>
+        )}
         <h3 className={styles.h}>{title ?? (mode === "add" ? "Add food manually" : "Edit food")}</h3>
         <div className={styles.meal}><MealChips value={meal} onChange={setMeal} /></div>
         <label className={styles.field}>
@@ -115,6 +122,11 @@ export function FoodSheet({ mode, initial, title, onSave, onDelete, onCancel }: 
           </button>
         </div>
       </div>
+      {zoom && photoUrl && (
+        <button className={styles.viewer} onClick={() => setZoom(false)} aria-label="Close photo">
+          <img src={photoUrl} alt="Your meal, full size" />
+        </button>
+      )}
     </div>
   );
 }

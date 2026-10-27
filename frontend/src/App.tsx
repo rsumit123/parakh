@@ -18,7 +18,7 @@ import {
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
 import { defaultServingG } from "./diet/portion";
-import { addLog, localDay, type Macros, type LogBody } from "./api/diet";
+import { addLog, uploadMealPhoto, localDay, type Macros, type LogBody } from "./api/diet";
 import { dayTitle } from "./diet/dates";
 import { mealForTime } from "./diet/meals";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
@@ -201,7 +201,9 @@ function Shell() {
       try { await addLog(token, { ...body, day: dietDate }); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
     };
     const isToday = dietDate === localDay();
+    const uploadPhoto = async (photo: Blob) => (await uploadMealPhoto(token, photo)).photo_key;
     return <ConfirmMealScreen estimate={cur.estimate} imageUrl={cur.imageUrl} onConfirm={logMeal} onBack={back}
+      onUploadPhoto={uploadPhoto}
       addLabel={isToday ? "Add to today" : `Add to ${dayTitle(dietDate, localDay())}`} />;
   }
   if (cur.t === "targets") {

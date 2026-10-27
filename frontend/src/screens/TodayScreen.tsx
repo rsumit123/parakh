@@ -183,7 +183,9 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
                   <div key={e.id} className={styles.item}>
                     <button className={styles.itemMain} onClick={() => setSheet({ t: "edit", entry: e })}
                       aria-label={`Edit ${e.name}`}>
-                      <span className={styles.thumb}>{e.kind === "packaged" ? "🛒" : e.kind === "manual" ? "✍️" : "🍽"}</span>
+                      {e.image_url
+                        ? <img className={styles.thumbImg} src={e.image_url} alt="" loading="lazy" />
+                        : <span className={styles.thumb}>{e.kind === "packaged" ? "🛒" : e.kind === "manual" ? "✍️" : "🍽"}</span>}
                       <span className={styles.itext}>
                         <span className={styles.iname}>{e.name}</span>
                         <span className={styles.imeta}>{Math.round(e.quantity_g)}{isLiquid(e.name) ? "ml" : "g"} · tap to edit</span>
@@ -219,7 +221,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
         <FoodSheet mode="add" onSave={addManual} onCancel={() => setSheet(null)} />
       )}
       {sheet?.t === "edit" && (
-        <FoodSheet mode="edit"
+        <FoodSheet mode="edit" photoUrl={sheet.entry.image_url || undefined}
           initial={{ name: sheet.entry.name, grams: sheet.entry.quantity_g, macros: sheet.entry,
                      meal: entryMeal(sheet.entry) }}
           onSave={(v) => saveEdit(sheet.entry, v)}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ConfirmMealScreen } from "./ConfirmMealScreen";
 import type { MealEstimate } from "../api/diet";
 
@@ -50,4 +50,31 @@ describe("ConfirmMealScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
     expect(onConfirm.mock.calls[0][0].quantity_g).toBe(200);
   });
+
+  it("uploads the photo on open and attaches its key when adding", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Blob(["img"])));
+    const est: MealEstimate = { items: [{ name: "Dal", portion_g: 200, per100g: macro(9) }] };
+    const onUpload = vi.fn(() => Promise.resolve("meals/user-1/abc.jpg"));
+    const onConfirm = vi.fn();
+    render(<ConfirmMealScreen estimate={est} imageUrl="blob:abc" onConfirm={onConfirm} onBack={() => {}}
+      onUploadPhoto={onUpload} />);
+    await waitFor(() => expect(onUpload).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled());
+    expect(onConfirm.mock.calls[0][0].photo_key).toBe("meals/user-1/abc.jpg");
+    fetchSpy.mockRestore();
+  });
+
+  it("still logs the meal (without a photo) if the upload fails", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(new Blob(["img"])));
+    const est: MealEstimate = { items: [{ name: "Dal", portion_g: 200, per100g: macro(9) }] };
+    const onConfirm = vi.fn();
+    render(<ConfirmMealScreen estimate={est} imageUrl="blob:abc" onConfirm={onConfirm} onBack={() => {}}
+      onUploadPhoto={() => Promise.reject(new Error("offline"))} />);
+    fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled());
+    expect(onConfirm.mock.calls[0][0].photo_key).toBeUndefined();
+    fetchSpy.mockRestore();
+  });
 });
+

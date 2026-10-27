@@ -115,4 +115,15 @@ describe("TodayScreen", () => {
     await waitFor(() => expect(api.addLog).toHaveBeenCalled());
     expect(vi.mocked(api.addLog).mock.calls[0][1]).toMatchObject({ name: "Amul Lassi", quantity_g: 200, meal: "breakfast" });
   });
+
+  it("shows a logged meal's photo as its thumbnail and in the editor", async () => {
+    vi.mocked(api.getDay).mockResolvedValueOnce({ ...DAY,
+      entries: [{ ...DAY.entries[0], image_url: "https://signed/meals/user-1/a.jpg" }] });
+    const { container } = renderToday();
+    await screen.findByText("Amul Lassi");
+    expect(container.querySelector('img[src="https://signed/meals/user-1/a.jpg"]')).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Amul Lassi" }));
+    expect(screen.getByAltText("Your meal")).toHaveAttribute("src", "https://signed/meals/user-1/a.jpg");
+  });
 });
+

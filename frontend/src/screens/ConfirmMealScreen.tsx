@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { MealEstimate, Macros, MacroKey, LogBody, Meal } from "../api/diet";
 import { mealForTime } from "../diet/meals";
 import { MealChips } from "../components/MealChips";
@@ -10,8 +10,10 @@ const MK: MacroKey[] = ["energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g
 
 interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
 
-export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLabel = "Add to today" }: {
+export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUploadPhoto, addLabel = "Add to today" }: {
   estimate: MealEstimate; imageUrl?: string; onConfirm: (body: LogBody) => void; onBack: () => void;
+  /** Stores the photo and resolves to its key; the meal is still logged if this fails. */
+  onUploadPhoto?: (photo: Blob) => Promise<string>;
   addLabel?: string;
 }) {
   const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i, idx) => ({
@@ -21,6 +23,13 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
   const [mealName, setMealName] = useState(() => defaultMealName(estimate.items.map((i) => i.name)));
   const [zoom, setZoom] = useState(false);
   const [meal, setMeal] = useState<Meal>(() => mealForTime());
+  const [saving, setSaving] = useState(false);
+  // Upload starts as soon as the screen opens, so it's usually done before "Add".
+  const upload = useRef<Promise<string | null> | null>(null);
+  useEffect(() => {
+    if (!imageUrl || !onUploadPhoto || upload.current) return;
+    upload.current = fetch(imageUrl).then((r) => r.blob()).then(onUploadPhoto).catch(() => null);
+  }, [imageUrl, onUploadPhoto]);
 
   useEffect(() => () => {
     if (imageUrl && imageUrl.startsWith("blob:") && typeof URL.revokeObjectURL === "function") {
@@ -39,11 +48,17 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
   }, {} as Macros);
   const totalGrams = rows.reduce((s, r) => s + r.grams, 0);
 
-  const submit = () => {
+  const submit = async () => {
     const per100g = {} as Macros;
     MK.forEach((k) => { per100g[k] = totalGrams > 0 ? (total[k] * 100) / totalGrams : 0; });
     const name = multi ? (mealName.trim() || "Meal") : (rows[0]?.name.trim() || "Meal");
-    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g, meal });
+    setSaving(true);
+    // Don't hold the meal hostage to a slow upload: give it 15 s, then log without.
+    const photoKey = upload.current
+      ? await Promise.race([upload.current, new Promise<null>((res) => setTimeout(() => res(null), 15000))])
+      : null;
+    onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g, meal,
+                ...(photoKey ? { photo_key: photoKey } : {}) });
   };
 
   return (
@@ -125,7 +140,9 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, addLa
       <div className={styles.label}>Meal</div>
       <div className={styles.meal}><MealChips value={meal} onChange={setMeal} /></div>
 
-      <button className={styles.add} onClick={submit} disabled={rows.length === 0}>{addLabel} ✓</button>
+      <button className={styles.add} onClick={submit} disabled={rows.length === 0 || saving}>
+        {saving ? "Saving…" : `${addLabel} ✓`}
+      </button>
 
       {zoom && imageUrl && (
         <button className={styles.viewer} onClick={() => setZoom(false)} aria-label="Close photo">

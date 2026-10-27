@@ -23,7 +23,7 @@ export interface LogBody {
   kind: "packaged" | "unpackaged" | "manual";
   barcode?: string | null; name: string; brand?: string;
   quantity_g: number; per100g?: Macros; image_url?: string; day?: string;
-  meal?: Meal;
+  meal?: Meal; photo_key?: string;
 }
 
 const localDay = () => {
@@ -48,6 +48,12 @@ export function editLog(token: string, id: number, edit: LogEdit): Promise<{ ent
 export interface HistoryDay { date: string; count: number; totals: Macros; }
 export function getHistory(token: string, days: number, end: string): Promise<{ targets: Macros; days: HistoryDay[] }> {
   return fetchJson(`/diet/history?days=${days}&end=${end}`, { token });
+}
+/** Stores a meal photo privately; returns the key to attach when logging. */
+export function uploadMealPhoto(token: string, photo: Blob): Promise<{ photo_key: string; url: string }> {
+  const fd = new FormData();
+  fd.append("image", photo, "meal.jpg");
+  return fetchJson(`/diet/photo`, { token, method: "POST", body: fd });
 }
 export function estimateMeal(token: string, file: File): Promise<MealEstimate> {
   const fd = new FormData();
