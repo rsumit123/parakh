@@ -1,4 +1,5 @@
 import json
+import pytest
 from app.services.meal_estimator import MealEstimator, MealEstimateError
 
 
@@ -60,10 +61,26 @@ def test_wraps_legacy_single_object(monkeypatch):
     assert len(out["items"]) == 1 and out["items"][0]["name"] == "Paneer Tikka"
 
 
-def test_empty_items_falls_back_to_one(monkeypatch):
+def test_empty_items_raises(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp('{"items": []}'))
+    with pytest.raises(MealEstimateError):
+        MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+
+
+def test_all_zero_nutrition_raises(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Almonds", "portion_g": 30, "nutrition": {}}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    with pytest.raises(MealEstimateError):
+        MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+
+
+def test_dry_fruit_portion_is_a_handful(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Mixed Dry Fruits", "portion_g": 500,
+        "nutrition": {"energy_kj": 2400, "sugars_g": 20, "sat_fat_g": 4, "salt_g": 0,
+                      "fibre_g": 9, "protein_g": 15}}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
     out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
-    assert len(out["items"]) == 1 and out["items"][0]["name"] == "Meal"
+    assert out["items"][0]["portion_g"] == 30  # 500 g is a whole bag, snapped to a handful
 
 
 def test_small_thali_helping_not_inflated(monkeypatch):
@@ -73,3 +90,14 @@ def test_small_thali_helping_not_inflated(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
     out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
     assert out["items"][0]["portion_g"] == 70  # survives (default min lowered to 15)
+
+
+def test_garnish_items_are_dropped(monkeypatch):
+    n = {"energy_kj": 400, "sugars_g": 1, "sat_fat_g": 1, "salt_g": 0.5, "fibre_g": 2, "protein_g": 5}
+    payload = json.dumps({"items": [{"name": "Fish Curry", "portion_g": 200, "nutrition": n},
+                                    {"name": "Red Chilli Flakes", "portion_g": 200, "nutrition": n},
+                                    {"name": "Lime Wedge", "portion_g": 10, "nutrition": n},
+                                    {"name": "Chilli Chicken", "portion_g": 200, "nutrition": n}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    assert [i["name"] for i in out["items"]] == ["Fish Curry", "Chilli Chicken"]

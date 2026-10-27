@@ -2,15 +2,19 @@
 Returns {"items": [{name, portion_g, per100g{6 macros}}, ...]} — one item per distinct
 dish (single dish = one-item list). The macros are PER 100 g so the client can re-scale
 to any confirmed portion."""
-import base64
 import json
 import re
 import httpx
 
+from app.images import data_url
+
 _MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
 _PROMPT = (
     "You are looking at a photo of an Indian meal that may contain ONE OR SEVERAL dishes (e.g. a thali "
-    "or combo plate). Identify EVERY distinct dish. Return ONLY a JSON object of the form "
+    "or combo plate). Identify EVERY distinct dish. It can also be a simple food that is not a cooked "
+    "dish — fruit, nuts or dry fruits, a snack, a sweet or a drink — which counts as an item too; "
+    "never return an empty list when food is visible. Do NOT list garnishes, herbs, spices, lime "
+    "wedges or onion slices as separate items. Return ONLY a JSON object of the form "
     "{\"items\": [ ... ]} where each item is {\"name\": str, \"portion_g\": number, \"nutrition\": {...}}.\n"
     "- name: the SPECIFIC dish name (e.g. 'Dal Tadka', 'Jeera Rice', 'Gulab Jamun'), NOT a generic "
     "description.\n"
@@ -19,7 +23,8 @@ _PROMPT = (
     "If only one dish is present, return a single-item list.\n"
     "Anchor each portion_g to one serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass of "
     "lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
-    "rasmalai) ~90 g; a fried snack (samosa/vada/pakora) ~60 g per piece.\n"
+    "rasmalai) ~90 g; a fried snack (samosa/vada/pakora) ~60 g per piece; a handful of nuts/dry "
+    "fruits (almonds/cashews/raisins/dates) ~30 g; one piece of fresh fruit ~150 g.\n"
     "BUT if SEVERAL dishes share one plate (a thali or combo), each dish is a smaller shared helping — "
     "use about HALF those sizes, and skip trivial condiments (papad, pickle, chutney, raita) unless one "
     "is the main dish.\n"
@@ -51,6 +56,10 @@ def _portion_bounds(name: str):
     if re.search(r"\b(naan|roti|chapati|chapathi|paratha|kulcha|bhatura|poori|puri|idli|"
                  r"dosa|uttapam|bread|papad|papadum)\b", n):
         return (55.0, 12.0, 300.0)
+    if re.search(r"\b(almonds?|cashews?|kaju|badam|pistachios?|pista|walnuts?|akhrot|raisins?|"
+                 r"kishmish|dates?|khajur|figs?|anjeer|apricots?|peanuts?|nuts?|dry ?fruits?|"
+                 r"makhana|trail mix|seeds?)\b", n):
+        return (30.0, 5.0, 200.0)
     if re.search(r"\b(samosa|vada|pakora|pakoda|bhaji|tikki|cutlet|bonda|kachori|chaat)\b", n):
         return (60.0, 15.0, 350.0)
     return (200.0, 15.0, 700.0)  # curries, dals, rice, biryani, everything else
@@ -62,6 +71,17 @@ def _clamp_portion(name: str, portion: float) -> float:
     if portion <= 0 or portion < lo or portion > hi:
         return default
     return portion
+
+
+# Garnishes the model sometimes lists as their own "item" (and then sizes as a 200 g
+# serving). Dropped outright; the dish they sit on already carries their nutrition.
+_GARNISH = re.compile(r"^(red |green )?(chill?i|chilli flakes|chili flakes|coriander|cilantro|"
+                      r"mint leaves|curry leaves|turmeric( powder)?|lime|lemon|onion|salt|pepper|"
+                      r"garnish|spices?)( wedges?| slices?| rings?| leaves| powder| flakes)?$")
+
+
+def _is_garnish(name: str) -> bool:
+    return bool(_GARNISH.match((name or "").strip().lower()))
 
 
 def _one_item(d: dict) -> dict:
@@ -79,12 +99,11 @@ class MealEstimator:
         self._timeout = timeout
 
     def estimate(self, image_bytes: bytes) -> dict:
-        b64 = base64.b64encode(image_bytes).decode("ascii")
         body = {
             "model": self._model,
             "messages": [{"role": "user", "content": [
                 {"type": "text", "text": _PROMPT},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "image_url", "image_url": {"url": data_url(image_bytes)}},
             ]}],
             "response_format": {"type": "json_object"},
         }
@@ -106,7 +125,11 @@ class MealEstimator:
         if not isinstance(raw, list) or not raw:
             # tolerate a legacy single-object response {name, portion_g, nutrition}
             raw = [data] if (data.get("name") or isinstance(data.get("nutrition"), dict)) else []
-        items = [_one_item(d) for d in raw if isinstance(d, dict)]
+        items = [_one_item(d) for d in raw
+                 if isinstance(d, dict) and not _is_garnish(str(d.get("name", "")))]
+        # No food found, or no nutrition at all: fail so the client asks for a retake,
+        # instead of showing a believable-looking 0 kcal estimate.
+        items = [i for i in items if any(i["per100g"].values())]
         if not items:
-            items = [{"name": "Meal", "portion_g": 200.0, "per100g": _per100g({})}]
+            raise MealEstimateError("no food with nutrition in photo")
         return {"items": items}

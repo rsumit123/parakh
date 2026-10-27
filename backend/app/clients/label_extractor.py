@@ -1,6 +1,7 @@
-import base64
 import json
 import httpx
+
+from app.images import data_url
 
 _PROMPT = (
     "You are reading a packaged food label (often an Indian product). Return ONLY a "
@@ -47,7 +48,6 @@ class LabelExtractor:
         self._timeout = timeout
 
     def extract(self, image_bytes: bytes) -> dict:
-        b64 = base64.b64encode(image_bytes).decode("ascii")
         body = {
             "model": self._model,
             "messages": [{
@@ -55,7 +55,7 @@ class LabelExtractor:
                 "content": [
                     {"type": "text", "text": _PROMPT},
                     {"type": "image_url",
-                     "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                     "image_url": {"url": data_url(image_bytes)}},
                 ],
             }],
             "response_format": {"type": "json_object"},
