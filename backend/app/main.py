@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date as Date, datetime, timedelta, timezone
 
 from fastapi import FastAPI, Depends, Header, HTTPException, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,8 @@ from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
 from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
-                         TokenResponse, BarcodeRequest, DietLogRequest, ProfileRequest)
+                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest,
+                         ProfileRequest)
 from app.repositories.diet import DietRepository
 from app.nutrition.targets import compute_targets, summarize_day, MACRO_KEYS
 
@@ -159,12 +160,41 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     def diet_day(date: str = "", identity: dict = Depends(current_user)):
         return _day_payload(identity["id"], date or _today())
 
+    @app.patch("/diet/log/{entry_id}")
+    def diet_edit(entry_id: int, req: DietEditRequest, identity: dict = Depends(current_user)):
+        if req.quantity_g is not None and req.quantity_g < 0:
+            raise HTTPException(status_code=422, detail={"error": "quantity must be >= 0"})
+        entry = diet.update_entry(identity["id"], entry_id, name=req.name,
+                                  quantity_g=req.quantity_g, macros=req.macros)
+        if entry is None:
+            raise HTTPException(status_code=404, detail={"error": "entry not found"})
+        return {"entry": entry, **_day_payload(identity["id"], entry["day"])}
+
     @app.delete("/diet/log/{entry_id}")
     def diet_delete(entry_id: int, date: str = "", identity: dict = Depends(current_user)):
-        ok = diet.delete_entry(identity["id"], entry_id)
-        if not ok:
+        entry = diet.get_entry(identity["id"], entry_id)
+        if entry is None or not diet.delete_entry(identity["id"], entry_id):
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
-        return {"ok": True, **_day_payload(identity["id"], date or _today())}
+        return {"ok": True, **_day_payload(identity["id"], entry["day"])}
+
+    @app.get("/diet/history")
+    def diet_history(days: int = 7, end: str = "", identity: dict = Depends(current_user)):
+        """Per-day totals for the `days` days ending at `end` (inclusive), oldest first.
+        Days with nothing logged are included with zero totals."""
+        days = max(1, min(days, 90))
+        try:
+            end_d = Date.fromisoformat(end or _today())
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"error": "bad end date"})
+        dates = [(end_d - timedelta(days=i)).isoformat() for i in range(days - 1, -1, -1)]
+        by_day: dict[str, list[dict]] = {d: [] for d in dates}
+        for e in diet.range_entries(identity["id"], dates[0], dates[-1]):
+            by_day.setdefault(e["day"], []).append(e)
+        targets = compute_targets(diet.get_profile(identity["id"]))
+        return {"targets": targets, "days": [
+            {"date": d, "count": len(by_day[d]),
+             "totals": {k: sum(float(e.get(k, 0) or 0) for e in by_day[d]) for k in MACRO_KEYS}}
+            for d in dates]}
 
     @app.get("/catalog/categories")
     def catalog_categories(identity: dict = Depends(current_identity)):

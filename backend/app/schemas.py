@@ -35,6 +35,12 @@ class DietLogRequest(BaseModel):
     day: str | None = None               # client-local YYYY-MM-DD; defaults to server today
 
 
+class DietEditRequest(BaseModel):
+    name: str | None = None
+    quantity_g: float | None = None
+    macros: dict | None = None           # absolute amounts for the whole portion
+
+
 class ProfileRequest(BaseModel):
     sex: str | None = None
     age: int | None = None

@@ -42,6 +42,47 @@ class DietRepository:
             ).all()
             return [self._entry_dict(e) for e in rows]
 
+    def range_entries(self, identity: str, start: str, end: str) -> list[dict]:
+        """Entries with start <= day <= end (ISO dates compare correctly as strings)."""
+        with self._Session() as s:
+            rows = s.scalars(
+                select(FoodLogEntry)
+                .where(FoodLogEntry.identity == identity,
+                       FoodLogEntry.day >= start, FoodLogEntry.day <= end)
+            ).all()
+            return [self._entry_dict(e) for e in rows]
+
+    def get_entry(self, identity: str, entry_id: int) -> dict | None:
+        with self._Session() as s:
+            e = s.get(FoodLogEntry, entry_id)
+            if e is None or e.identity != identity:
+                return None
+            return self._entry_dict(e)
+
+    def update_entry(self, identity: str, entry_id: int, *, name: str | None = None,
+                     quantity_g: float | None = None, macros: dict | None = None) -> dict | None:
+        """Edit an entry. A new quantity without explicit macros rescales the stored
+        macros proportionally (entries keep absolute amounts, not per-100 g)."""
+        with self._Session() as s:
+            e = s.get(FoodLogEntry, entry_id)
+            if e is None or e.identity != identity:
+                return None
+            if name is not None:
+                e.name = name
+            if quantity_g is not None:
+                new_q = float(quantity_g)
+                if macros is None and e.quantity_g > 0:
+                    factor = new_q / e.quantity_g
+                    for k in MACRO_KEYS:
+                        setattr(e, k, getattr(e, k) * factor)
+                e.quantity_g = new_q
+            if macros is not None:
+                for k in MACRO_KEYS:
+                    setattr(e, k, float(macros.get(k, 0) or 0))
+            s.commit()
+            s.refresh(e)
+            return self._entry_dict(e)
+
     def delete_entry(self, identity: str, entry_id: int) -> bool:
         with self._Session() as s:
             e = s.get(FoodLogEntry, entry_id)

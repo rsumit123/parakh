@@ -109,3 +109,69 @@ def test_profile_get_then_override_changes_targets(client_and_sf):
     r1 = c.get("/diet/profile", headers=h).json()
     assert r1["effective_targets"]["protein_g"] == 90.0
     assert c.get("/diet/day?date=2026-06-13", headers=h).json()["targets"]["protein_g"] == 90.0
+
+
+_PER = {"energy_kj": 500, "sugars_g": 2, "sat_fat_g": 1, "salt_g": 0.3, "fibre_g": 2, "protein_g": 4}
+
+
+def _log(c, h, **kw):
+    body = {"kind": "unpackaged", "name": "Dal rice", "quantity_g": 200, "per100g": _PER, **kw}
+    return c.post("/diet/log", headers=h, json=body).json()["entry"]
+
+
+def test_patch_quantity_rescales_macros_and_renames(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h)
+    r = c.patch(f"/diet/log/{e['id']}", headers=h, json={"name": "Dal chawal", "quantity_g": 300})
+    assert r.status_code == 200
+    got = r.json()["entry"]
+    assert got["name"] == "Dal chawal" and got["quantity_g"] == 300
+    assert round(got["protein_g"], 1) == 12.0  # 4 g/100 g x 300 g
+    assert r.json()["date"] == "2026-06-13" and round(r.json()["totals"]["protein_g"], 1) == 12.0
+
+
+def test_patch_explicit_macros_override(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h)
+    macros = {"energy_kj": 1000, "sugars_g": 5, "sat_fat_g": 3, "salt_g": 1, "fibre_g": 4, "protein_g": 20}
+    got = c.patch(f"/diet/log/{e['id']}", headers=h,
+                  json={"quantity_g": 250, "macros": macros}).json()["entry"]
+    assert got["protein_g"] == 20 and got["quantity_g"] == 250
+
+
+def test_patch_other_users_entry_is_404(client_and_sf):
+    c, _ = client_and_sf
+    e = _log(c, _user_headers())
+    import hmac, hashlib
+    sig = hmac.new(b"s", b"user:2", hashlib.sha256).hexdigest()
+    r = c.patch(f"/diet/log/{e['id']}", headers={"Authorization": f"Bearer user:2.{sig}"},
+                json={"name": "x"})
+    assert r.status_code == 404
+
+
+def test_past_day_log_edit_and_delete_return_that_day(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h, day="2026-06-10")
+    assert e["day"] == "2026-06-10"
+    r = c.patch(f"/diet/log/{e['id']}", headers=h, json={"quantity_g": 100})
+    assert r.json()["date"] == "2026-06-10"
+    d = c.delete(f"/diet/log/{e['id']}", headers=h)  # no ?date: uses the entry's own day
+    assert d.json()["date"] == "2026-06-10" and d.json()["entries"] == []
+
+
+def test_history_returns_daily_totals_including_empty_days(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    _log(c, h, day="2026-06-13")
+    _log(c, h, day="2026-06-13")
+    _log(c, h, day="2026-06-11")
+    r = c.get("/diet/history?days=3&end=2026-06-13", headers=h)
+    assert r.status_code == 200
+    body = r.json()
+    assert [d["date"] for d in body["days"]] == ["2026-06-11", "2026-06-12", "2026-06-13"]
+    assert [d["count"] for d in body["days"]] == [1, 0, 2]
+    assert round(body["days"][2]["totals"]["protein_g"], 1) == 16.0
+    assert body["targets"]["protein_g"] == 50.0
