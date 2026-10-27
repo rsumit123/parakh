@@ -17,7 +17,8 @@ from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
                          TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
-from app.nutrition.targets import compute_targets, summarize_day, is_personalised, MACRO_KEYS
+from app.nutrition.targets import (compute_targets, summarize_day, is_personalised,
+                                   MACRO_KEYS, OPTIONAL_KEYS)
 
 
 def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
@@ -70,7 +71,7 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         profile = diet.get_profile(identity_id)
         targets = compute_targets(profile)
         summary = summarize_day(entries, targets)
-        return {"date": day, "entries": entries, "targets": targets,
+        return {"date": day, "entries": entries, "targets": targets, "partial": summary["partial"],
                 "personalised": is_personalised(profile),
                 "totals": summary["totals"], "status": summary["status"],
                 "headline": summary["headline"]}
@@ -82,7 +83,12 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         else:
             per100g = req.per100g or {}
         q = req.quantity_g
-        return {k: float(per100g.get(k, 0) or 0) * q / 100.0 for k in MACRO_KEYS}
+        out = {}
+        for k in MACRO_KEYS:
+            v = per100g.get(k)
+            # unknown carbs/fat stay unknown rather than counting as 0
+            out[k] = None if (v is None and k in OPTIONAL_KEYS) else float(v or 0) * q / 100.0
+        return out
 
     def _ensure_quota(identity: dict) -> None:
         # Read-only check up front so an over-quota user is blocked before any work,
@@ -243,7 +249,8 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         targets = compute_targets(diet.get_profile(identity["id"]))
         return {"targets": targets, "days": [
             {"date": d, "count": len(by_day[d]),
-             "totals": {k: sum(float(e.get(k, 0) or 0) for e in by_day[d]) for k in MACRO_KEYS}}
+             "totals": {k: sum(float(e[k]) for e in by_day[d] if e.get(k) is not None) for k in MACRO_KEYS},
+             "partial": [k for k in OPTIONAL_KEYS if any(e.get(k) is None for e in by_day[d])]}
             for d in dates]}
 
     @app.get("/catalog/categories")

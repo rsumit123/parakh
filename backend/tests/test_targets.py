@@ -101,3 +101,22 @@ def test_overrides_still_win_over_personal():
     assert t["protein_g"] == 100 and round(t["energy_kj"] / 4.184) == 2556
     base = compute_targets({**_P, "target_overrides": {"protein_g": 100}}, with_overrides=False)
     assert base["protein_g"] == 58
+
+
+def test_carbs_and_fat_targets_are_shares_of_energy():
+    d = compute_targets(None)
+    assert d["carbs_g"] == 250.0 and d["fat_g"] == 67.0          # 2000 kcal: 50% / 30%
+    p = personal_targets(_P)                                      # 2556 kcal
+    assert p["carbs_g"] == 320 and p["fat_g"] == 85
+
+
+def test_carbs_and_fat_are_informational_and_may_be_unknown():
+    t = compute_targets(None)
+    s = summarize_day([_entry(carbs_g=400.0, fat_g=None, protein_g=60.0, fibre_g=40.0),
+                       _entry(carbs_g=None, fat_g=None, protein_g=0.0)], t)
+    assert s["totals"]["carbs_g"] == 400.0 and s["totals"]["fat_g"] == 0.0
+    assert s["status"]["carbs_g"] == "ok"            # never "over"/"low": no carb-shaming
+    assert sorted(s["partial"]) == ["carbs_g", "fat_g"]
+    assert "carb" not in s["headline"]
+    full = summarize_day([_entry(carbs_g=10.0, fat_g=2.0)], t)
+    assert full["partial"] == []

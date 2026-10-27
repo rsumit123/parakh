@@ -1,6 +1,13 @@
 from sqlalchemy import select
 from app.models import FoodLogEntry, Profile
-from app.nutrition.targets import MACRO_KEYS
+from app.nutrition.targets import MACRO_KEYS, OPTIONAL_KEYS
+
+
+def _num(k: str, v) -> float | None:
+    """Core macros default to 0; optional ones (carbs, fat) stay None when unknown."""
+    if v is None or v == "":
+        return None if k in OPTIONAL_KEYS else 0.0
+    return float(v)
 
 _PROFILE_FIELDS = ("sex", "age", "weight_kg", "height_cm", "activity", "goal")
 
@@ -28,7 +35,7 @@ class DietRepository:
             e = FoodLogEntry(
                 identity=identity, day=day, kind=kind, name=name, brand=brand,
                 quantity_g=float(quantity_g), barcode=barcode, image_url=image_url, meal=meal,
-                **{k: float(macros.get(k, 0) or 0) for k in MACRO_KEYS},
+                **{k: _num(k, macros.get(k)) for k in MACRO_KEYS},
             )
             s.add(e)
             s.commit()
@@ -73,7 +80,8 @@ class DietRepository:
             seen[key] = {
                 "name": e.name, "brand": e.brand, "kind": e.kind, "barcode": e.barcode,
                 "quantity_g": q, "meal": e.meal, "last_day": e.day, "uses": 1,
-                "per100g": {k: (getattr(e, k) * 100 / q if q else 0.0) for k in MACRO_KEYS},
+                "per100g": {k: (None if getattr(e, k) is None else (getattr(e, k) * 100 / q if q else 0.0))
+                            for k in MACRO_KEYS},
             }
         return list(seen.values())[:limit]
 
@@ -102,11 +110,14 @@ class DietRepository:
                 if macros is None and e.quantity_g > 0:
                     factor = new_q / e.quantity_g
                     for k in MACRO_KEYS:
-                        setattr(e, k, getattr(e, k) * factor)
+                        if getattr(e, k) is not None:
+                            setattr(e, k, getattr(e, k) * factor)
                 e.quantity_g = new_q
             if macros is not None:
                 for k in MACRO_KEYS:
-                    setattr(e, k, float(macros.get(k, 0) or 0))
+                    if k in OPTIONAL_KEYS and k not in macros:
+                        continue  # older clients don't send carbs/fat: keep what's stored
+                    setattr(e, k, _num(k, macros.get(k)))
             s.commit()
             s.refresh(e)
             return self._entry_dict(e)

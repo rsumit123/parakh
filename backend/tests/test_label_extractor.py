@@ -70,3 +70,10 @@ def test_extract_tolerates_non_list_ingredients():
     result = ext.extract(b"fakeimage")
     assert result["ingredients"] == []
     assert result["nutrition"]["sugars_g"] == 1
+
+
+def test_normalize_keeps_carbs_fat_and_marks_missing_unknown():
+    from app.clients.label_extractor import _normalize_nutrition
+    n = _normalize_nutrition({"energy_kj": 2000, "carbs_g": 60, "fat_g": "21.5"})
+    assert n["carbs_g"] == 60.0 and n["fat_g"] == 21.5
+    assert _normalize_nutrition({"energy_kj": 2000})["carbs_g"] is None

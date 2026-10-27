@@ -8,7 +8,7 @@ import httpx
 
 from app.images import data_url
 
-_MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
+_MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g", "carbs_g", "fat_g")
 _PROMPT = (
     "You are looking at a photo of an Indian meal that may contain ONE OR SEVERAL dishes (e.g. a thali "
     "or combo plate). Identify EVERY distinct dish. It can also be a simple food that is not a cooked "
@@ -19,7 +19,8 @@ _PROMPT = (
     "- name: the SPECIFIC dish name (e.g. 'Dal Tadka', 'Jeera Rice', 'Gulab Jamun'), NOT a generic "
     "description.\n"
     "- portion_g: ONE typical single-person serving of THAT dish (NOT the whole platter).\n"
-    "- nutrition: PER-100g numbers: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g.\n"
+    "- nutrition: PER-100g numbers: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g, "
+    "carbs_g (total carbohydrate), fat_g (total fat).\n"
     "If only one dish is present, return a single-item list.\n"
     "Anchor each portion_g to one serving: curry/sabzi/dal ~200 g; rice or biryani ~250 g; a glass of "
     "lassi/juice/drink ~250 ml; one roti/naan/paratha ~55 g; a dessert (barfi/gulab jamun/kulfi/"
@@ -37,7 +38,11 @@ class MealEstimateError(Exception):
 
 
 def _per100g(n: dict) -> dict:
-    g = lambda k: float(n.get(k, 0) or 0)
+    def g(k):
+        v = n.get(k)
+        if v is None and k in ("carbs_g", "fat_g"):
+            return None  # unknown, not zero
+        return float(v or 0)
     return {k: g(k) for k in _MACRO_KEYS}
 
 

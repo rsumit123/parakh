@@ -308,3 +308,40 @@ def test_photo_endpoint_off_without_bucket(client_and_sf):
     c, _ = client_and_sf
     r = c.post("/diet/photo", headers=_user_headers(), files={"image": ("m.jpg", b"x", "image/jpeg")})
     assert r.status_code == 503
+
+
+def test_carbs_and_fat_logged_unknown_and_rescaled(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    with_cf = _log(c, h, per100g={**_PER, "carbs_g": 20, "fat_g": 5})
+    assert with_cf["carbs_g"] == 40 and with_cf["fat_g"] == 10            # 200 g
+    without = _log(c, h)                                                  # old-style per100g
+    assert without["carbs_g"] is None and without["fat_g"] is None
+    edited = c.patch(f"/diet/log/{with_cf['id']}", headers=h, json={"quantity_g": 100}).json()["entry"]
+    assert edited["carbs_g"] == 20
+    edited = c.patch(f"/diet/log/{without['id']}", headers=h, json={"quantity_g": 100}).json()["entry"]
+    assert edited["carbs_g"] is None                                      # unknown stays unknown
+    day = c.get("/diet/day?date=2026-06-13", headers=h).json()
+    assert day["totals"]["carbs_g"] == 20 and day["partial"] == ["carbs_g", "fat_g"]
+    assert day["targets"]["carbs_g"] == 250.0
+    hist = c.get("/diet/history?days=1&end=2026-06-13", headers=h).json()["days"][0]
+    assert hist["totals"]["carbs_g"] == 20 and hist["partial"] == ["carbs_g", "fat_g"]
+    items = {i["name"]: i for i in c.get("/diet/recent", headers=h).json()["items"]}
+    assert items["Dal rice"]["per100g"]["carbs_g"] in (None, 20.0)
+
+
+def test_edit_can_set_carbs_explicitly(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h)
+    m = {**{k: 1 for k in _PER}, "carbs_g": 55, "fat_g": None}
+    got = c.patch(f"/diet/log/{e['id']}", headers=h, json={"macros": m}).json()["entry"]
+    assert got["carbs_g"] == 55 and got["fat_g"] is None
+
+
+def test_edit_from_older_app_keeps_carbs(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h, per100g={**_PER, "carbs_g": 20, "fat_g": 5})
+    got = c.patch(f"/diet/log/{e['id']}", headers=h, json={"macros": _PER}).json()["entry"]  # no carbs key
+    assert got["carbs_g"] == 40 and got["protein_g"] == 4

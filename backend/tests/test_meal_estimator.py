@@ -27,7 +27,9 @@ def test_parses_single_item(monkeypatch):
     assert len(out["items"]) == 1
     it = out["items"][0]
     assert it["name"] == "Dal Tadka" and it["portion_g"] == 200
-    assert set(it["per100g"]) == {"energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g"}
+    assert set(it["per100g"]) == {"energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g",
+                                  "carbs_g", "fat_g"}
+    assert it["per100g"]["carbs_g"] is None   # not given by the model -> unknown
 
 
 def test_parses_multi_item_thali(monkeypatch):
@@ -101,3 +103,12 @@ def test_garnish_items_are_dropped(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
     out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
     assert [i["name"] for i in out["items"]] == ["Fish Curry", "Chilli Chicken"]
+
+
+def test_parses_carbs_and_fat(monkeypatch):
+    payload = json.dumps({"items": [{"name": "Poha", "portion_g": 150,
+        "nutrition": {"energy_kj": 600, "sugars_g": 2, "sat_fat_g": 1, "salt_g": 0.5,
+                      "fibre_g": 2, "protein_g": 3, "carbs_g": 25, "fat_g": 5}}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    it = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")["items"][0]
+    assert it["per100g"]["carbs_g"] == 25 and it["per100g"]["fat_g"] == 5

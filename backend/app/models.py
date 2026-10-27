@@ -66,6 +66,8 @@ class FoodLogEntry(Base):
     salt_g: Mapped[float] = mapped_column(Float, default=0.0)
     fibre_g: Mapped[float] = mapped_column(Float, default=0.0)
     protein_g: Mapped[float] = mapped_column(Float, default=0.0)
+    carbs_g: Mapped[float | None] = mapped_column(Float, nullable=True)  # None = unknown
+    fat_g: Mapped[float | None] = mapped_column(Float, nullable=True)    # None = unknown
     image_url: Mapped[str] = mapped_column(String, default="")
     meal: Mapped[str | None] = mapped_column(String, nullable=True)  # breakfast|lunch|snack|dinner
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

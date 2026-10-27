@@ -4,7 +4,11 @@ Two nutrient roles:
 - HIT  (protein, fibre): being UNDER the target is the problem -> status "low".
 - LIMIT (energy, sugar, sat-fat, salt): being OVER is the problem -> status "over".
 """
-MACRO_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
+CORE_KEYS = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g", "fibre_g", "protein_g")
+# Added later and may be unknown (None) on older entries/products, so they're summed
+# over known values and flagged "partial". Informational only: no low/over status.
+OPTIONAL_KEYS = ("carbs_g", "fat_g")
+MACRO_KEYS = CORE_KEYS + OPTIONAL_KEYS
 HIT = ("protein_g", "fibre_g")
 LIMIT = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g")
 
@@ -12,12 +16,14 @@ LIMIT = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g")
 _DEFAULTS = {
     "energy_kj": 8368.0, "protein_g": 50.0, "fibre_g": 30.0,
     "sugars_g": 50.0, "sat_fat_g": 22.0, "salt_g": 5.0,
+    "carbs_g": 250.0, "fat_g": 67.0,   # 50% / 30% of 2000 kcal
 }
 # Nutrients named in the headline (energy intentionally excluded — no calorie-shaming).
 _HEADLINE_LOW = ("fibre_g", "protein_g")
 _HEADLINE_OVER = ("sugars_g", "sat_fat_g", "salt_g")
 _LABELS = {"energy_kj": "energy", "protein_g": "protein", "fibre_g": "fibre",
-           "sugars_g": "sugar", "sat_fat_g": "sat fat", "salt_g": "salt"}
+           "sugars_g": "sugar", "sat_fat_g": "sat fat", "salt_g": "salt",
+           "carbs_g": "carbs", "fat_g": "fat"}
 
 
 # Personal targets from an "About you" profile.
@@ -40,7 +46,8 @@ def personal_targets(profile: dict | None) -> dict | None:
 
     Energy: Mifflin-St Jeor BMR x activity factor, +/- for the goal (floored).
     Protein: g per kg body weight. Fibre: 15 g per 1000 kcal. Sugar and sat fat:
-    each under 10% of energy (WHO). Salt: 5 g (WHO), independent of size."""
+    each under 10% of energy (WHO). Salt: 5 g (WHO), independent of size.
+    Carbs ~50% and fat ~30% of energy, shown for reference only."""
     if not is_personalised(profile):
         return None
     p = profile or {}
@@ -54,6 +61,8 @@ def personal_targets(profile: dict | None) -> dict | None:
         "sugars_g": float(round(kcal_day * 0.10 / 4)),
         "sat_fat_g": float(round(kcal_day * 0.10 / 9)),
         "salt_g": 5.0,
+        "carbs_g": float(round(kcal_day * 0.50 / 4)),   # ~50% of energy (ICMR range 45-65%)
+        "fat_g": float(round(kcal_day * 0.30 / 9)),     # ~30% of energy (WHO upper bound)
     }
 
 
@@ -72,6 +81,8 @@ def compute_targets(profile: dict | None = None, with_overrides: bool = True) ->
 
 
 def _status_for(macro: str, consumed: float, target: float) -> str:
+    if macro in OPTIONAL_KEYS:
+        return "ok"
     if macro in HIT:
         return "low" if consumed < target else "ok"
     return "over" if consumed > target else "ok"
@@ -103,11 +114,17 @@ def _headline(lows: list[str], overs: list[str], has_entries: bool) -> str:
 def summarize_day(entries: list[dict], targets: dict) -> dict:
     """Sum macros across entries; derive per-macro status + a headline string."""
     totals = {k: 0.0 for k in MACRO_KEYS}
+    partial: list[str] = []
     for e in entries:
         for k in MACRO_KEYS:
-            totals[k] += float(e.get(k, 0) or 0)
+            v = e.get(k)
+            if v is None:
+                if k in OPTIONAL_KEYS and k not in partial:
+                    partial.append(k)
+                continue
+            totals[k] += float(v)
     status = {k: _status_for(k, totals[k], targets[k]) for k in MACRO_KEYS}
     lows = [_LABELS[k] for k in _HEADLINE_LOW if status[k] == "low"]
     overs = [_LABELS[k] for k in _HEADLINE_OVER if status[k] == "over"]
-    return {"totals": totals, "status": status,
+    return {"partial": [k for k in OPTIONAL_KEYS if k in partial], "totals": totals, "status": status,
             "headline": _headline(lows, overs, bool(entries))}

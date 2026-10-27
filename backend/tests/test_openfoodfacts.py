@@ -110,3 +110,10 @@ def test_fetch_serving_size_g_none_when_absent():
     }))
     result = OpenFoodFactsClient().fetch("111")
     assert result["serving_size_g"] is None
+
+
+def test_map_nutrition_reads_carbs_and_fat():
+    from app.clients.openfoodfacts import _map_nutrition
+    n = _map_nutrition({"carbohydrates_100g": 62.1, "fat_100g": 20})
+    assert n["carbs_g"] == 62.1 and n["fat_g"] == 20.0
+    assert _map_nutrition({})["carbs_g"] is None

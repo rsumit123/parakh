@@ -44,6 +44,9 @@ def _map_nutrition(n: dict) -> dict:
         "fibre_g": g("fiber_100g"),
         "protein_g": g("proteins_100g"),
         "fruit_veg_nuts_pct": g("fruits-vegetables-nuts-estimate-from-ingredients_100g"),
+        # optional: None (unknown) when OFF doesn't have them
+        "carbs_g": float(n["carbohydrates_100g"]) if n.get("carbohydrates_100g") is not None else None,
+        "fat_g": float(n["fat_100g"]) if n.get("fat_100g") is not None else None,
     }
 
 

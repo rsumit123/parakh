@@ -7,7 +7,8 @@ _PROMPT = (
     "You are reading a packaged food label (often an Indian product). Return ONLY a "
     "JSON object with keys: name (string), brand (string), category (string), "
     "ingredients (array of lowercase strings), and nutrition (object with numeric "
-    "per-100g keys: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g).\n"
+    "per-100g keys: energy_kj, sugars_g, sat_fat_g, salt_g, fibre_g, protein_g, carbs_g, "
+    "fat_g).\n"
     "- category: a short, generic lowercase food category for finding similar products "
     "(e.g. 'biscuits', 'potato chips', 'instant noodles', 'chocolate', 'breakfast cereal', "
     "'namkeen', 'soft drink'). Prefer a common type over a brand-specific name.\n"
@@ -18,7 +19,8 @@ _PROMPT = (
     "kJ = kcal * 4.184.\n"
     "- salt_g: if the label lists sodium in mg, convert to salt in grams: "
     "salt_g = sodium_mg * 2.5 / 1000. If it lists sodium in g, salt_g = sodium_g * 2.5.\n"
-    "- sugars_g: use total sugars.\n"
+    "- sugars_g: use total sugars. carbs_g: total carbohydrate. fat_g: total fat.\n"
+    "- If carbs or total fat are not printed on the label, use null for them (not 0).\n"
     "- Use 0 only for values genuinely absent from the label. No prose, JSON only."
 )
 
@@ -34,7 +36,16 @@ def _normalize_nutrition(n: dict) -> dict:
         "sat_fat_g": g("sat_fat_g"), "salt_g": g("salt_g"),
         "fibre_g": g("fibre_g"), "protein_g": g("protein_g"),
         "fruit_veg_nuts_pct": g("fruit_veg_nuts_pct"),
+        "carbs_g": _opt(n.get("carbs_g")), "fat_g": _opt(n.get("fat_g")),
     }
+
+
+def _opt(v) -> float | None:
+    """Optional nutrient: None when the label doesn't give it."""
+    try:
+        return None if v is None or v == "" else float(v)
+    except (TypeError, ValueError):
+        return None
 
 
 class LabelExtractor:
