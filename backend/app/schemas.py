@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class GuestRequest(BaseModel):
@@ -24,6 +26,9 @@ class BarcodeRequest(BaseModel):
     barcode: str
 
 
+Meal = Literal["breakfast", "lunch", "snack", "dinner"]
+
+
 class DietLogRequest(BaseModel):
     kind: str = "packaged"               # packaged | unpackaged | manual
     barcode: str | None = None
@@ -33,18 +38,21 @@ class DietLogRequest(BaseModel):
     per100g: dict | None = None          # required for unpackaged/manual
     image_url: str = ""
     day: str | None = None               # client-local YYYY-MM-DD; defaults to server today
+    meal: Meal | None = None
 
 
 class DietEditRequest(BaseModel):
     name: str | None = None
+    meal: Meal | None = None
     quantity_g: float | None = None
     macros: dict | None = None           # absolute amounts for the whole portion
 
 
 class ProfileRequest(BaseModel):
-    sex: str | None = None
-    age: int | None = None
-    weight_kg: float | None = None
-    activity: str | None = None
-    goal: str | None = None
+    sex: Literal["male", "female"] | None = None
+    age: int | None = Field(default=None, ge=13, le=100)
+    weight_kg: float | None = Field(default=None, ge=25, le=300)
+    height_cm: float | None = Field(default=None, ge=100, le=250)
+    activity: Literal["sedentary", "light", "moderate", "active"] | None = None
+    goal: Literal["lose", "maintain", "gain"] | None = None
     target_overrides: dict | None = None

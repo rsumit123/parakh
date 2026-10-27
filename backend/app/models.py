@@ -67,6 +67,7 @@ class FoodLogEntry(Base):
     fibre_g: Mapped[float] = mapped_column(Float, default=0.0)
     protein_g: Mapped[float] = mapped_column(Float, default=0.0)
     image_url: Mapped[str] = mapped_column(String, default="")
+    meal: Mapped[str | None] = mapped_column(String, nullable=True)  # breakfast|lunch|snack|dinner
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
@@ -77,6 +78,7 @@ class Profile(Base):
     sex: Mapped[str | None] = mapped_column(String, nullable=True)
     age: Mapped[int | None] = mapped_column(Integer, nullable=True)
     weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    height_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
     activity: Mapped[str | None] = mapped_column(String, nullable=True)
     goal: Mapped[str | None] = mapped_column(String, nullable=True)
     target_overrides: Mapped[dict] = mapped_column(JSON, default=dict)

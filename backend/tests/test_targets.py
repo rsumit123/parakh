@@ -55,3 +55,49 @@ def test_headline_multiple_lows_and_overs():
     s = summarize_day(entries, targets)
     assert "low on fibre & protein" in s["headline"]
     assert "over on sugar, sat fat & salt" in s["headline"]
+
+
+from app.nutrition.targets import personal_targets, is_personalised
+
+_P = {"sex": "male", "age": 30, "weight_kg": 70.0, "height_cm": 175.0,
+      "activity": "moderate", "goal": "maintain"}
+
+
+def test_personal_targets_mifflin_st_jeor_maintain():
+    t = personal_targets(_P)
+    # BMR = 10*70 + 6.25*175 - 5*30 + 5 = 1648.75; x1.55 = 2555.6 -> 2556 kcal
+    assert round(t["energy_kj"] / 4.184) == 2556
+    assert t["protein_g"] == 58            # 0.83 g/kg, rounded
+    assert t["fibre_g"] == 38              # 15 g per 1000 kcal
+    assert t["sugars_g"] == 64             # 10% of energy / 4 kcal/g
+    assert t["sat_fat_g"] == 28            # 10% of energy / 9 kcal/g
+    assert t["salt_g"] == 5.0
+
+
+def test_personal_targets_goal_and_sex_adjust():
+    lose = personal_targets({**_P, "sex": "female", "goal": "lose"})
+    # female BMR = 1648.75 - 166 = 1482.75; x1.55 = 2298 ; -500 = 1798 kcal
+    assert round(lose["energy_kj"] / 4.184) == 1798
+    assert lose["protein_g"] == 77         # 1.1 g/kg when losing (keeps muscle)
+    gain = personal_targets({**_P, "goal": "gain"})
+    assert round(gain["energy_kj"] / 4.184) == 2856
+
+
+def test_energy_floor_on_aggressive_loss():
+    t = personal_targets({**_P, "sex": "female", "age": 70, "weight_kg": 40.0,
+                          "height_cm": 145.0, "activity": "sedentary", "goal": "lose"})
+    assert round(t["energy_kj"] / 4.184) == 1200
+
+
+def test_incomplete_profile_falls_back_to_defaults():
+    assert personal_targets({**_P, "height_cm": None}) is None
+    assert not is_personalised({**_P, "height_cm": None})
+    assert is_personalised(_P)
+    assert compute_targets({**_P, "height_cm": None})["energy_kj"] == 8368.0
+
+
+def test_overrides_still_win_over_personal():
+    t = compute_targets({**_P, "target_overrides": {"protein_g": 100}})
+    assert t["protein_g"] == 100 and round(t["energy_kj"] / 4.184) == 2556
+    base = compute_targets({**_P, "target_overrides": {"protein_g": 100}}, with_overrides=False)
+    assert base["protein_g"] == 58

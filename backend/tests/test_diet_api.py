@@ -175,3 +175,62 @@ def test_history_returns_daily_totals_including_empty_days(client_and_sf):
     assert [d["count"] for d in body["days"]] == [1, 0, 2]
     assert round(body["days"][2]["totals"]["protein_g"], 1) == 16.0
     assert body["targets"]["protein_g"] == 50.0
+
+
+def test_meal_slot_logged_edited_and_validated(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    e = _log(c, h, meal="lunch")
+    assert e["meal"] == "lunch" and e["created_at"]
+    got = c.patch(f"/diet/log/{e['id']}", headers=h, json={"meal": "dinner"}).json()["entry"]
+    assert got["meal"] == "dinner"
+    bad = c.post("/diet/log", headers=h, json={"kind": "manual", "name": "x", "quantity_g": 1,
+                                                "per100g": _PER, "meal": "brunch"})
+    assert bad.status_code == 422
+    assert _log(c, h)["meal"] is None  # optional: client infers from time
+
+
+def test_recent_foods_dedupes_and_counts(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    _log(c, h, name="Poha", quantity_g=150, day="2026-06-11")
+    _log(c, h, name="poha ", quantity_g=200, day="2026-06-12")   # same food, newer amount
+    _log(c, h, name="Dal rice", day="2026-06-12")
+    c.post("/diet/log", headers=h, json={"kind": "packaged", "barcode": "b1", "name": "Amul Lassi",
+                                         "brand": "Amul", "quantity_g": 200})
+    items = c.get("/diet/recent", headers=h).json()["items"]
+    names = [i["name"] for i in items]
+    assert names[0] == "Amul Lassi"                      # most recent first
+    assert sorted(names) == ["Amul Lassi", "Dal rice", "poha "]
+    poha = next(i for i in items if i["name"].strip().lower() == "poha")
+    assert poha["uses"] == 2 and poha["quantity_g"] == 200
+    assert round(poha["per100g"]["protein_g"], 2) == 4.0  # back to per-100 g
+    lassi = next(i for i in items if i["name"] == "Amul Lassi")
+    assert lassi["kind"] == "packaged" and lassi["barcode"] == "b1"
+
+
+def test_profile_personalises_targets_and_day_flag(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    assert c.get("/diet/day?date=2026-06-13", headers=h).json()["personalised"] is False
+    prof = {"sex": "male", "age": 30, "weight_kg": 70, "height_cm": 175,
+            "activity": "moderate", "goal": "maintain"}
+    r = c.put("/diet/profile", headers=h, json={**prof, "target_overrides": {}}).json()
+    assert r["profile"]["height_cm"] == 175
+    assert round(r["effective_targets"]["energy_kj"] / 4.184) == 2556
+    assert r["computed_targets"]["protein_g"] == 58
+    day = c.get("/diet/day?date=2026-06-13", headers=h).json()
+    assert day["personalised"] is True and day["targets"]["protein_g"] == 58
+    # an explicit override sits on top; clearing overrides goes back to computed
+    c.put("/diet/profile", headers=h, json={"target_overrides": {"protein_g": 90}})
+    assert c.get("/diet/profile", headers=h).json()["effective_targets"]["protein_g"] == 90
+    c.put("/diet/profile", headers=h, json={"target_overrides": {}})
+    assert c.get("/diet/profile", headers=h).json()["effective_targets"]["protein_g"] == 58
+
+
+def test_profile_rejects_bad_values(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    assert c.put("/diet/profile", headers=h, json={"sex": "x"}).status_code == 422
+    assert c.put("/diet/profile", headers=h, json={"age": 5}).status_code == 422
+    assert c.put("/diet/profile", headers=h, json={"activity": "extreme"}).status_code == 422

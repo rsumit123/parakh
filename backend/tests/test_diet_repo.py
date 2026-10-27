@@ -39,7 +39,7 @@ def test_delete_only_own_entry():
 
 def test_profile_defaults_empty_then_upsert():
     r = _repo()
-    assert r.get_profile("user:1") == {"sex": None, "age": None, "weight_kg": None,
+    assert r.get_profile("user:1") == {"sex": None, "age": None, "weight_kg": None, "height_cm": None,
                                        "activity": None, "goal": None, "target_overrides": {}}
     r.upsert_profile("user:1", {"sex": "m", "target_overrides": {"protein_g": 80}})
     p = r.get_profile("user:1")

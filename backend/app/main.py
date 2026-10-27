@@ -16,7 +16,7 @@ from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
                          TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
-from app.nutrition.targets import compute_targets, summarize_day, MACRO_KEYS
+from app.nutrition.targets import compute_targets, summarize_day, is_personalised, MACRO_KEYS
 
 
 def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
@@ -54,9 +54,11 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
 
     def _day_payload(identity_id: str, day: str) -> dict:
         entries = diet.day_entries(identity_id, day)
-        targets = compute_targets(diet.get_profile(identity_id))
+        profile = diet.get_profile(identity_id)
+        targets = compute_targets(profile)
         summary = summarize_day(entries, targets)
         return {"date": day, "entries": entries, "targets": targets,
+                "personalised": is_personalised(profile),
                 "totals": summary["totals"], "status": summary["status"],
                 "headline": summary["headline"]}
 
@@ -128,7 +130,8 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         macros = _entry_macros(req)
         entry = diet.add_entry(identity=identity["id"], day=day, kind=req.kind,
                                name=req.name, brand=req.brand, quantity_g=req.quantity_g,
-                               macros=macros, barcode=req.barcode, image_url=req.image_url)
+                               macros=macros, barcode=req.barcode, image_url=req.image_url,
+                               meal=req.meal)
         return {"entry": entry, **_day_payload(identity["id"], day)}
 
     @app.post("/diet/estimate")
@@ -146,15 +149,24 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         _consume(identity)
         return est  # {"items": [{name, portion_g, per100g}, ...]}
 
+    def _profile_payload(profile: dict) -> dict:
+        # computed_targets = before overrides, so the client can tell which values the
+        # user has pinned and offer "reset to calculated".
+        return {"profile": profile, "personalised": is_personalised(profile),
+                "effective_targets": compute_targets(profile),
+                "computed_targets": compute_targets(profile, with_overrides=False)}
+
     @app.get("/diet/profile")
     def diet_get_profile(identity: dict = Depends(current_user)):
-        profile = diet.get_profile(identity["id"])
-        return {"profile": profile, "effective_targets": compute_targets(profile)}
+        return _profile_payload(diet.get_profile(identity["id"]))
 
     @app.put("/diet/profile")
     def diet_put_profile(req: ProfileRequest, identity: dict = Depends(current_user)):
-        profile = diet.upsert_profile(identity["id"], req.model_dump(exclude_unset=True))
-        return {"profile": profile, "effective_targets": compute_targets(profile)}
+        return _profile_payload(diet.upsert_profile(identity["id"], req.model_dump(exclude_unset=True)))
+
+    @app.get("/diet/recent")
+    def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):
+        return {"items": diet.recent_foods(identity["id"], limit=max(1, min(limit, 50)))}
 
     @app.get("/diet/day")
     def diet_day(date: str = "", identity: dict = Depends(current_user)):
@@ -165,7 +177,7 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         if req.quantity_g is not None and req.quantity_g < 0:
             raise HTTPException(status_code=422, detail={"error": "quantity must be >= 0"})
         entry = diet.update_entry(identity["id"], entry_id, name=req.name,
-                                  quantity_g=req.quantity_g, macros=req.macros)
+                                  quantity_g=req.quantity_g, macros=req.macros, meal=req.meal)
         if entry is None:
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
         return {"entry": entry, **_day_payload(identity["id"], entry["day"])}
