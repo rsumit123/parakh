@@ -17,3 +17,7 @@ def test_rejects_misreads():
 def test_near_zero_calorie_drinks_use_absolute_check():
     assert plausible(0.5, 0, {"energy_kj": 10, "protein_g": 0})
     assert not plausible(10, 0, {"energy_kj": 10, "protein_g": 0})
+
+
+def test_rejects_less_carbs_than_sugar():
+    assert not plausible(10, 20, {"energy_kj": 1000, "protein_g": 2, "sugars_g": 25})

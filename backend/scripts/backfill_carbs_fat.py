@@ -51,6 +51,8 @@ def plausible(carbs, fat, n: dict) -> bool:
     protein, fibre = float(n.get("protein_g") or 0), float(n.get("fibre_g") or 0)
     if carbs + fat + protein > 105:
         return False
+    if float(n.get("sugars_g") or 0) > carbs + 1:  # sugar is part of carbohydrate
+        return False
     energy = float(n.get("energy_kj") or 0)
     if energy <= 0:
         return False
