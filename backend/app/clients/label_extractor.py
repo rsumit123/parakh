@@ -2,6 +2,7 @@ import json
 import httpx
 
 from app.images import data_url
+from app.llm_json import strip_fences
 
 _PROMPT = (
     "You are reading a packaged food label (often an Indian product). Return ONLY a "
@@ -83,7 +84,7 @@ class LabelExtractor:
         except (json.JSONDecodeError, KeyError, IndexError, TypeError) as e:
             raise ExtractionError("unexpected OpenRouter response shape") from e
         try:
-            data = json.loads(content)
+            data = json.loads(strip_fences(content))
         except (json.JSONDecodeError, TypeError) as e:
             raise ExtractionError("model did not return JSON") from e
         if not isinstance(data, dict):

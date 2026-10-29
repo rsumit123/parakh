@@ -77,3 +77,18 @@ def test_normalize_keeps_carbs_fat_and_marks_missing_unknown():
     n = _normalize_nutrition({"energy_kj": 2000, "carbs_g": 60, "fat_g": "21.5"})
     assert n["carbs_g"] == 60.0 and n["fat_g"] == 21.5
     assert _normalize_nutrition({"energy_kj": 2000})["carbs_g"] is None
+
+
+def test_extract_accepts_json_in_code_fences(monkeypatch):
+    import json as _json
+    from app.clients.label_extractor import LabelExtractor
+    payload = {"name": "Biscuit", "brand": "B", "category": "biscuits", "ingredients": ["wheat"],
+               "nutrition": {"energy_kj": 2000, "sugars_g": 20, "sat_fat_g": 8, "salt_g": 1,
+                             "fibre_g": 2, "protein_g": 7}}
+
+    class R:
+        status_code = 200
+        def json(self): return {"choices": [{"message": {"content": "```json\n" + _json.dumps(payload) + "\n```"}}]}
+
+    monkeypatch.setattr("app.clients.label_extractor.httpx.post", lambda *a, **k: R())
+    assert LabelExtractor(api_key="k", model="m", url="u").extract(b"x")["name"] == "Biscuit"

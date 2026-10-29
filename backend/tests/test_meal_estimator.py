@@ -112,3 +112,51 @@ def test_parses_carbs_and_fat(monkeypatch):
     monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
     it = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")["items"][0]
     assert it["per100g"]["carbs_g"] == 25 and it["per100g"]["fat_g"] == 5
+
+
+def _run(monkeypatch, items):
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post",
+                        lambda *a, **k: _Resp(json.dumps({"items": items})))
+    return MealEstimator(api_key="k", model="m", url="u").estimate(b"x")["items"]
+
+
+def test_known_food_counts_become_grams_and_table_nutrition(monkeypatch):
+    out = _run(monkeypatch, [{"food": "roti", "name": "Chapati", "count": 3},
+                             {"food": "boiled_egg", "count": 2}])
+    roti, egg = out
+    assert roti["name"] == "Chapati" and roti["portion_g"] == 120 and roti["count"] == 3
+    assert roti["food_id"] == "roti" and roti["per100g"]["carbs_g"] == 46.0
+    assert egg["name"] == "Boiled Egg" and egg["portion_g"] == 100
+
+
+def test_known_food_grams_are_clamped_and_defaulted(monkeypatch):
+    out = _run(monkeypatch, [{"food": "dal_tadka", "grams": 1000},
+                             {"food": "rice"},
+                             {"food": "curd", "grams": 150}])
+    assert [i["portion_g"] for i in out] == [450, 200, 150]
+
+
+def test_nuts_counted_by_piece(monkeypatch):
+    out = _run(monkeypatch, [{"food": "almonds", "count": 4}, {"food": "raisins", "count": 5}])
+    assert out[0]["portion_g"] == 4.8 and out[1]["portion_g"] == 2.5
+
+
+def test_unknown_food_falls_back_to_model_nutrition(monkeypatch):
+    n = {"energy_kj": 800, "protein_g": 5, "carbs_g": 20, "fat_g": 8, "fibre_g": 1,
+         "sugars_g": 2, "sat_fat_g": 2, "salt_g": 1}
+    out = _run(monkeypatch, [{"food": "other", "name": "Litti Chokha", "grams": 150, "nutrition": n}])
+    assert out[0]["name"] == "Litti Chokha" and out[0]["portion_g"] == 150
+    assert out[0]["per100g"]["energy_kj"] == 800 and "food_id" not in out[0]
+
+
+def test_prompt_lists_food_ids():
+    from app.services.meal_estimator import _prompt
+    p = _prompt()
+    assert "dal_tadka" in p and "roti (per piece)" in p and "Do NOT shrink portions" in p
+
+
+def test_json_wrapped_in_code_fences_is_accepted(monkeypatch):
+    fenced = "```json\n" + json.dumps({"items": [{"food": "rice", "grams": 150}]}) + "\n```"
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(fenced))
+    out = MealEstimator(api_key="k", model="m", url="u").estimate(b"x")["items"]
+    assert out[0]["portion_g"] == 150
