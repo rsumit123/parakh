@@ -17,7 +17,7 @@ from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
                          TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
-from app.nutrition.targets import (compute_targets, summarize_day, is_personalised,
+from app.nutrition.targets import (compute_targets, summarize_day, is_personalised, targets_basis,
                                    MACRO_KEYS, OPTIONAL_KEYS)
 
 
@@ -191,6 +191,7 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         # computed_targets = before overrides, so the client can tell which values the
         # user has pinned and offer "reset to calculated".
         return {"profile": profile, "personalised": is_personalised(profile),
+                "basis": targets_basis(profile),
                 "effective_targets": compute_targets(profile),
                 "computed_targets": compute_targets(profile, with_overrides=False)}
 

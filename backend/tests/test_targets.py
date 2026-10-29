@@ -93,7 +93,9 @@ def test_incomplete_profile_falls_back_to_defaults():
     assert personal_targets({**_P, "height_cm": None}) is None
     assert not is_personalised({**_P, "height_cm": None})
     assert is_personalised(_P)
-    assert compute_targets({**_P, "height_cm": None})["energy_kj"] == 8368.0
+    # missing height is now assumed (172 cm for a man) rather than falling back to generic
+    est = compute_targets({**_P, "height_cm": None})
+    assert est["energy_kj"] != 8368.0 and round(est["energy_kj"] / 4.184) == 2527  # 1630 x 1.55
 
 
 def test_overrides_still_win_over_personal():
@@ -120,3 +122,27 @@ def test_carbs_and_fat_are_informational_and_may_be_unknown():
     assert "carb" not in s["headline"]
     full = summarize_day([_entry(carbs_g=10.0, fat_g=2.0)], t)
     assert full["partial"] == []
+
+
+def test_partial_profile_estimates_with_assumptions():
+    from app.nutrition.targets import targets_basis
+    # the owner's real case: everything but age -> age 30 assumed
+    p = {"sex": "male", "height_cm": 180, "weight_kg": 67, "activity": "light", "goal": "maintain"}
+    assert targets_basis(p) == "estimated"
+    t = compute_targets(p)
+    # 10*67 + 6.25*180 - 5*30 + 5 = 1650 ; x1.375 = 2268.75 -> 2269
+    assert round(t["energy_kj"] / 4.184) == 2269 and t["protein_g"] == 56
+
+
+def test_single_choice_moves_targets():
+    base = compute_targets({})
+    very = compute_targets({"activity": "active"})
+    lose = compute_targets({"goal": "lose"})
+    assert base["energy_kj"] == 8368.0                    # nothing set: generic default
+    assert very["energy_kj"] > base["energy_kj"] > lose["energy_kj"]
+
+
+def test_basis_values():
+    from app.nutrition.targets import targets_basis
+    assert targets_basis(None) == "default" and targets_basis({"target_overrides": {}}) == "default"
+    assert targets_basis(_P) == "calculated"
