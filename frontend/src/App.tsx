@@ -122,7 +122,8 @@ function Shell() {
   const profile = (variant: "light" | "dark") => (
     <div style={{ position: "absolute", top: "calc(16px + var(--inset-top))", right: 16, zIndex: 60 }}>
       <ProfileMenu label={email ?? "Guest"} isGuest={isGuest} variant={variant}
-        onHistory={() => go(selectTab(stack, "history"))} onSignOut={signOut} />
+        onHistory={() => go(selectTab(stack, "history"))}
+        onTargets={() => go(push(stack, { t: "targets" }))} onSignOut={signOut} />
     </div>
   );
   const tabbed = (node: ReactNode, variant: "light" | "dark") => (

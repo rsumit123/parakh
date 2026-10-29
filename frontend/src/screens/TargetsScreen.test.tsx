@@ -61,4 +61,21 @@ describe("TargetsScreen", () => {
     await waitFor(() => expect(api.putProfile).toHaveBeenCalled());
     expect(vi.mocked(api.putProfile).mock.calls[0][1].target_overrides).toEqual({ salt_g: 4 });
   });
+
+  it("updates the preview as soon as one choice is made, labelled estimated", async () => {
+    respond({});
+    render(<TargetsScreen token="t" onBack={() => {}} />);
+    expect(await screen.findByLabelText("Energy target")).toHaveValue(2000);
+    fireEvent.click(screen.getByRole("radio", { name: /very active/i }));
+    expect(Number((screen.getByLabelText("Energy target") as HTMLInputElement).value)).toBeGreaterThan(2000);
+    expect(screen.getAllByText("estimated").length).toBeGreaterThan(0);
+    expect(screen.getByText(/add your age/i)).toBeInTheDocument();
+  });
+
+  it("shows empty fields as 'add', not a value-looking placeholder", async () => {
+    respond({});
+    render(<TargetsScreen token="t" onBack={() => {}} />);
+    expect(await screen.findByLabelText("Age in years")).toHaveAttribute("placeholder", "add");
+  });
 });
+

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProfileMenu } from "./ProfileMenu";
 
@@ -40,4 +40,17 @@ describe("ProfileMenu", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: /log out/i }));
     expect(props.onSignOut).toHaveBeenCalledOnce();
   });
+
+  it("offers Your targets to signed-in users only", () => {
+    const onTargets = vi.fn();
+    const { unmount } = render(<ProfileMenu label="a@b.com" isGuest={false} onHistory={() => {}} onTargets={onTargets} onSignOut={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Profile menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /your targets/i }));
+    expect(onTargets).toHaveBeenCalled();
+    unmount();
+    render(<ProfileMenu label="Guest" isGuest onHistory={() => {}} onTargets={onTargets} onSignOut={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Profile menu" }));
+    expect(screen.queryByRole("menuitem", { name: /your targets/i })).not.toBeInTheDocument();
+  });
 });
+

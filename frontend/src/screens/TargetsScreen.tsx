@@ -3,7 +3,7 @@ import {
   getProfile, putProfile, type Totals, type MacroKey, type Activity, type Goal, type Sex,
 } from "../api/diet";
 import { kcal } from "../diet/portion";
-import { computeTargets, isComplete, sameTarget, type AboutYou } from "../diet/targets";
+import { computeTargets, basisOf, sameTarget, ASSUMED, type AboutYou } from "../diet/targets";
 import styles from "./TargetsScreen.module.css";
 
 const FIELDS: { key: MacroKey; label: string; unit: string }[] = [
@@ -60,7 +60,9 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
   if (!about) return <div className={styles.screen}><div className={`skeleton ${styles.skel}`} /></div>;
 
   const calc = computeTargets(about);
-  const complete = isComplete(about);
+  const basis = basisOf(about);
+  const missing = [!about.age && "age", !about.height_cm && "height", !about.weight_kg && "weight",
+    !about.sex && "sex", !about.activity && "activity", !about.goal && "goal"].filter(Boolean) as string[];
   const set = (patch: Partial<AboutYou>) => setAbout({ ...about, ...patch });
 
   const save = async () => {
@@ -83,7 +85,10 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
 
       <h2 className={styles.h}>About you</h2>
       <p className={styles.note}>
-        {complete ? "Targets below are calculated for you." : "Fill these in to get targets for your body and goal."}
+        {basis === "calculated" ? "Targets below are calculated for you."
+          : basis === "estimated" ? `Estimated so far. Add your ${missing.join(", ")} for exact numbers (assuming ${
+              !about.age ? `age ${ASSUMED.age}` : "typical values"} meanwhile).`
+          : "Fill these in to get targets for your body and goal."}
       </p>
       <div className={styles.seg} role="radiogroup" aria-label="Sex">
         {(["male", "female"] as Sex[]).map((s) => (
@@ -92,11 +97,11 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
         ))}
       </div>
       <div className={styles.body}>
-        <label><span>Age</span><input type="number" inputMode="numeric" value={about.age ?? ""} placeholder="30"
+        <label><span>Age</span><input type="number" inputMode="numeric" value={about.age ?? ""} placeholder="add"
           aria-label="Age in years" onChange={(e) => set({ age: num(e.target.value) })} /><em>yrs</em></label>
-        <label><span>Height</span><input type="number" inputMode="decimal" value={about.height_cm ?? ""} placeholder="165"
+        <label><span>Height</span><input type="number" inputMode="decimal" value={about.height_cm ?? ""} placeholder="add"
           aria-label="Height in cm" onChange={(e) => set({ height_cm: num(e.target.value) })} /><em>cm</em></label>
-        <label><span>Weight</span><input type="number" inputMode="decimal" value={about.weight_kg ?? ""} placeholder="65"
+        <label><span>Weight</span><input type="number" inputMode="decimal" value={about.weight_kg ?? ""} placeholder="add"
           aria-label="Weight in kg" onChange={(e) => set({ weight_kg: num(e.target.value) })} /><em>kg</em></label>
       </div>
       <div className={styles.label}>How active are you?</div>
@@ -124,7 +129,7 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
         return (
           <div key={f.key} className={styles.row}>
             <span className={styles.lbl}>{f.label}
-              <small className={pinned ? styles.mine : styles.auto}>{pinned ? "custom" : complete ? "calculated" : "default"}</small>
+              <small className={pinned ? styles.mine : styles.auto}>{pinned ? "custom" : basis}</small>
             </span>
             <input type="number" min={0} value={toShown(f.key, value)} aria-label={`${f.label} target`}
               onChange={(e) => setCustom({ ...custom, [f.key]: fromShown(f.key, Math.max(0, Number(e.target.value) || 0)) })} />

@@ -19,15 +19,34 @@ export function isComplete(p: AboutYou): boolean {
   return !!(p.sex && p.age && p.weight_kg && p.height_cm && p.activity && p.goal);
 }
 
-/** Targets from the profile alone (no overrides), or the defaults if incomplete. */
+export type Basis = "calculated" | "estimated" | "default";
+/** calculated = full profile; estimated = some fields, rest assumed; default = none. */
+export function basisOf(p: AboutYou): Basis {
+  if (isComplete(p)) return "calculated";
+  return p.sex || p.age || p.weight_kg || p.height_cm || p.activity || p.goal ? "estimated" : "default";
+}
+
+// Assumed values for fields not filled in yet (typical Indian adults), so every
+// choice moves the targets. Same as the server's _ASSUME / _ASSUME_BODY.
+export const ASSUMED = {
+  age: 30,
+  body: { male: [172, 70], female: [158, 57], none: [165, 63] } as Record<string, [number, number]>,
+};
+
+/** Targets from the profile alone (no overrides): calculated, estimated with
+ * assumptions for missing fields, or the generic defaults if nothing is set. */
 export function computeTargets(p: AboutYou): Totals {
-  if (!isComplete(p)) return DEFAULT_TARGETS;
-  const w = p.weight_kg!, h = p.height_cm!, age = p.age!;
-  const bmr = 10 * w + 6.25 * h - 5 * age + (p.sex === "male" ? 5 : -161);
-  const kcalDay = Math.round(Math.max(MIN_KCAL, bmr * ACTIVITY[p.activity!] + GOAL_KCAL[p.goal!]));
+  const basis = basisOf(p);
+  if (basis === "default") return DEFAULT_TARGETS;
+  const [hAssumed, wAssumed] = ASSUMED.body[p.sex ?? "none"];
+  const w = p.weight_kg || wAssumed, h = p.height_cm || hAssumed, age = p.age || ASSUMED.age;
+  const activity = p.activity ?? "light", goal = p.goal ?? "maintain";
+  const sexTerm = p.sex === "male" ? 5 : p.sex === "female" ? -161 : -78;
+  const bmr = 10 * w + 6.25 * h - 5 * age + sexTerm;
+  const kcalDay = Math.round(Math.max(MIN_KCAL, bmr * ACTIVITY[activity] + GOAL_KCAL[goal]));
   return {
     energy_kj: kcalDay * 4.184,
-    protein_g: Math.round(w * PROTEIN_PER_KG[p.goal!]),
+    protein_g: Math.round(w * PROTEIN_PER_KG[goal]),
     fibre_g: Math.round((kcalDay * 15) / 1000),
     sugars_g: Math.round((kcalDay * 0.1) / 4),
     sat_fat_g: Math.round((kcalDay * 0.1) / 9),

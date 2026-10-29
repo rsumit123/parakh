@@ -20,7 +20,21 @@ describe("computeTargets", () => {
     expect(kcal(computeTargets({ sex: "female", age: 70, weight_kg: 40, height_cm: 145,
       activity: "sedentary", goal: "lose" }).energy_kj)).toBe(1200);
   });
-  it("falls back to defaults when incomplete", () => {
-    expect(computeTargets({ ...P, height_cm: null })).toEqual(DEFAULT_TARGETS);
+  it("estimates from a partial profile, matching the server", () => {
+    // owner's real case: everything except age (server test: 2269 kcal)
+    const t = computeTargets({ sex: "male", age: null, height_cm: 180, weight_kg: 67, activity: "light", goal: "maintain" });
+    expect(kcal(t.energy_kj)).toBe(2269);
+    expect(t.protein_g).toBe(56);
+    // missing height for a man assumes 172 cm (server: 2527 kcal)
+    expect(kcal(computeTargets({ ...P, height_cm: null }).energy_kj)).toBe(2527);
+  });
+  it("moves with a single choice", () => {
+    const empty = { sex: null, age: null, weight_kg: null, height_cm: null, activity: null, goal: null };
+    expect(computeTargets(empty)).toEqual(DEFAULT_TARGETS);
+    const active = kcal(computeTargets({ ...empty, activity: "active" }).energy_kj);
+    const lose = kcal(computeTargets({ ...empty, goal: "lose" }).energy_kj);
+    expect(active).toBeGreaterThan(2000);
+    expect(lose).toBeLessThan(2000);
   });
 });
+

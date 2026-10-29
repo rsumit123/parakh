@@ -5,11 +5,12 @@ interface Props {
   label: string;          // e.g. "Guest" or an email
   isGuest: boolean;
   onHistory: () => void;
+  onTargets?: () => void;   // signed-in users only
   onSignOut: () => void;
   variant?: "light" | "dark"; // dark = on light backgrounds
 }
 
-export function ProfileMenu({ label, isGuest, onHistory, onSignOut, variant = "light" }: Props) {
+export function ProfileMenu({ label, isGuest, onHistory, onTargets, onSignOut, variant = "light" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initial = (isGuest ? "G" : label.trim()[0] || "U").toUpperCase();
@@ -44,6 +45,11 @@ export function ProfileMenu({ label, isGuest, onHistory, onSignOut, variant = "l
           <button className={styles.item} role="menuitem" onClick={() => { setOpen(false); onHistory(); }}>
             <span className={styles.itemIcon}>🕘</span> Scan history
           </button>
+          {!isGuest && onTargets && (
+            <button className={styles.item} role="menuitem" onClick={() => { setOpen(false); onTargets(); }}>
+              <span className={styles.itemIcon}>🎯</span> Your targets
+            </button>
+          )}
           <button className={`${styles.item} ${styles.danger}`} role="menuitem" onClick={() => { setOpen(false); onSignOut(); }}>
             <span className={styles.itemIcon}>↩</span> {isGuest ? "Reset session" : "Log out"}
           </button>
