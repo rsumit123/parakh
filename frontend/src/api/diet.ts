@@ -107,3 +107,17 @@ export function getRecent(token: string): Promise<{ items: RecentFood[] }> {
   return fetchJson(`/diet/recent`, { token });
 }
 export { localDay };
+
+/** A reference Indian food (server table) for search-and-add. unit_g: one piece,
+ * for countable foods (roti, idli, egg); default_g: a typical serving. */
+export interface RefFood {
+  id: string; name: string; aliases: string[];
+  unit_g: number | null; default_g: number; min_g: number; max_g: number; per100g: Macros;
+}
+let foodsCache: Promise<RefFood[]> | null = null;
+/** The table is static, so it's fetched once per app session. */
+export function getFoods(token: string): Promise<RefFood[]> {
+  foodsCache ??= fetchJson<{ foods: RefFood[] }>(`/diet/foods`, { token }).then((r) => r.foods)
+    .catch((e) => { foodsCache = null; throw e; });
+  return foodsCache;
+}

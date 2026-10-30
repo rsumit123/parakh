@@ -18,6 +18,7 @@ from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
 from app.nutrition.suggest import suggest_meals
+from app.nutrition.foods import catalog as food_catalog
 from app.nutrition.targets import (compute_targets, summarize_day, is_personalised, targets_basis,
                                    MACRO_KEYS, OPTIONAL_KEYS)
 
@@ -243,6 +244,11 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     @app.get("/diet/recent")
     def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):
         return {"items": diet.recent_foods(identity["id"], limit=max(1, min(limit, 50)))}
+
+    @app.get("/diet/foods")
+    def diet_foods(identity: dict = Depends(current_user)):
+        """Reference Indian foods for search-and-add (static; the app caches it)."""
+        return {"foods": food_catalog()}
 
     @app.get("/diet/day")
     def diet_day(date: str = "", identity: dict = Depends(current_user)):

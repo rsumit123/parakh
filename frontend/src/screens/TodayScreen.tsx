@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   getDay, getHistory, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
   type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
-  type Meal, type MealSuggestion,
+  type Meal, type MealSuggestion, type RefFood,
 } from "../api/diet";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { addDays, dayTitle, shortDate } from "../diet/dates";
@@ -12,6 +12,7 @@ import { FoodSheet, type FoodValues } from "../components/FoodSheet";
 import { AddFoodSheet } from "../components/AddFoodSheet";
 import { MealSuggestions } from "../components/MealSuggestions";
 import { TrendsSheet } from "../components/TrendsSheet";
+import { FoodPicker } from "../components/FoodPicker";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -34,7 +35,7 @@ function chartEnd(date: string, today: string): string {
   return end > today ? today : end;
 }
 
-type Sheet = { t: "choose" } | { t: "manual" } | { t: "again"; food: RecentFood }
+type Sheet = { t: "choose" } | { t: "manual" } | { t: "again"; food: RecentFood } | { t: "food"; food: RefFood }
   | { t: "edit"; entry: LogEntry } | null;
 
 // Back to per-100 g (what /diet/log takes). Unknown carbs/fat stay unknown.
@@ -250,7 +251,12 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
           onManual={() => setSheet({ t: "manual" })}
           onQuickAdd={quickAdd}
           onPick={(food) => setSheet({ t: "again", food })}
+          onFood={(food) => setSheet({ t: "food", food })}
           onClose={() => setSheet(null)} />
+      )}
+      {sheet?.t === "food" && (
+        <FoodPicker food={sheet.food} onCancel={() => setSheet(null)}
+          onAdd={(v) => log({ kind: "unpackaged", name: v.name, quantity_g: v.grams, per100g: v.per100g, meal: v.meal }, v.name)} />
       )}
       {sheet?.t === "again" && (
         <FoodSheet mode="add" title="Add again"

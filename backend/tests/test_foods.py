@@ -19,3 +19,9 @@ def test_per100g_uses_app_keys_and_kj():
     p = per100g(FOODS["rice"])
     assert p["energy_kj"] == round(130 * 4.184, 1) and p["carbs_g"] == 28.0
     assert set(p) == {"energy_kj", "protein_g", "carbs_g", "fat_g", "fibre_g", "sugars_g", "sat_fat_g", "salt_g"}
+
+
+def test_aliases_point_at_real_foods():
+    from app.nutrition.foods import ALIASES, catalog
+    assert set(ALIASES) <= set(FOODS)
+    assert [f["id"] for f in catalog()] == list(FOODS)

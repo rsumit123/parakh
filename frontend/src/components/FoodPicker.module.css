@@ -1,0 +1,25 @@
+.wrap { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; justify-content: flex-end; }
+.scrim { position: absolute; inset: 0; background: rgba(8,20,14,.34); }
+.sheet { position: relative; width: 100%; max-width: 560px; margin: 0 auto; background: var(--paper); border-radius: 24px 24px 0 0; padding: 8px 16px calc(18px + var(--inset-bottom)); box-shadow: 0 -8px 30px rgba(0,0,0,.18); }
+.grab { width: 38px; height: 4px; border-radius: 99px; background: #d9d8cf; margin: 6px auto 12px; }
+.h { font-size: 19px; font-weight: 800; color: var(--green-deep); }
+.sub { font-size: 12.5px; color: var(--muted); margin: 2px 0 12px; }
+.meal { margin-bottom: 14px; }
+.stepper { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 8px; margin-bottom: 14px; }
+.stepper button { width: 48px; height: 48px; border-radius: 13px; background: var(--paper); border: 1px solid var(--line); font-size: 22px; font-weight: 700; color: var(--ink); }
+.stepper button:disabled { opacity: .35; }
+.stepper b { font-size: 26px; font-weight: 800; }
+.stepper b span { font-size: 14px; font-weight: 600; color: var(--muted); }
+.seg { display: flex; gap: 8px; margin-bottom: 10px; }
+.seg button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 9px 0; border-radius: 13px; background: var(--card); border: 1px solid var(--line); font-size: 15px; font-weight: 800; color: var(--ink); }
+.seg button small { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.seg button.on { background: var(--green-deep); color: #eafff2; border-color: var(--green-deep); }
+.seg button.on small { color: #b9dcc8; }
+.grams { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 11px 13px; margin-bottom: 14px; }
+.grams input { flex: 1; border: 0; background: transparent; font-family: inherit; font-size: 15px; font-weight: 700; width: 100%; }
+.grams span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.preview { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 4px; margin-bottom: 14px; text-align: center; }
+.preview b { display: block; font-size: 17px; font-weight: 800; }
+.preview span { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.add { display: block; width: 100%; padding: 15px; border-radius: 16px; font-size: 15.5px; font-weight: 800; background: var(--lime); color: #16341f; }
+.add:disabled { opacity: .5; }

@@ -177,6 +177,38 @@ def per100g(food: Food) -> dict:
     return out
 
 
+# Other names people search by (Hindi / regional / English), for the app's food search.
+ALIASES: dict[str, tuple[str, ...]] = {
+    "roti": ("chapati", "chapathi", "phulka", "fulka"),
+    "paratha": ("parantha",), "aloo_paratha": ("potato paratha",),
+    "rice": ("chawal", "plain rice", "steamed rice"),
+    "dal_tadka": ("dal", "daal", "arhar dal", "toor dal", "dal fry"),
+    "moong_dal": ("moong daal",), "chana_dal": ("chana daal",),
+    "rajma": ("kidney beans",), "chole": ("chana", "chickpeas", "chhole"),
+    "sprouts_salad": ("moong sprouts",), "soya_chunks_curry": ("soya", "nutrela"),
+    "aloo_sabzi": ("potato",), "aloo_gobi": ("cauliflower", "gobi"), "aloo_chokha": ("mashed potato",),
+    "bhindi_sabzi": ("okra", "lady finger", "bhindi"), "lauki_sabzi": ("bottle gourd", "lauki", "ghiya"),
+    "baingan_bharta": ("brinjal", "eggplant"), "baingan_chokha": ("brinjal",),
+    "palak_sabzi": ("spinach",), "cabbage_sabzi": ("patta gobi",), "beans_sabzi": ("french beans",),
+    "paneer_sabzi": ("cottage cheese",), "chhena": ("chenna",),
+    "boiled_egg": ("egg", "anda", "eggs"), "omelette": ("omelet", "egg"), "egg_bhurji": ("scrambled egg",),
+    "curd": ("dahi", "yogurt", "yoghurt"), "chaas": ("buttermilk", "mattha"),
+    "sweet_lassi": ("lassi",), "masala_chai": ("chai", "tea"), "coffee_milk": ("coffee",),
+    "plain_dosa": ("dosai",), "medu_vada": ("vada",), "maggi_noodles": ("maggi", "noodles"),
+    "oats_porridge": ("oatmeal", "porridge"), "poha": ("aval", "chivda"),
+    "peanuts": ("groundnut", "moongphali"), "makhana": ("fox nut", "lotus seed"),
+    "jaggery": ("gur",), "mixed_dry_fruits": ("dry fruits", "nuts"), "raw_onion": ("pyaz",),
+    "green_salad": ("cucumber", "kheera"), "watermelon": ("tarbooz",), "guava": ("amrood",),
+}
+
+
+def catalog() -> list[dict]:
+    """Every food for the app's search and portion picker, in table order."""
+    return [{"id": fid, "name": f.name, "aliases": list(ALIASES.get(fid, ())),
+             "unit_g": f.unit_g, "default_g": f.default_g, "min_g": f.min_g, "max_g": f.max_g,
+             "per100g": per100g(f)} for fid, f in FOODS.items()]
+
+
 def menu() -> str:
     """Compact id list for the model prompt: `id (unit 40g)` for countables."""
     return ", ".join(f"{fid}{f' (per piece)' if f.unit_g else ''}" for fid, f in FOODS.items())

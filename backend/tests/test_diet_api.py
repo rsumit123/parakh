@@ -418,3 +418,14 @@ def test_repeat_copies_the_photo(photo_client):
                                                    "meal": "lunch"}).json()["created"][0]
     assert new["image_url"].startswith("https://signed/meals/user-1/") and key not in new["image_url"]
     assert len(s3.objects) == 2                       # deleting one entry won't break the other
+
+
+def test_food_catalog_for_search(client_and_sf):
+    c, _ = client_and_sf
+    foods = c.get("/diet/foods", headers=_user_headers()).json()["foods"]
+    by_id = {f["id"]: f for f in foods}
+    assert len(foods) > 100
+    idli = by_id["idli"]
+    assert idli["name"] == "Idli" and idli["unit_g"] == 40
+    assert round(idli["per100g"]["energy_kj"] / 4.184) == 130
+    assert "chapati" in by_id["roti"]["aliases"] and by_id["rice"]["unit_g"] is None
