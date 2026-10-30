@@ -240,6 +240,7 @@ def test_profile_rejects_bad_values(client_and_sf):
 
 class _FakeS3:
     def __init__(self): self.objects, self.deleted = {}, []
+    def copy_object(self, Bucket, Key, CopySource, **kw): self.objects[Key] = self.objects[CopySource["Key"]]
     def put_object(self, Bucket, Key, Body, **kw): self.objects[Key] = Body
     def generate_presigned_url(self, op, Params, ExpiresIn): return f"https://signed/{Params['Key']}?exp={ExpiresIn}"
     def delete_object(self, Bucket, Key): self.deleted.append(Key); self.objects.pop(Key, None)
@@ -345,3 +346,73 @@ def test_edit_from_older_app_keeps_carbs(client_and_sf):
     e = _log(c, h, per100g={**_PER, "carbs_g": 20, "fat_g": 5})
     got = c.patch(f"/diet/log/{e['id']}", headers=h, json={"macros": _PER}).json()["entry"]  # no carbs key
     assert got["carbs_g"] == 40 and got["protein_g"] == 4
+
+
+# ---- repeat-meal suggestions --------------------------------------------------
+
+def _meal(c, h, day, meal, *names):
+    return [_log(c, h, name=n, day=day, meal=meal) for n in names]
+
+
+def test_suggestions_rank_usual_meals_per_slot(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    for d in ("2026-06-10", "2026-06-11", "2026-06-12"):
+        _meal(c, h, d, "breakfast", "Roti, Dal", "Boiled eggs ×2")
+    _meal(c, h, "2026-06-12", "lunch", "Rice, Dal")
+    _meal(c, h, "2026-06-11", "lunch", "Rajma Chawal")
+    _meal(c, h, "2026-06-13", "breakfast", "Poha")            # the day being viewed: excluded
+    r = c.get("/diet/suggestions?date=2026-06-13", headers=h).json()["slots"]
+    b = r["breakfast"]
+    assert b[0]["times"] == 3 and b[0]["source_day"] == "2026-06-12"
+    assert [i["name"] for i in b[0]["items"]] == ["Roti, Dal", "Boiled eggs ×2"]
+    assert b[0]["kcal"] == round(2 * 500 * 2 / 4.184)           # two 200 g items at 500 kJ/100 g
+    assert [s["items"][0]["name"] for s in r["lunch"]] == ["Rice, Dal", "Rajma Chawal"]  # tie -> newest first
+    assert r["dinner"] == [] and r["snack"] == []
+
+
+def test_suggestions_ignore_old_and_other_users_meals(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    _meal(c, h, "2026-05-01", "lunch", "Old meal")             # > 14 days before
+    import hmac, hashlib
+    sig = hmac.new(b"s", b"user:2", hashlib.sha256).hexdigest()
+    _meal(c, {"Authorization": f"Bearer user:2.{sig}"}, "2026-06-12", "lunch", "Not mine")
+    assert c.get("/diet/suggestions?date=2026-06-13", headers=h).json()["slots"]["lunch"] == []
+
+
+def test_repeat_copies_a_meal_into_the_viewed_day(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    src = _meal(c, h, "2026-06-12", "breakfast", "Roti, Dal", "Boiled eggs ×2")
+    r = c.post("/diet/repeat", headers=h, json={"entry_ids": [e["id"] for e in src],
+                                                 "day": "2026-06-13", "meal": "breakfast"})
+    assert r.status_code == 200
+    body = r.json()
+    assert [e["name"] for e in body["entries"]] == ["Roti, Dal", "Boiled eggs ×2"]
+    assert all(e["day"] == "2026-06-13" and e["meal"] == "breakfast" for e in body["entries"])
+    assert body["date"] == "2026-06-13" and round(body["totals"]["protein_g"]) == 16
+    assert len(c.get("/diet/day?date=2026-06-12", headers=h).json()["entries"]) == 2   # source untouched
+
+
+def test_repeat_rejects_someone_elses_entries(client_and_sf):
+    c, _ = client_and_sf
+    e = _log(c, _user_headers())
+    import hmac, hashlib
+    sig = hmac.new(b"s", b"user:2", hashlib.sha256).hexdigest()
+    r = c.post("/diet/repeat", headers={"Authorization": f"Bearer user:2.{sig}"},
+               json={"entry_ids": [e["id"]], "day": "2026-06-13", "meal": "lunch"})
+    assert r.status_code == 404
+
+
+def test_repeat_copies_the_photo(photo_client):
+    c, s3 = photo_client
+    h = _user_headers()
+    key = c.post("/diet/photo", headers=h, files={"image": ("m.jpg", _jpeg_with_gps(), "image/jpeg")}).json()["photo_key"]
+    e = c.post("/diet/log", headers=h, json={"kind": "unpackaged", "name": "Thali", "quantity_g": 300,
+                                              "per100g": _PER, "photo_key": key, "day": "2026-06-12",
+                                              "meal": "lunch"}).json()["entry"]
+    new = c.post("/diet/repeat", headers=h, json={"entry_ids": [e["id"]], "day": "2026-06-13",
+                                                   "meal": "lunch"}).json()["entries"][0]
+    assert new["image_url"].startswith("https://signed/meals/user-1/") and key not in new["image_url"]
+    assert len(s3.objects) == 2                       # deleting one entry won't break the other

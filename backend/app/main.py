@@ -14,9 +14,10 @@ from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
 from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
-                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest,
+                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest, RepeatRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
+from app.nutrition.suggest import suggest_meals
 from app.nutrition.targets import (compute_targets, summarize_day, is_personalised, targets_basis,
                                    MACRO_KEYS, OPTIONAL_KEYS)
 
@@ -202,6 +203,41 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     @app.put("/diet/profile")
     def diet_put_profile(req: ProfileRequest, identity: dict = Depends(current_user)):
         return _profile_payload(diet.upsert_profile(identity["id"], req.model_dump(exclude_unset=True)))
+
+    @app.get("/diet/suggestions")
+    def diet_suggestions(date: str = "", identity: dict = Depends(current_user)):
+        """Usual meals per slot from the 14 days before `date` (the viewed day itself
+        is excluded, so suggestions are for filling it)."""
+        try:
+            d = Date.fromisoformat(date or _today())
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"error": "bad date"})
+        start, end = (d - timedelta(days=14)).isoformat(), (d - timedelta(days=1)).isoformat()
+        return {"date": d.isoformat(), "slots": suggest_meals(diet.range_entries(identity["id"], start, end))}
+
+    @app.post("/diet/repeat")
+    def diet_repeat(req: RepeatRequest, identity: dict = Depends(current_user)):
+        """Copy a past meal's entries into `day`/`meal` (photos copied too)."""
+        try:
+            Date.fromisoformat(req.day)
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"error": "bad day"})
+        sources = [diet.get_entry(identity["id"], i) for i in req.entry_ids]
+        if any(s is None for s in sources):
+            raise HTTPException(status_code=404, detail={"error": "entry not found"})
+        created = []
+        for s in sources:
+            image = s.get("image_url") or ""
+            if image.startswith(KEY_PREFIX):
+                try:
+                    image = photo_store.copy(identity["id"], image) if photo_store else ""
+                except Exception:
+                    image = ""  # the meal still gets logged, just without the photo
+            created.append(diet.add_entry(
+                identity=identity["id"], day=req.day, kind=s["kind"], name=s["name"], brand=s["brand"],
+                quantity_g=s["quantity_g"], macros={k: s.get(k) for k in MACRO_KEYS},
+                barcode=s.get("barcode"), image_url=image, meal=req.meal))
+        return {"entries": [_present(e) for e in created], **_day_payload(identity["id"], req.day)}
 
     @app.get("/diet/recent")
     def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):

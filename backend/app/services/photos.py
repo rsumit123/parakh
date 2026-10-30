@@ -61,6 +61,15 @@ class PhotoStore:
                             ContentType="image/jpeg", CacheControl="private, max-age=86400")
         return key
 
+    def copy(self, identity: str, key: str) -> str:
+        """Server-side copy into the user's folder (for repeated meals), so deleting
+        one entry's photo never breaks another's."""
+        new = f"{user_prefix(identity)}{uuid.uuid4().hex}.jpg"
+        self._s3.copy_object(Bucket=self._bucket, Key=new, CopySource={"Bucket": self._bucket, "Key": key},
+                             ContentType="image/jpeg", MetadataDirective="REPLACE",
+                             CacheControl="private, max-age=86400")
+        return new
+
     def url(self, key: str) -> str:
         return self._s3.generate_presigned_url(
             "get_object", Params={"Bucket": self._bucket, "Key": key}, ExpiresIn=URL_TTL_S)

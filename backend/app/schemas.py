@@ -49,6 +49,12 @@ class DietEditRequest(BaseModel):
     macros: dict | None = None           # absolute amounts for the whole portion
 
 
+class RepeatRequest(BaseModel):
+    entry_ids: list[int] = Field(min_length=1, max_length=30)
+    day: str
+    meal: Meal
+
+
 class ProfileRequest(BaseModel):
     sex: Literal["male", "female"] | None = None
     age: int | None = Field(default=None, ge=13, le=100)
