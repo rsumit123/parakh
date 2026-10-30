@@ -131,3 +131,16 @@ export interface Gaps { gaps: Partial<Record<"protein_g" | "fibre_g", number>>; 
 export function getGaps(token: string, date: string): Promise<Gaps> {
   return fetchJson(`/diet/gaps?date=${date}`, { token });
 }
+
+export interface WeighIn { day: string; weight_kg: number; }
+export interface WeightData { entries: WeighIn[]; latest: WeighIn | null; goal: string | null; }
+export function getWeight(token: string, days: number, end: string): Promise<WeightData> {
+  return fetchJson(`/diet/weight?days=${days}&end=${end}`, { token });
+}
+/** Save a weigh-in (one per day); the latest also updates the profile weight. */
+export function logWeight(token: string, day: string, weight_kg: number): Promise<WeightData> {
+  return fetchJson(`/diet/weight`, { token, method: "PUT", json: { day, weight_kg } });
+}
+export function deleteWeight(token: string, day: string): Promise<WeightData> {
+  return fetchJson(`/diet/weight/${day}`, { token, method: "DELETE" });
+}

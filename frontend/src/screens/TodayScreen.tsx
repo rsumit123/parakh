@@ -15,6 +15,7 @@ import { TrendsSheet } from "../components/TrendsSheet";
 import { syncReminders } from "../diet/reminders";
 import { FoodPicker } from "../components/FoodPicker";
 import { GapIdeas } from "../components/GapIdeas";
+import { WeightCard } from "../components/WeightCard";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -260,6 +261,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
           })}
           {day.entries.length === 0 && <div className={styles.empty}>Nothing logged {isToday ? "yet" : "that day"}.</div>}
           <button className={styles.add} onClick={() => setSheet({ t: "choose" })}>＋ Add food</button>
+          {isToday && <WeightCard token={token} today={today} />}
         </>
       )}
 

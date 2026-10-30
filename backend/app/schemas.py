@@ -55,6 +55,11 @@ class RepeatRequest(BaseModel):
     meal: Meal
 
 
+class WeightRequest(BaseModel):
+    day: str
+    weight_kg: float = Field(ge=25, le=300)   # same bounds as the profile
+
+
 class ProfileRequest(BaseModel):
     sex: Literal["male", "female"] | None = None
     age: int | None = Field(default=None, ge=13, le=100)

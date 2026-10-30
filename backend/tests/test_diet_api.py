@@ -439,3 +439,29 @@ def test_gap_ideas_for_a_day(client_and_sf):
     r = c.get("/diet/gaps?date=2026-06-20", headers=h).json()
     assert r["gaps"]["protein_g"] > 30 and r["ideas"]
     assert all({"name", "quantity_g", "per100g", "kcal", "protein_g", "own"} <= set(i) for i in r["ideas"])
+
+
+def test_weight_log_tracks_profile_weight(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    c.put("/diet/profile", headers=h, json={"sex": "male", "age": 30, "weight_kg": 70, "height_cm": 175,
+                                            "activity": "moderate", "goal": "lose"})
+    kcal = lambda: round(c.get("/diet/profile", headers=h).json()["computed_targets"]["energy_kj"] / 4.184)
+    before = kcal()
+    c.put("/diet/weight", headers=h, json={"day": "2026-06-01", "weight_kg": 69.95})
+    r = c.put("/diet/weight", headers=h, json={"day": "2026-06-08", "weight_kg": 68.4}).json()
+    assert [e["weight_kg"] for e in r["entries"]][-2:] == [70.0, 68.4] and r["latest"]["day"] == "2026-06-08"
+    assert r["goal"] == "lose"
+    assert c.get("/diet/profile", headers=h).json()["profile"]["weight_kg"] == 68.4   # targets follow
+    assert kcal() < before
+    # same day again replaces; an older day doesn't change the profile weight
+    c.put("/diet/weight", headers=h, json={"day": "2026-06-08", "weight_kg": 68.0})
+    c.put("/diet/weight", headers=h, json={"day": "2026-05-20", "weight_kg": 72.0})
+    assert c.get("/diet/profile", headers=h).json()["profile"]["weight_kg"] == 68.0
+    w = c.get("/diet/weight?days=30&end=2026-06-10", headers=h).json()
+    assert [e["day"] for e in w["entries"]] == ["2026-05-20", "2026-06-01", "2026-06-08"]
+    # deleting the latest falls back to the previous weigh-in
+    assert c.delete("/diet/weight/2026-06-08", headers=h).status_code == 200
+    assert c.get("/diet/profile", headers=h).json()["profile"]["weight_kg"] == 70.0
+    assert c.delete("/diet/weight/2026-06-08", headers=h).status_code == 404
+    assert c.put("/diet/weight", headers=h, json={"day": "2026-06-09", "weight_kg": 5}).status_code == 422

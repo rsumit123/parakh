@@ -14,7 +14,7 @@ from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
 from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
-                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest, RepeatRequest,
+                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest, RepeatRequest, WeightRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
 from app.nutrition.suggest import suggest_meals
@@ -205,6 +205,36 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     @app.put("/diet/profile")
     def diet_put_profile(req: ProfileRequest, identity: dict = Depends(current_user)):
         return _profile_payload(diet.upsert_profile(identity["id"], req.model_dump(exclude_unset=True)))
+
+    def _weight_payload(identity_id: str, days: int = 90, end: str = "") -> dict:
+        try:
+            end_d = Date.fromisoformat(end or _today())
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"error": "bad end date"})
+        start = (end_d - timedelta(days=max(1, min(days, 400)) - 1)).isoformat()
+        profile = diet.get_profile(identity_id)
+        return {"entries": diet.weights(identity_id, start, end_d.isoformat()),
+                "latest": (diet.weights(identity_id)[-1:] or [None])[0], "goal": profile.get("goal")}
+
+    @app.get("/diet/weight")
+    def diet_weight(days: int = 90, end: str = "", identity: dict = Depends(current_user)):
+        """Weigh-ins for the `days` days ending at `end`, plus the latest ever."""
+        return _weight_payload(identity["id"], days, end)
+
+    @app.put("/diet/weight")
+    def diet_log_weight(req: WeightRequest, identity: dict = Depends(current_user)):
+        try:
+            Date.fromisoformat(req.day)
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"error": "bad day"})
+        diet.log_weight(identity["id"], req.day, round(req.weight_kg, 1))
+        return _weight_payload(identity["id"], end=max(req.day, _today()))
+
+    @app.delete("/diet/weight/{day}")
+    def diet_delete_weight(day: str, identity: dict = Depends(current_user)):
+        if not diet.delete_weight(identity["id"], day):
+            raise HTTPException(status_code=404, detail={"error": "no weigh-in that day"})
+        return _weight_payload(identity["id"])
 
     @app.get("/diet/suggestions")
     def diet_suggestions(date: str = "", identity: dict = Depends(current_user)):

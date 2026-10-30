@@ -8,7 +8,7 @@ const W = 320;
  * nearest day; `active` is controlled so several charts can share one crosshair.
  * Vertical swipes still scroll the page (touch-action: pan-y). */
 export function LineChart({ values, target, partial, active, onActive, marked, ticks, height = 132, top = 10,
-  tip, ariaLabel }: {
+  tip, ariaLabel, range }: {
   values: (number | null)[]; target: number; partial?: boolean[];
   active: number | null; onActive: (i: number) => void;
   marked?: number;  // the day open on Today: a ringed dot
@@ -16,13 +16,14 @@ export function LineChart({ values, target, partial, active, onActive, marked, t
   height?: number; top?: number;  // `top` leaves room above the line for a tooltip
   tip?: ReactNode;  // shown above the active day
   ariaLabel: string;
+  range?: [number, number];  // fixed y scale (e.g. body weight), instead of 0..max
 }) {
   const ref = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
   const n = values.length;
-  const base = height - 22;
-  const max = Math.max(target * 1.15, ...values.map((v) => (v ?? 0) * 1.1), 1e-6);
-  const y = (v: number) => base - (v / max) * (base - top);
+  const base = height - (ticks.length ? 22 : 4);  // room for day labels only when there are any
+  const [lo, max] = range ?? [0, Math.max(target * 1.15, ...values.map((v) => (v ?? 0) * 1.1), 1e-6)];
+  const y = (v: number) => base - ((v - lo) / (max - lo || 1)) * (base - top);
   const x = (i: number) => (W / n) * (i + 0.5);
 
   // Contiguous runs of logged days; each run is one line + its soft fill.

@@ -85,3 +85,12 @@ class Profile(Base):
     goal: Mapped[str | None] = mapped_column(String, nullable=True)
     target_overrides: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class WeightEntry(Base):
+    """One weigh-in per user per day (a second one that day replaces it)."""
+    __tablename__ = "weight_log"
+    identity: Mapped[str] = mapped_column(String, primary_key=True)
+    day: Mapped[str] = mapped_column(String, primary_key=True)     # local 'YYYY-MM-DD'
+    weight_kg: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

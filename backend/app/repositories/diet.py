@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from app.models import FoodLogEntry, Profile
+from app.models import FoodLogEntry, Profile, WeightEntry
 from app.nutrition.targets import MACRO_KEYS, OPTIONAL_KEYS
 
 
@@ -152,3 +152,39 @@ class DietRepository:
                 p.target_overrides = fields["target_overrides"]
             s.commit()
         return self.get_profile(identity)
+
+    # --- weight log ---
+    def log_weight(self, identity: str, day: str, weight_kg: float) -> None:
+        """Record a weigh-in; the latest one also becomes the profile weight, so the
+        targets follow the user's weight."""
+        with self._Session() as s:
+            w = s.get(WeightEntry, (identity, day))
+            if w is None:
+                s.add(WeightEntry(identity=identity, day=day, weight_kg=weight_kg))
+            else:
+                w.weight_kg = weight_kg
+            s.commit()
+        self._sync_profile_weight(identity)
+
+    def delete_weight(self, identity: str, day: str) -> bool:
+        with self._Session() as s:
+            w = s.get(WeightEntry, (identity, day))
+            if w is None:
+                return False
+            s.delete(w)
+            s.commit()
+        self._sync_profile_weight(identity)
+        return True
+
+    def weights(self, identity: str, start: str = "", end: str = "9999-12-31") -> list[dict]:
+        """Weigh-ins with start <= day <= end, oldest first."""
+        with self._Session() as s:
+            rows = s.scalars(select(WeightEntry).where(
+                WeightEntry.identity == identity, WeightEntry.day >= start, WeightEntry.day <= end,
+            ).order_by(WeightEntry.day)).all()
+            return [{"day": w.day, "weight_kg": w.weight_kg} for w in rows]
+
+    def _sync_profile_weight(self, identity: str) -> None:
+        latest = self.weights(identity)[-1:]
+        if latest:
+            self.upsert_profile(identity, {"weight_kg": latest[0]["weight_kg"]})
