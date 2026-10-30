@@ -1,4 +1,4 @@
-.screen { min-height: 100dvh; padding-top: var(--inset-top); padding-bottom: 20px; }
+.screen { composes: status-shield from global; min-height: 100dvh; padding-top: var(--inset-top); padding-bottom: 20px; }
 .top { display: flex; align-items: center; justify-content: space-between; padding: 30px 18px 8px; }
 .ttl { font-size: 22px; font-weight: 800; color: var(--green-deep); }
 .gear { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); font-size: 15px; }

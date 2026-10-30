@@ -1,4 +1,4 @@
-.screen { min-height: 100dvh; background: var(--paper); color: var(--ink); padding: calc(14px + var(--inset-top)) 16px 24px; }
+.screen { composes: status-shield from global; min-height: 100dvh; background: var(--paper); color: var(--ink); padding: calc(14px + var(--inset-top)) 16px 24px; }
 .top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .back { font-size: 24px; line-height: 1; color: var(--ink); background: transparent; padding: 0 4px; }
 .title { font-size: 19px; font-weight: 800; text-transform: capitalize; }

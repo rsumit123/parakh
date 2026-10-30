@@ -3,7 +3,7 @@ from app.nutrition.targets import compute_targets, summarize_day, MACRO_KEYS
 
 def test_defaults_when_no_profile():
     t = compute_targets(None)
-    assert t["protein_g"] == 50.0 and t["fibre_g"] == 30.0
+    assert t["protein_g"] == 50.0 and t["fibre_g"] == 40.0   # ICMR: 40 g / 2000 kcal
     assert t["sugars_g"] == 50.0 and t["salt_g"] == 5.0 and t["sat_fat_g"] == 22.0
     assert 8000 < t["energy_kj"] < 8800  # ~2000 kcal
     assert set(t) == set(MACRO_KEYS)
@@ -13,7 +13,7 @@ def test_overrides_win_per_macro():
     t = compute_targets({"target_overrides": {"protein_g": 80, "sugars_g": 0, "x": 9}})
     assert t["protein_g"] == 80.0        # applied
     assert t["sugars_g"] == 50.0         # 0 ignored (must be > 0)
-    assert t["fibre_g"] == 30.0          # untouched
+    assert t["fibre_g"] == 40.0          # untouched
 
 
 def _entry(**kw):
@@ -43,7 +43,7 @@ def test_empty_day_headline():
 
 def test_on_track_headline():
     targets = compute_targets(None)
-    entries = [_entry(protein_g=60, fibre_g=35, sugars_g=10, salt_g=1, sat_fat_g=5, energy_kj=3000)]
+    entries = [_entry(protein_g=60, fibre_g=42, sugars_g=10, salt_g=1, sat_fat_g=5, energy_kj=3000)]
     s = summarize_day(entries, targets)
     assert s["status"]["protein_g"] == "ok" and s["status"]["fibre_g"] == "ok"
     assert "On track" in s["headline"]
@@ -63,24 +63,24 @@ _P = {"sex": "male", "age": 30, "weight_kg": 70.0, "height_cm": 175.0,
       "activity": "moderate", "goal": "maintain"}
 
 
-def test_personal_targets_mifflin_st_jeor_maintain():
+def test_personal_targets_icmr_maintain():
     t = personal_targets(_P)
-    # BMR = 10*70 + 6.25*175 - 5*30 + 5 = 1648.75; x1.55 = 2555.6 -> 2556 kcal
-    assert round(t["energy_kj"] / 4.184) == 2556
+    # ICMR-NIN: BMR = (11.472*70 + 873.1) * 0.90 = 1508.5 (age 30-60); x1.8 = 2715 kcal
+    assert round(t["energy_kj"] / 4.184) == 2715
     assert t["protein_g"] == 58            # 0.83 g/kg, rounded
-    assert t["fibre_g"] == 38              # 15 g per 1000 kcal
-    assert t["sugars_g"] == 64             # 10% of energy / 4 kcal/g
-    assert t["sat_fat_g"] == 28            # 10% of energy / 9 kcal/g
+    assert t["fibre_g"] == 54              # ICMR: 40 g per 2000 kcal
+    assert t["sugars_g"] == 68             # 10% of energy / 4 kcal/g
+    assert t["sat_fat_g"] == 30            # 10% of energy / 9 kcal/g
     assert t["salt_g"] == 5.0
 
 
 def test_personal_targets_goal_and_sex_adjust():
     lose = personal_targets({**_P, "sex": "female", "goal": "lose"})
-    # female BMR = 1648.75 - 166 = 1482.75; x1.55 = 2298 ; -500 = 1798 kcal
-    assert round(lose["energy_kj"] / 4.184) == 1798
+    # female BMR = (8.126*70 + 845.6) * 0.91 = 1287.1; x1.8 = 2317 ; -500 = 1817 kcal
+    assert round(lose["energy_kj"] / 4.184) == 1817
     assert lose["protein_g"] == 77         # 1.1 g/kg when losing (keeps muscle)
     gain = personal_targets({**_P, "goal": "gain"})
-    assert round(gain["energy_kj"] / 4.184) == 2856
+    assert round(gain["energy_kj"] / 4.184) == 3015
 
 
 def test_energy_floor_on_aggressive_loss():
@@ -93,14 +93,14 @@ def test_incomplete_profile_falls_back_to_defaults():
     assert personal_targets({**_P, "height_cm": None}) is None
     assert not is_personalised({**_P, "height_cm": None})
     assert is_personalised(_P)
-    # missing height is now assumed (172 cm for a man) rather than falling back to generic
+    # missing height is assumed rather than falling back to generic (ICMR energy ignores it)
     est = compute_targets({**_P, "height_cm": None})
-    assert est["energy_kj"] != 8368.0 and round(est["energy_kj"] / 4.184) == 2527  # 1630 x 1.55
+    assert round(est["energy_kj"] / 4.184) == 2715
 
 
 def test_overrides_still_win_over_personal():
     t = compute_targets({**_P, "target_overrides": {"protein_g": 100}})
-    assert t["protein_g"] == 100 and round(t["energy_kj"] / 4.184) == 2556
+    assert t["protein_g"] == 100 and round(t["energy_kj"] / 4.184) == 2715
     base = compute_targets({**_P, "target_overrides": {"protein_g": 100}}, with_overrides=False)
     assert base["protein_g"] == 58
 
@@ -108,8 +108,8 @@ def test_overrides_still_win_over_personal():
 def test_carbs_and_fat_targets_are_shares_of_energy():
     d = compute_targets(None)
     assert d["carbs_g"] == 250.0 and d["fat_g"] == 67.0          # 2000 kcal: 50% / 30%
-    p = personal_targets(_P)                                      # 2556 kcal
-    assert p["carbs_g"] == 320 and p["fat_g"] == 85
+    p = personal_targets(_P)                                      # 2715 kcal
+    assert p["carbs_g"] == 339 and p["fat_g"] == 91
 
 
 def test_carbs_and_fat_are_informational_and_may_be_unknown():
@@ -130,8 +130,8 @@ def test_partial_profile_estimates_with_assumptions():
     p = {"sex": "male", "height_cm": 180, "weight_kg": 67, "activity": "light", "goal": "maintain"}
     assert targets_basis(p) == "estimated"
     t = compute_targets(p)
-    # 10*67 + 6.25*180 - 5*30 + 5 = 1650 ; x1.375 = 2268.75 -> 2269
-    assert round(t["energy_kj"] / 4.184) == 2269 and t["protein_g"] == 56
+    # (11.472*67 + 873.1) * 0.90 = 1477.6 ; x1.6 = 2364
+    assert round(t["energy_kj"] / 4.184) == 2364 and t["protein_g"] == 56
 
 
 def test_single_choice_moves_targets():
@@ -140,6 +140,16 @@ def test_single_choice_moves_targets():
     lose = compute_targets({"goal": "lose"})
     assert base["energy_kj"] == 8368.0                    # nothing set: generic default
     assert very["energy_kj"] > base["energy_kj"] > lose["energy_kj"]
+
+
+def test_matches_icmr_reference_adults():
+    # ICMR-NIN 2020 Table 1b: 65 kg man 2110 / 2710 / 3470, 55 kg woman 1660 kcal (to 10 kcal)
+    man = {"sex": "male", "age": 25, "weight_kg": 65.0, "height_cm": 170.0, "goal": "maintain"}
+    kcal = lambda p: round(personal_targets(p)["energy_kj"] / 4.184)
+    got = [kcal({**man, "activity": a}) for a in ("sedentary", "moderate", "active")]
+    assert all(abs(g - want) <= 12 for g, want in zip(got, (2110, 2710, 3470))), got
+    assert abs(kcal({**man, "sex": "female", "weight_kg": 55.0, "activity": "sedentary"}) - 1660) <= 12
+    assert personal_targets({**man, "activity": "sedentary"})["protein_g"] == 54
 
 
 def test_basis_values():

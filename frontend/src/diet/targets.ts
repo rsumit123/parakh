@@ -5,10 +5,21 @@ import type { Totals, MacroKey, Profile } from "../api/diet";
 // of truth for what the day view uses); targets.test.ts pins the same numbers.
 
 export const DEFAULT_TARGETS: Totals = {
-  energy_kj: 8368, protein_g: 50, fibre_g: 30, sugars_g: 50, sat_fat_g: 22, salt_g: 5,
+  energy_kj: 8368, protein_g: 50, fibre_g: 40, sugars_g: 50, sat_fat_g: 22, salt_g: 5,
   carbs_g: 250, fat_g: 67,
 };
-const ACTIVITY = { sedentary: 1.2, light: 1.375, moderate: 1.55, active: 1.725 } as const;
+// ICMR-NIN 2020: BMR from the FAO/WHO/UNU (Schofield) equations, reduced 10% for men
+// and 9% for women, times ICMR's activity levels (sedentary 1.4, moderate 1.8, heavy 2.3).
+const ACTIVITY = { sedentary: 1.4, light: 1.6, moderate: 1.8, active: 2.3 } as const;
+const SCHOFIELD: Record<"male" | "female", [number, number, number][]> = {  // [below age, per kg, constant]
+  male: [[30, 15.057, 692.2], [60, 11.472, 873.1], [Infinity, 11.711, 587.7]],
+  female: [[30, 14.818, 486.6], [60, 8.126, 845.6], [Infinity, 9.082, 658.5]],
+};
+const INDIAN_BMR = { male: 0.9, female: 0.91 };
+function bmrFor(sex: "male" | "female", w: number, age: number): number {
+  const [, perKg, c] = SCHOFIELD[sex].find(([upto]) => age < upto)!;
+  return (perKg * w + c) * INDIAN_BMR[sex];
+}
 const GOAL_KCAL = { lose: -500, maintain: 0, gain: 300 } as const;
 const PROTEIN_PER_KG = { lose: 1.1, maintain: 0.83, gain: 1.1 } as const;
 const MIN_KCAL = 1200;
@@ -38,16 +49,16 @@ export const ASSUMED = {
 export function computeTargets(p: AboutYou): Totals {
   const basis = basisOf(p);
   if (basis === "default") return DEFAULT_TARGETS;
-  const [hAssumed, wAssumed] = ASSUMED.body[p.sex ?? "none"];
-  const w = p.weight_kg || wAssumed, h = p.height_cm || hAssumed, age = p.age || ASSUMED.age;
+  const [, wAssumed] = ASSUMED.body[p.sex ?? "none"];
+  const w = p.weight_kg || wAssumed, age = p.age || ASSUMED.age;
   const activity = p.activity ?? "light", goal = p.goal ?? "maintain";
-  const sexTerm = p.sex === "male" ? 5 : p.sex === "female" ? -161 : -78;
-  const bmr = 10 * w + 6.25 * h - 5 * age + sexTerm;
+  const sexes: ("male" | "female")[] = p.sex ? [p.sex] : ["male", "female"];  // unknown: average of the two
+  const bmr = sexes.reduce((sum, x) => sum + bmrFor(x, w, age), 0) / sexes.length;
   const kcalDay = Math.round(Math.max(MIN_KCAL, bmr * ACTIVITY[activity] + GOAL_KCAL[goal]));
   return {
     energy_kj: kcalDay * 4.184,
     protein_g: Math.round(w * PROTEIN_PER_KG[goal]),
-    fibre_g: Math.round((kcalDay * 15) / 1000),
+    fibre_g: Math.round((kcalDay * 20) / 1000),   // ICMR: 40 g per 2000 kcal
     sugars_g: Math.round((kcalDay * 0.1) / 4),
     sat_fat_g: Math.round((kcalDay * 0.1) / 9),
     salt_g: 5,

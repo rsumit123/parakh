@@ -217,7 +217,7 @@ def test_profile_personalises_targets_and_day_flag(client_and_sf):
             "activity": "moderate", "goal": "maintain"}
     r = c.put("/diet/profile", headers=h, json={**prof, "target_overrides": {}}).json()
     assert r["profile"]["height_cm"] == 175
-    assert round(r["effective_targets"]["energy_kj"] / 4.184) == 2556
+    assert round(r["effective_targets"]["energy_kj"] / 4.184) == 2715
     assert r["computed_targets"]["protein_g"] == 58
     day = c.get("/diet/day?date=2026-06-13", headers=h).json()
     assert day["personalised"] is True and day["targets"]["protein_g"] == 58

@@ -16,7 +16,7 @@ LIMIT = ("energy_kj", "sugars_g", "sat_fat_g", "salt_g")
 
 # Conservative adult guideline defaults (unisex). energy ~2000 kcal in kJ.
 _DEFAULTS = {
-    "energy_kj": 8368.0, "protein_g": 50.0, "fibre_g": 30.0,
+    "energy_kj": 8368.0, "protein_g": 50.0, "fibre_g": 40.0,   # fibre: ICMR-NIN 40 g / 2000 kcal
     "sugars_g": 50.0, "sat_fat_g": 22.0, "salt_g": 5.0,
     "carbs_g": 250.0, "fat_g": 67.0,   # 50% / 30% of 2000 kcal
 }
@@ -29,7 +29,16 @@ _LABELS = {"energy_kj": "energy", "protein_g": "protein", "fibre_g": "fibre",
 
 
 # Personal targets from an "About you" profile.
-_ACTIVITY = {"sedentary": 1.2, "light": 1.375, "moderate": 1.55, "active": 1.725}
+# Energy follows ICMR-NIN 2020: TEE = BMR x PAL, with BMR from the FAO/WHO/UNU
+# (Schofield) equations reduced 10% for men and 9% for women, since Indians' measured
+# BMR is lower. PALs are ICMR's sedentary / moderate / heavy work (1.4 / 1.8 / 2.3);
+# "light" sits between the first two. Reproduces ICMR's table (65 kg man: 2110 kcal).
+_ACTIVITY = {"sedentary": 1.4, "light": 1.6, "moderate": 1.8, "active": 2.3}
+_SCHOFIELD = {  # age bands: (below age, kcal per kg, constant)
+    "male": ((30, 15.057, 692.2), (60, 11.472, 873.1), (math.inf, 11.711, 587.7)),
+    "female": ((30, 14.818, 486.6), (60, 8.126, 845.6), (math.inf, 9.082, 658.5)),
+}
+_INDIAN_BMR = {"male": 0.90, "female": 0.91}
 _GOAL_KCAL = {"lose": -500, "maintain": 0, "gain": 300}
 _PROTEIN_G_PER_KG = {"lose": 1.1, "maintain": 0.83, "gain": 1.1}  # 0.83 = ICMR-NIN adult RDA
 _MIN_KCAL = 1200
@@ -45,7 +54,7 @@ def is_personalised(profile: dict | None) -> bool:
 
 # Assumed values for About-you fields the user hasn't filled in, so every choice they
 # do make (e.g. "Very active") still moves the targets. Heights/weights are typical
-# Indian adults; with no sex given, the Mifflin-St Jeor sex term is averaged.
+# Indian adults; with no sex given, the male and female BMRs are averaged.
 _ASSUME = {"age": 30, "activity": "light", "goal": "maintain"}
 _ASSUME_BODY = {"male": (172.0, 70.0), "female": (158.0, 57.0), None: (165.0, 63.0)}
 _FIELDS = ("sex", "age", "weight_kg", "height_cm", "activity", "goal")
@@ -75,9 +84,9 @@ def _fill(profile: dict) -> dict:
 def personal_targets(profile: dict | None) -> dict | None:
     """Targets from body + lifestyle, or None if the profile is incomplete.
 
-    Energy: Mifflin-St Jeor BMR x activity factor, +/- for the goal (floored).
-    Protein: g per kg body weight. Fibre: 15 g per 1000 kcal. Sugar and sat fat:
-    each under 10% of energy (WHO). Salt: 5 g (WHO), independent of size.
+    Energy: ICMR-NIN BMR x activity level, +/- for the goal (floored).
+    Protein: g per kg body weight (ICMR RDA 0.83). Fibre: 20 g per 1000 kcal (ICMR).
+    Sugar (total, not just added) and sat fat: each under 10% of energy. Salt: 5 g.
     Carbs ~50% and fat ~30% of energy, shown for reference only."""
     if not is_personalised(profile):
         return None
@@ -89,15 +98,20 @@ def _r(x: float) -> float:
     return float(math.floor(x + 0.5))
 
 
+def _bmr(sex: str, w: float, age: float) -> float:
+    per_kg, const = next((k, c) for upto, k, c in _SCHOFIELD[sex] if age < upto)
+    return (per_kg * w + const) * _INDIAN_BMR[sex]
+
+
 def _calc(p: dict) -> dict:
-    w, h, age = float(p["weight_kg"]), float(p["height_cm"]), float(p["age"])
-    sex_term = {"male": 5, "female": -161}.get(p.get("sex"), -78)  # -78: average of the two
-    bmr = 10 * w + 6.25 * h - 5 * age + sex_term
+    w, age = float(p["weight_kg"]), float(p["age"])
+    sexes = [p["sex"]] if p.get("sex") in _SCHOFIELD else ["male", "female"]  # unknown: average
+    bmr = sum(_bmr(s, w, age) for s in sexes) / len(sexes)
     kcal_day = _r(max(_MIN_KCAL, bmr * _ACTIVITY[p["activity"]] + _GOAL_KCAL[p["goal"]]))
     return {
         "energy_kj": kcal_day * _KJ_PER_KCAL,
         "protein_g": _r((w * _PROTEIN_G_PER_KG[p["goal"]])),
-        "fibre_g": _r((kcal_day * 15 / 1000)),
+        "fibre_g": _r((kcal_day * 20 / 1000)),
         "sugars_g": _r((kcal_day * 0.10 / 4)),
         "sat_fat_g": _r((kcal_day * 0.10 / 9)),
         "salt_g": 5.0,

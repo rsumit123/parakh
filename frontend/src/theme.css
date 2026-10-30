@@ -39,3 +39,10 @@ button { font-family: inherit; cursor: pointer; border: 0; }
   border-radius: 12px;
 }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* Light screens scroll under the transparent status bar (edge-to-edge); this paper
+   strip keeps the clock and icons readable. Screens opt in via `composes`. */
+.status-shield::before {
+  content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--inset-top);
+  background: var(--paper); z-index: 60; pointer-events: none;
+}

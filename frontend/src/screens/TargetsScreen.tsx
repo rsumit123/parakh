@@ -35,6 +35,15 @@ const num = (s: string) => (s.trim() === "" ? null : Number(s));
 /** "About you" (drives calculated targets) + per-nutrient custom values on top.
  * Only values that differ from the calculated ones are saved as overrides, so
  * targets keep following the profile unless you pin one. */
+// Where each target comes from, shown behind a tap so the screen stays clean.
+const HOW: [string, string][] = [
+  ["Energy", "Indian BMR × activity level (ICMR-NIN 2020)"],
+  ["Protein", "0.83 g per kg (ICMR-NIN); 1.1 g when losing or gaining"],
+  ["Fibre", "40 g per 2000 kcal (ICMR-NIN)"],
+  ["Carbs · Fat", "About 50% and 30% of energy, for reference"],
+  ["Limits", "Sugar and sat fat under 10% of energy; salt 5\u00a0g"],
+];
+
 export function TargetsScreen({ token, onBack }: { token: string; onBack: () => void }) {
   const [about, setAbout] = useState<AboutYou | null>(null);
   const [custom, setCustom] = useState<Partial<Totals>>({});
@@ -141,9 +150,13 @@ export function TargetsScreen({ token, onBack }: { token: string; onBack: () => 
           </div>
         );
       })}
-      <p className={styles.fine}>Energy: Mifflin-St Jeor × activity. Protein by body weight. Carbs ~50% and fat ~30% of
-        energy (for reference). Fibre 15 g per 1000 kcal. Sugar and sat fat under 10% of energy, salt 5 g (WHO).
-        General guidance, not medical advice.</p>
+      <details className={styles.how}>
+        <summary>Based on ICMR-NIN (India) guidance <span>How these are set</span></summary>
+        <dl>
+          {HOW.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+        </dl>
+        <p>General guidance, not medical advice.</p>
+      </details>
       <button className={styles.save} onClick={save} disabled={saving}>Save</button>
     </div>
   );

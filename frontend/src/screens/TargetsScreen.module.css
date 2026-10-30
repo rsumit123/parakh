@@ -1,4 +1,4 @@
-.screen { min-height: 100dvh; padding-top: var(--inset-top); padding-bottom: 24px; }
+.screen { composes: status-shield from global; min-height: 100dvh; padding-top: var(--inset-top); padding-bottom: 24px; }
 .skel { height: 420px; margin: 70px 16px; }
 .top { display: flex; align-items: center; justify-content: space-between; padding: 30px 18px 8px; font-size: 13px; color: var(--muted); }
 .back { background: transparent; font-size: 20px; color: var(--ink); border: 0; }
@@ -28,6 +28,17 @@
 .row input { width: 80px; text-align: right; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-family: inherit; font-size: 15px; font-weight: 700; }
 .unit { color: var(--muted); font-size: 13px; width: 30px; }
 .reset { width: 24px; flex: none; background: transparent; color: var(--muted); font-size: 14px; }
-.fine { font-size: 11px; color: var(--muted); margin: 10px 18px 0; line-height: 1.45; }
+.how { margin: 12px 16px 0; font-size: 12px; color: var(--muted); }
+.how summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 2px; cursor: pointer; }
+.how summary::-webkit-details-marker { display: none; }
+.how summary span { font-weight: 700; color: var(--green-deep); white-space: nowrap; }
+.how summary span::after { content: " ›"; display: inline-block; transition: transform .15s; }
+.how[open] summary span::after { transform: rotate(90deg); }
+.how dl { margin-top: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 12px; }
+.how dl div { display: grid; grid-template-columns: 82px 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.how dl div:last-child { border-bottom: 0; }
+.how dt { font-weight: 700; color: var(--ink); }
+.how dd { line-height: 1.4; }
+.how p { font-size: 11px; margin: 8px 2px 0; }
 .save { display: block; width: calc(100% - 32px); margin: 16px; padding: 15px; border-radius: 16px; font-size: 15.5px; font-weight: 700; background: var(--green-deep); color: #eafff2; border: 0; }
 .save:disabled { opacity: .5; }
