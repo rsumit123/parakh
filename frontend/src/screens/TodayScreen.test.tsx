@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { TodayScreen } from "./TodayScreen";
 import * as api from "../api/diet";
 import type { DietDay } from "../api/diet";
@@ -24,6 +24,19 @@ vi.mock("../api/diet", async (orig) => ({
   deleteLog: vi.fn(() => Promise.resolve({ ok: true, ...DAY, entries: [] })),
   editLog: vi.fn(() => Promise.resolve({ entry: DAY.entries[0], ...DAY })),
   addLog: vi.fn(() => Promise.resolve({ entry: { ...DAY.entries[0], id: 9 }, ...DAY })),
+  getSuggestions: vi.fn(() => Promise.resolve({ date: "2026-06-13", slots: {
+    breakfast: [], lunch: [], snack: [],
+    dinner: [
+      { source_day: "2026-06-12", times: 3, entry_ids: [41, 42], kcal: 491, protein_g: 22.2,
+        items: [{ name: "Roti", quantity_g: 80, kcal: 211 }, { name: "Paneer Sabzi", quantity_g: 100, kcal: 280 }] },
+      { source_day: "2026-06-10", times: 1, entry_ids: [30], kcal: 411, protein_g: 17,
+        items: [{ name: "Roti + Palak Paneer", quantity_g: 180, kcal: 411 }] },
+    ] } })),
+  repeatMeal: vi.fn(() => {
+    const created = [{ ...DAY.entries[0], id: 51, meal: "dinner", name: "Roti" },
+                     { ...DAY.entries[0], id: 52, meal: "dinner", name: "Paneer Sabzi" }];
+    return Promise.resolve({ ...DAY, entries: [...DAY.entries, ...created], created });
+  }),
   getRecent: vi.fn(() => Promise.resolve({ items: [
     { name: "Poha", brand: "", kind: "unpackaged", barcode: null, quantity_g: 150, meal: "breakfast",
       last_day: "2026-06-12", uses: 3,
@@ -66,7 +79,7 @@ describe("TodayScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /enter manually/i }));
     fireEvent.change(screen.getByLabelText("Food name"), { target: { value: "Banana" } });
     fireEvent.change(screen.getByLabelText("Energy in kcal"), { target: { value: "90" } });
-    fireEvent.click(screen.getByRole("button", { name: /^add/i }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Add food" })).getByRole("button", { name: /^add/i }));
     await waitFor(() => expect(api.addLog).toHaveBeenCalled());
     const body = vi.mocked(api.addLog).mock.calls[0][1];
     expect(body).toMatchObject({ kind: "manual", name: "Banana", quantity_g: 100, day: "2026-06-10" });
@@ -103,7 +116,7 @@ describe("TodayScreen", () => {
     expect(vi.mocked(api.addLog).mock.calls[0][1]).toMatchObject({ kind: "packaged", barcode: "b1", quantity_g: 200 });
     fireEvent.click(await screen.findByRole("button", { name: /add food/i }));
     fireEvent.click(await screen.findByRole("tab", { name: "Frequent" }));
-    expect(screen.getByText(/3×/)).toBeInTheDocument();             // Poha, used 3 times
+    expect(within(screen.getByRole("dialog", { name: "Add food" })).getByText(/3×/)).toBeInTheDocument();  // Poha, used 3 times
     expect(screen.queryByRole("button", { name: "Add Amul Lassi again" })).not.toBeInTheDocument();
   });
 
@@ -132,6 +145,24 @@ describe("TodayScreen", () => {
     expect(await screen.findByText("Carbs")).toBeInTheDocument();
     expect(screen.getByText("Fat")).toBeInTheDocument();
     expect(screen.getByText(/no carb data/i)).toBeInTheDocument();
+  });
+
+  it("suggests the usual meal in an empty slot and adds it in one tap, with Undo", async () => {
+    renderToday();
+    const dinner = await screen.findByRole("region", { name: "Dinner" });
+    expect(dinner).toHaveTextContent("Usual dinner · 3×");
+    expect(dinner).toHaveTextContent("Roti · Paneer Sabzi");
+    expect(screen.queryByRole("region", { name: "Lunch" })).not.toBeInTheDocument();  // nothing to suggest
+    fireEvent.click(screen.getByRole("button", { name: /add usual dinner/i }));
+    await waitFor(() => expect(api.repeatMeal).toHaveBeenCalledWith("t", [41, 42], "2026-06-13", "dinner"));
+    fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+    await waitFor(() => expect(vi.mocked(api.deleteLog).mock.calls.map((c) => c[1])).toEqual([51, 52]));
+  });
+
+  it("offers the runner-up meal too", async () => {
+    renderToday();
+    fireEvent.click(await screen.findByRole("button", { name: /add dinner: roti \+ palak paneer/i }));
+    await waitFor(() => expect(api.repeatMeal).toHaveBeenCalledWith("t", [30], "2026-06-13", "dinner"));
   });
 });
 

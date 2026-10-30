@@ -1,0 +1,11 @@
+.card { margin: 0 14px 9px; border: 1px dashed #c9d8cc; border-radius: 15px; background: #f9fbf7; padding: 10px 10px 8px 12px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.kicker { font-size: 10.5px; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .05em; }
+.names { font-size: 13.5px; font-weight: 700; color: var(--ink); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.add { flex: none; padding: 9px 13px; border-radius: 12px; background: var(--lime); color: #16341f; font-size: 13px; font-weight: 800; }
+.add:disabled, .alt:disabled { opacity: .5; }
+.alt { display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 8px; padding: 8px 0 0; border-top: 1px solid var(--line); background: transparent; text-align: left; font-size: 12px; color: var(--muted); }
+.alt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alt b { flex: none; color: var(--green); font-weight: 800; }

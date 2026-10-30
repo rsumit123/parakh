@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  getDay, getHistory, deleteLog, editLog, addLog, MACRO_KEYS,
+  getDay, getHistory, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
   type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
+  type Meal, type MealSuggestion,
 } from "../api/diet";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { addDays, dayTitle, shortDate } from "../diet/dates";
@@ -9,6 +10,7 @@ import { MEALS, entryMeal, mealForTime } from "../diet/meals";
 import { WeekChart } from "../components/WeekChart";
 import { FoodSheet, type FoodValues } from "../components/FoodSheet";
 import { AddFoodSheet } from "../components/AddFoodSheet";
+import { MealSuggestions } from "../components/MealSuggestions";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -82,8 +84,27 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   useEffect(() => {
     getHistory(token, CHART_DAYS, end).then(setWeek).catch(() => setWeek(null));
   }, [token, end, version]);
+  const [suggest, setSuggest] = useState<Record<Meal, MealSuggestion[]> | null>(null);
+  const [repeating, setRepeating] = useState(false);
+  useEffect(() => {
+    getSuggestions(token, date).then((r) => setSuggest(r.slots)).catch(() => setSuggest(null));
+  }, [token, date]);
 
   const apply = (d: DietDay) => { setDay(d); setVersion((v) => v + 1); };
+  const addSuggestion = async (meal: Meal, s: MealSuggestion) => {
+    setRepeating(true);
+    try {
+      const r = await repeatMeal(token, s.entry_ids, date, meal);
+      apply(r);
+      const ids = r.created.map((e) => e.id);
+      showToast(`Added ${MEALS.find((m) => m.key === meal)?.label.toLowerCase()} · ${s.kcal} kcal`, async () => {
+        let last: DietDay | null = null;
+        for (const id of ids) { try { last = await deleteLog(token, id); } catch { /* ignore */ } }
+        if (last) apply(last);
+      });
+    } catch { /* ignore */ }
+    setRepeating(false);
+  };
   // Deletes are instant (no "are you sure?"); the toast offers Undo instead.
   const remove = async (entry: LogEntry) => {
     setSheet(null);
@@ -179,7 +200,17 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
           )}
           {MEALS.map((m) => {
             const items = day.entries.filter((e) => entryMeal(e) === m.key);
-            if (items.length === 0) return null;
+            if (items.length === 0) {
+              const options = suggest?.[m.key] ?? [];
+              if (options.length === 0) return null;
+              return (
+                <section key={m.key} aria-label={m.label}>
+                  <div className={styles.sec}><span>{m.icon} {m.label}</span><span>not logged</span></div>
+                  <MealSuggestions slotLabel={m.label} suggestions={options} busy={repeating}
+                    onAdd={(s) => addSuggestion(m.key, s)} />
+                </section>
+              );
+            }
             const total = kcal(items.reduce((s, e) => s + e.energy_kj, 0));
             return (
               <section key={m.key} aria-label={m.label}>

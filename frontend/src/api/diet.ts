@@ -91,6 +91,18 @@ export interface RecentFood {
   name: string; brand: string; kind: string; barcode: string | null;
   quantity_g: number; meal: Meal | null; last_day: string; uses: number; per100g: Macros;
 }
+export interface MealSuggestion {
+  source_day: string; times: number; entry_ids: number[];
+  items: { name: string; quantity_g: number; kcal: number }[];
+  kcal: number; protein_g: number;
+}
+export function getSuggestions(token: string, date: string): Promise<{ date: string; slots: Record<Meal, MealSuggestion[]> }> {
+  return fetchJson(`/diet/suggestions?date=${date}`, { token });
+}
+/** Copy a past meal into `day`/`meal`; answers with that day plus the `created` copies. */
+export function repeatMeal(token: string, entryIds: number[], day: string, meal: Meal): Promise<{ created: LogEntry[] } & DietDay> {
+  return fetchJson(`/diet/repeat`, { token, method: "POST", json: { entry_ids: entryIds, day, meal } });
+}
 export function getRecent(token: string): Promise<{ items: RecentFood[] }> {
   return fetchJson(`/diet/recent`, { token });
 }
