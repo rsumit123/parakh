@@ -385,13 +385,15 @@ def test_repeat_copies_a_meal_into_the_viewed_day(client_and_sf):
     c, _ = client_and_sf
     h = _user_headers()
     src = _meal(c, h, "2026-06-12", "breakfast", "Roti, Dal", "Boiled eggs ×2")
+    _meal(c, h, "2026-06-13", "lunch", "Already logged")       # the target day isn't empty
     r = c.post("/diet/repeat", headers=h, json={"entry_ids": [e["id"] for e in src],
                                                  "day": "2026-06-13", "meal": "breakfast"})
     assert r.status_code == 200
     body = r.json()
-    assert [e["name"] for e in body["entries"]] == ["Roti, Dal", "Boiled eggs ×2"]
-    assert all(e["day"] == "2026-06-13" and e["meal"] == "breakfast" for e in body["entries"])
-    assert body["date"] == "2026-06-13" and round(body["totals"]["protein_g"]) == 16
+    assert [e["name"] for e in body["created"]] == ["Roti, Dal", "Boiled eggs ×2"]   # only the copies
+    assert all(e["day"] == "2026-06-13" and e["meal"] == "breakfast" for e in body["created"])
+    assert len(body["entries"]) == 3                                                  # the whole day
+    assert body["date"] == "2026-06-13" and round(body["totals"]["protein_g"]) == 24
     assert len(c.get("/diet/day?date=2026-06-12", headers=h).json()["entries"]) == 2   # source untouched
 
 
@@ -413,6 +415,6 @@ def test_repeat_copies_the_photo(photo_client):
                                               "per100g": _PER, "photo_key": key, "day": "2026-06-12",
                                               "meal": "lunch"}).json()["entry"]
     new = c.post("/diet/repeat", headers=h, json={"entry_ids": [e["id"]], "day": "2026-06-13",
-                                                   "meal": "lunch"}).json()["entries"][0]
+                                                   "meal": "lunch"}).json()["created"][0]
     assert new["image_url"].startswith("https://signed/meals/user-1/") and key not in new["image_url"]
     assert len(s3.objects) == 2                       # deleting one entry won't break the other

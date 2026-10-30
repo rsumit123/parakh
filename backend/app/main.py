@@ -237,7 +237,8 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
                 identity=identity["id"], day=req.day, kind=s["kind"], name=s["name"], brand=s["brand"],
                 quantity_g=s["quantity_g"], macros={k: s.get(k) for k in MACRO_KEYS},
                 barcode=s.get("barcode"), image_url=image, meal=req.meal))
-        return {"entries": [_present(e) for e in created], **_day_payload(identity["id"], req.day)}
+        # "created" (not "entries"): the day payload has its own "entries" (the whole day)
+        return {**_day_payload(identity["id"], req.day), "created": [_present(e) for e in created]}
 
     @app.get("/diet/recent")
     def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):
