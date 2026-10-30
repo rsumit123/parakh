@@ -12,6 +12,12 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
   },
+  plugins: {
+    LocalNotifications: {
+      smallIcon: "ic_stat_parakh",   // android/app/src/main/res/drawable
+      iconColor: "#1fa463",
+    },
+  },
 };
 
 export default config;

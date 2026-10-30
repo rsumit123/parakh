@@ -6,11 +6,12 @@ interface Props {
   isGuest: boolean;
   onHistory: () => void;
   onTargets?: () => void;   // signed-in users only
+  onReminders?: () => void;
   onSignOut: () => void;
   variant?: "light" | "dark"; // dark = on light backgrounds
 }
 
-export function ProfileMenu({ label, isGuest, onHistory, onTargets, onSignOut, variant = "light" }: Props) {
+export function ProfileMenu({ label, isGuest, onHistory, onTargets, onReminders, onSignOut, variant = "light" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initial = (isGuest ? "G" : label.trim()[0] || "U").toUpperCase();
@@ -48,6 +49,11 @@ export function ProfileMenu({ label, isGuest, onHistory, onTargets, onSignOut, v
           {!isGuest && onTargets && (
             <button className={styles.item} role="menuitem" onClick={() => { setOpen(false); onTargets(); }}>
               <span className={styles.itemIcon}>🎯</span> Your targets
+            </button>
+          )}
+          {!isGuest && onReminders && (
+            <button className={styles.item} role="menuitem" onClick={() => { setOpen(false); onReminders(); }}>
+              <span className={styles.itemIcon}>🔔</span> Meal reminders
             </button>
           )}
           <button className={`${styles.item} ${styles.danger}`} role="menuitem" onClick={() => { setOpen(false); onSignOut(); }}>

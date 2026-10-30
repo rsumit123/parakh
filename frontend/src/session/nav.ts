@@ -12,6 +12,7 @@ export type Screen =
   | { t: "mealCapture" }
   | { t: "confirmMeal"; estimate: MealEstimate; imageUrl?: string }
   | { t: "targets" }
+  | { t: "reminders" }
   | { t: "category"; category: string }
   | { t: "scan" }
   | { t: "result"; result: ScanResult }

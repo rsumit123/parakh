@@ -12,6 +12,8 @@ import { CategoryScreen } from "./screens/CategoryScreen";
 import { TodayScreen } from "./screens/TodayScreen";
 import { TabBar } from "./components/TabBar";
 import { ProfileMenu } from "./components/ProfileMenu";
+import { RemindersScreen } from "./screens/RemindersScreen";
+import { syncReminders } from "./diet/reminders";
 import { PortionSheet } from "./components/PortionSheet";
 import {
   push, selectTab, pushResultFromScan, top, activeTab, type Stack, type Tab,
@@ -60,6 +62,22 @@ function Shell() {
     });
     return () => remove?.();
   }, []);
+
+  // Meal reminders: re-plan on start (they cover the next week), and a tapped
+  // reminder opens the Today tab on today.
+  useEffect(() => {
+    if (!token || !Capacitor.isNativePlatform()) return;
+    void syncReminders();
+    let remove: (() => void) | undefined;
+    void import("@capacitor/local-notifications").then(({ LocalNotifications }) =>
+      LocalNotifications.addListener("localNotificationActionPerformed", () => {
+        const next: Stack = [{ t: "today" }];
+        setDietDate(localDay());
+        setStack(next);
+        window.history.pushState({ stack: next }, "");
+      }).then((h) => { remove = () => void h.remove(); }));
+    return () => remove?.();
+  }, [token]);
 
   // Android edge-to-edge (targetSdk 36 forces it): let the WebView draw under the
   // transparent status bar; screens add var(--inset-top) padding so nothing
@@ -123,7 +141,8 @@ function Shell() {
     <div style={{ position: "absolute", top: "calc(16px + var(--inset-top))", right: 16, zIndex: 60 }}>
       <ProfileMenu label={email ?? "Guest"} isGuest={isGuest} variant={variant}
         onHistory={() => go(selectTab(stack, "history"))}
-        onTargets={() => go(push(stack, { t: "targets" }))} onSignOut={signOut} />
+        onTargets={() => go(push(stack, { t: "targets" }))}
+        onReminders={() => go(push(stack, { t: "reminders" }))} onSignOut={signOut} />
     </div>
   );
   const tabbed = (node: ReactNode, variant: "light" | "dark") => (
@@ -207,6 +226,7 @@ function Shell() {
       onUploadPhoto={uploadPhoto}
       addLabel={isToday ? "Add to today" : `Add to ${dayTitle(dietDate, localDay())}`} />;
   }
+  if (cur.t === "reminders") return <RemindersScreen onBack={back} />;
   if (cur.t === "targets") {
     if (!token) return null;
     return <TargetsScreen token={token} onBack={back} />;

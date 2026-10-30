@@ -12,6 +12,7 @@ import { FoodSheet, type FoodValues } from "../components/FoodSheet";
 import { AddFoodSheet } from "../components/AddFoodSheet";
 import { MealSuggestions } from "../components/MealSuggestions";
 import { TrendsSheet } from "../components/TrendsSheet";
+import { syncReminders } from "../diet/reminders";
 import { FoodPicker } from "../components/FoodPicker";
 import styles from "./TodayScreen.module.css";
 
@@ -84,6 +85,10 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
     setDay(null);
     getDay(token, date).then(setDay).catch(() => setDay(null));
   }, [token, date]);
+  // Tell the reminders what's logged today, so a logged meal isn't nudged.
+  useEffect(() => {
+    if (day && day.date === today) void syncReminders(new Set(day.entries.map(entryMeal)));
+  }, [day, today]);
   useEffect(() => {
     getHistory(token, CHART_DAYS, end).then(setWeek).catch(() => setWeek(null));
   }, [token, end, version]);
