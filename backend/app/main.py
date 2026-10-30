@@ -19,6 +19,7 @@ from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
 from app.repositories.diet import DietRepository
 from app.nutrition.suggest import suggest_meals
 from app.nutrition.foods import catalog as food_catalog
+from app.nutrition.gaps import close_gaps
 from app.nutrition.targets import (compute_targets, summarize_day, is_personalised, targets_basis,
                                    MACRO_KEYS, OPTIONAL_KEYS)
 
@@ -244,6 +245,14 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     @app.get("/diet/recent")
     def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):
         return {"items": diet.recent_foods(identity["id"], limit=max(1, min(limit, 50)))}
+
+    @app.get("/diet/gaps")
+    def diet_gaps(date: str = "", identity: dict = Depends(current_user)):
+        """Foods to close the day's protein / fibre shortfall within the calories left."""
+        day = _day_payload(identity["id"], date or _today())
+        if not day["entries"]:
+            return {"gaps": {}, "kcal_left": None, "ideas": []}
+        return close_gaps(day["totals"], day["targets"], diet.recent_foods(identity["id"], limit=50))
 
     @app.get("/diet/foods")
     def diet_foods(identity: dict = Depends(current_user)):

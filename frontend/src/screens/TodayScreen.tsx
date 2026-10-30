@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  getDay, getHistory, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
+  getDay, getHistory, getGaps, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
   type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
-  type Meal, type MealSuggestion, type RefFood,
+  type Meal, type MealSuggestion, type RefFood, type Gaps, type GapIdea,
 } from "../api/diet";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { addDays, dayTitle, shortDate } from "../diet/dates";
@@ -14,6 +14,7 @@ import { MealSuggestions } from "../components/MealSuggestions";
 import { TrendsSheet } from "../components/TrendsSheet";
 import { syncReminders } from "../diet/reminders";
 import { FoodPicker } from "../components/FoodPicker";
+import { GapIdeas } from "../components/GapIdeas";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -99,6 +100,17 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   }, [token, date]);
 
   const apply = (d: DietDay) => { setDay(d); setVersion((v) => v + 1); };
+  // Close-the-gap ideas: today only, once the day is mostly in (from 4 pm, or once
+  // dinner is logged) — in the morning everyone is "short" and that's just noise.
+  const [gaps, setGaps] = useState<Gaps | null>(null);
+  const lateEnough = !!day && (new Date().getHours() >= 16 || day.entries.some((e) => entryMeal(e) === "dinner"));
+  const wantGaps = date === today && !!day?.entries.length && lateEnough;
+  useEffect(() => {
+    if (!wantGaps) { setGaps(null); return; }
+    getGaps(token, date).then(setGaps).catch(() => setGaps(null));
+  }, [token, date, wantGaps, version]);
+  const addIdea = (i: GapIdea) =>
+    log({ kind: i.kind, name: i.name, quantity_g: i.quantity_g, per100g: i.per100g, meal: mealForTime() }, i.name);
   const addSuggestion = async (meal: Meal, s: MealSuggestion) => {
     setRepeating(true);
     try {
@@ -182,6 +194,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
             <div className={styles.k}>{isToday ? "Today's gaps" : "That day's gaps"}</div>
             <div className={styles.v}>{day.headline}</div>
           </div>
+          {gaps && <GapIdeas data={gaps} onAdd={addIdea} />}
           <div className={styles.card}>
             {ROWS.map((r) => {
               const disp = r.toDisplay ?? ((v: number) => Math.round(v));

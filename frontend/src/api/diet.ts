@@ -121,3 +121,13 @@ export function getFoods(token: string): Promise<RefFood[]> {
     .catch((e) => { foodsCache = null; throw e; });
   return foodsCache;
 }
+
+/** A food that would help close the day's protein / fibre gap (own = one you eat). */
+export interface GapIdea {
+  name: string; quantity_g: number; per100g: Macros; kind: LogBody["kind"]; own: boolean;
+  kcal: number; protein_g: number; fibre_g: number;
+}
+export interface Gaps { gaps: Partial<Record<"protein_g" | "fibre_g", number>>; kcal_left: number | null; ideas: GapIdea[]; }
+export function getGaps(token: string, date: string): Promise<Gaps> {
+  return fetchJson(`/diet/gaps?date=${date}`, { token });
+}

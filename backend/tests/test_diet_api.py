@@ -429,3 +429,13 @@ def test_food_catalog_for_search(client_and_sf):
     assert idli["name"] == "Idli" and idli["unit_g"] == 40
     assert round(idli["per100g"]["energy_kj"] / 4.184) == 130
     assert "chapati" in by_id["roti"]["aliases"] and by_id["rice"]["unit_g"] is None
+
+
+def test_gap_ideas_for_a_day(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    assert c.get("/diet/gaps?date=2026-06-20", headers=h).json()["ideas"] == []   # nothing logged
+    _log(c, h, name="Poha", quantity_g=200, day="2026-06-20")
+    r = c.get("/diet/gaps?date=2026-06-20", headers=h).json()
+    assert r["gaps"]["protein_g"] > 30 and r["ideas"]
+    assert all({"name", "quantity_g", "per100g", "kcal", "protein_g", "own"} <= set(i) for i in r["ideas"])
