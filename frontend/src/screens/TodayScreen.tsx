@@ -11,6 +11,7 @@ import { WeekChart } from "../components/WeekChart";
 import { FoodSheet, type FoodValues } from "../components/FoodSheet";
 import { AddFoodSheet } from "../components/AddFoodSheet";
 import { MealSuggestions } from "../components/MealSuggestions";
+import { TrendsSheet } from "../components/TrendsSheet";
 import styles from "./TodayScreen.module.css";
 
 const ROWS: { key: MacroKey; label: string; unit: string; toDisplay?: (v: number) => number }[] = [
@@ -66,6 +67,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   const [week, setWeek] = useState<{ targets: DietDay["targets"]; days: HistoryDay[] } | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [metric, setMetric] = useState<MacroKey>("energy_kj");  // which nutrient the chart shows
+  const [trends, setTrends] = useState(false);  // full-screen chart of every nutrient
   const [version, setVersion] = useState(0);  // bumps after any change, to refresh the chart
   const [toast, setToast] = useState<{ text: string; undo: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -151,7 +153,10 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
 
       {week && week.days.length > 0 && (
         <WeekChart days={week.days} targets={week.targets} metric={metric} onMetric={setMetric}
-          selected={date} today={today} onSelect={onChangeDate} />
+          selected={date} today={today} onSelect={onChangeDate} onExpand={() => setTrends(true)} />
+      )}
+      {trends && (
+        <TrendsSheet token={token} today={today} onClose={() => setTrends(false)} />
       )}
 
       {!day && <div className={`skeleton ${styles.skel}`} />}

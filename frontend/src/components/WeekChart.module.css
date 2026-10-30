@@ -1,21 +1,14 @@
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin: 6px 14px 8px; padding: 12px 12px 6px; }
-.head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 4px; }
-.title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.head { display: flex; align-items: center; gap: 8px; padding: 0 0 4px 4px; }
+.title { flex: 1; font-size: 13px; font-weight: 700; color: var(--ink); }
 .note { font-size: 11.5px; color: var(--muted); font-weight: 600; }
-.svg { display: block; width: 100%; height: auto; max-height: 170px; }
-.axis { stroke: var(--line); stroke-width: 1; }
-.target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
-.col { cursor: pointer; outline: none; }
-.col:focus-visible .bar, .col:focus-visible .barOn { stroke: var(--ink); stroke-width: 1.5; }
-.bar { fill: var(--green); opacity: .38; }
-.barOn { fill: var(--green-deep); }
-.val { font-size: 11px; font-weight: 800; fill: var(--ink); text-anchor: middle; }
-.day { font-size: 11px; font-weight: 600; fill: var(--muted); text-anchor: middle; }
-.dayOn { font-size: 11px; font-weight: 800; fill: var(--ink); text-anchor: middle; }
+.expand { flex: none; width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 15px; line-height: 1; }
 .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -2px -12px 10px; padding: 0 12px; }
 .chips::-webkit-scrollbar { display: none; }
 .chip, .chipOn { flex: none; padding: 6px 11px; border-radius: 99px; font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: transparent; color: var(--muted); }
 .chipOn { background: var(--ink); border-color: var(--ink); color: #fff; }
-.barPartial { fill: var(--green); fill-opacity: .12; stroke: var(--green); stroke-width: 1.2; stroke-dasharray: 3 2; }
 .foot { font-size: 11px; color: var(--muted); margin: 2px 4px 6px; line-height: 1.4; }
-.barPartialOn { fill: var(--green-deep); fill-opacity: .14; stroke: var(--green-deep); stroke-width: 1.6; stroke-dasharray: 3 2; }
+.tipDay { display: block; font-size: 10.5px; opacity: .7; font-weight: 600; }
+.tipRow { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.tipVal { font-size: 13px; font-weight: 800; }
+.tipGo { margin: 0; padding: 2px 8px; border-radius: 99px; border: 0; background: var(--lime); color: #16341f; font-size: 11px; font-weight: 800; }
