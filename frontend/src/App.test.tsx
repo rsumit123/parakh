@@ -32,7 +32,8 @@ describe("App", () => {
 
   it("a signed-in user opens on Today, with Today as the first tab", async () => {
     saveToken("user-token");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) }));
+    // requests never settle: this test is about the first screen, not its data
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
     render(<App />);
     expect(screen.getByRole("button", { name: /Today/ })).toHaveAttribute("aria-current", "page");
     const tabs = screen.getAllByRole("button").filter((b) => /^(📊|📷|🔍|🕘)/.test(b.textContent ?? ""));
