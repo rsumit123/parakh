@@ -20,7 +20,9 @@ _PROMPT_TEMPLATE = (
     "You are looking at a photo of food someone is about to eat, usually an Indian home meal. "
     "List EVERY distinct food item you can see. Do NOT list garnishes, herbs, whole spices, chillies "
     "or lime wedges; list raw onion only when it is served as a side. Never return an empty list when "
-    "food is visible. Return ONLY a JSON object {{\"items\": [ ... ]}}.\n"
+    "food is visible, but if the photo shows no food (an object, a screen, a person, a blank or dark "
+    "frame) return {{\"items\": []}} rather than guessing. Return ONLY a JSON object "
+    "{{\"items\": [ ... ]}}.\n"
     "For each item:\n"
     "- \"food\": the closest id from this list: {menu}. Pick the closest even if not exact (any dry "
     "vegetable curry without a better id -> mixed_veg_sabzi; any paneer dish without a better id -> "
@@ -96,6 +98,15 @@ def _clamp_portion(name: str, portion: float) -> float:
 _GARNISH = re.compile(r"^(red |green )?(chill?i|chilli flakes|chili flakes|coriander|cilantro|"
                       r"mint leaves|curry leaves|turmeric( powder)?|lime|lemon|onion|salt|pepper|"
                       r"garnish|spices?)( wedges?| slices?| rings?| leaves| powder| flakes)?$")
+
+
+# Placeholder names the model sometimes invents for a non-food photo; they'd log as
+# a believable 120 kcal "dish", so they count as no food.
+_PLACEHOLDER = re.compile(r"\b(unidentified|unknown|unrecogni[sz]ed|unclear|no food|not food|non[- ]food)\b")
+
+
+def _is_placeholder(name: str) -> bool:
+    return bool(_PLACEHOLDER.search((name or "").lower()))
 
 
 def _is_garnish(name: str) -> bool:
@@ -175,7 +186,8 @@ class MealEstimator:
             # tolerate a legacy single-object response {name, portion_g, nutrition}
             raw = [data] if (data.get("name") or isinstance(data.get("nutrition"), dict)) else []
         items = [_resolve(d) for d in raw
-                 if isinstance(d, dict) and not _is_garnish(str(d.get("name", "")))]
+                 if isinstance(d, dict) and not _is_garnish(str(d.get("name", "")))
+                 and not _is_placeholder(str(d.get("name", "")))]
         # No food found, or no nutrition at all: fail so the client asks for a retake,
         # instead of showing a believable-looking 0 kcal estimate.
         items = [i for i in items if any(i["per100g"].values())]

@@ -105,6 +105,20 @@ def test_garnish_items_are_dropped(monkeypatch):
     assert [i["name"] for i in out["items"]] == ["Fish Curry", "Chilli Chicken"]
 
 
+def test_placeholder_dish_means_no_food(monkeypatch):
+    # a non-food photo once came back as "Unidentified dish" and logged as 120 kcal
+    n = {"energy_kj": 500, "sugars_g": 1, "sat_fat_g": 1, "salt_g": 0.5, "fibre_g": 2, "protein_g": 3}
+    for name in ("Unidentified dish", "Unknown food", "Unrecognised item"):
+        payload = json.dumps({"items": [{"food": "other", "name": name, "grams": 100, "nutrition": n}]})
+        monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, p=payload, **k: _Resp(p))
+        with pytest.raises(MealEstimateError):
+            MealEstimator(api_key="k", model="m", url="u").estimate(b"x")
+    # but a real dish whose name merely contains a similar word is kept
+    payload = json.dumps({"items": [{"food": "dal_tadka", "name": "Dal Tadka", "grams": 200}]})
+    monkeypatch.setattr("app.services.meal_estimator.httpx.post", lambda *a, **k: _Resp(payload))
+    assert MealEstimator(api_key="k", model="m", url="u").estimate(b"x")["items"][0]["name"] == "Dal Tadka"
+
+
 def test_parses_carbs_and_fat(monkeypatch):
     payload = json.dumps({"items": [{"name": "Poha", "portion_g": 150,
         "nutrition": {"energy_kj": 600, "sugars_g": 2, "sat_fat_g": 1, "salt_g": 0.5,
