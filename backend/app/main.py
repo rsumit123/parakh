@@ -1,3 +1,4 @@
+import uuid
 from datetime import date as Date, datetime, timedelta, timezone
 
 from fastapi import FastAPI, Depends, Header, HTTPException, Form, UploadFile, File
@@ -14,7 +15,7 @@ from app.services.rate_limiter import RateLimiter
 from app.services.auth import AuthService, AuthError
 from app.services.scan import ScanService, ProductNotFound
 from app.schemas import (GuestRequest, GoogleLoginRequest, GoogleLoginResponse,
-                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest, RepeatRequest, WeightRequest,
+                         TokenResponse, BarcodeRequest, DietLogRequest, DietEditRequest, RepeatRequest, WeightRequest, MealLogRequest,
                          ProfileRequest)
 from app.repositories.diet import DietRepository
 from app.nutrition.suggest import suggest_meals
@@ -85,7 +86,9 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
             per100g = (product or {}).get("nutrition", {}) if product else {}
         else:
             per100g = req.per100g or {}
-        q = req.quantity_g
+        return _scaled(per100g, req.quantity_g)
+
+    def _scaled(per100g: dict, q: float) -> dict:
         out = {}
         for k in MACRO_KEYS:
             v = per100g.get(k)
@@ -150,17 +153,53 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     def diet_log(req: DietLogRequest, identity: dict = Depends(current_user)):
         day = req.day or _today()
         macros = _entry_macros(req)
-        image = ""
-        if req.photo_key:
-            # Only a key this user uploaded; never a client-supplied URL.
-            if not req.photo_key.startswith(user_prefix(identity["id"])) or ".." in req.photo_key:
-                raise HTTPException(status_code=422, detail={"error": "bad photo key"})
-            image = req.photo_key
+        image = _own_photo(identity, req.photo_key)
         entry = diet.add_entry(identity=identity["id"], day=day, kind=req.kind,
                                name=req.name, brand=req.brand, quantity_g=req.quantity_g,
                                macros=macros, barcode=req.barcode, image_url=image,
                                meal=req.meal)
         return {"entry": _present(entry), **_day_payload(identity["id"], day)}
+
+    def _own_photo(identity: dict, key: str | None) -> str:
+        """A photo key this user uploaded, or 422 (never a client-supplied URL)."""
+        if not key:
+            return ""
+        if not key.startswith(user_prefix(identity["id"])) or ".." in key:
+            raise HTTPException(status_code=422, detail={"error": "bad photo key"})
+        return key
+
+    @app.post("/diet/meal")
+    def diet_log_meal(req: MealLogRequest, identity: dict = Depends(current_user)):
+        """Log a photo meal as its dishes, grouped: Today shows one row, and each dish
+        stays editable. The photo sits on the first dish."""
+        day = req.day or _today()
+        image = _own_photo(identity, req.photo_key)
+        gid = uuid.uuid4().hex
+        name = req.name.strip() or ", ".join(i.name for i in req.items[:2])
+        created = [diet.add_entry(identity=identity["id"], day=day, kind="unpackaged", name=i.name.strip(),
+                                  brand="", quantity_g=i.quantity_g, macros=_scaled(i.per100g, i.quantity_g),
+                                  image_url=image if n == 0 else "", meal=req.meal,
+                                  group_id=gid, group_name=name)
+                   for n, i in enumerate(req.items)]
+        return {**_day_payload(identity["id"], day), "created": [_present(e) for e in created]}
+
+    @app.delete("/diet/meal/{group_id}")
+    def diet_delete_meal(group_id: str, identity: dict = Depends(current_user)):
+        """Delete every dish of a grouped meal, and its photo."""
+        entries = diet.group_entries(identity["id"], group_id)
+        if not entries:
+            raise HTTPException(status_code=404, detail={"error": "meal not found"})
+        for e in entries:
+            diet.delete_entry(identity["id"], e["id"])
+            _drop_photo(e)
+        return {"ok": True, **_day_payload(identity["id"], entries[0]["day"])}
+
+    def _drop_photo(entry: dict) -> None:
+        if photo_store and (entry.get("image_url") or "").startswith(KEY_PREFIX):
+            try:
+                photo_store.delete(entry["image_url"])
+            except Exception:
+                pass  # the entry is gone either way; an orphaned private object is harmless
 
     @app.post("/diet/photo")
     async def diet_photo(image: UploadFile = File(...), identity: dict = Depends(current_user)):
@@ -258,6 +297,7 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         if any(s is None for s in sources):
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
         created = []
+        groups: dict[str, str] = {}  # a repeated grouped meal stays one group, with a new id
         for s in sources:
             image = s.get("image_url") or ""
             if image.startswith(KEY_PREFIX):
@@ -268,7 +308,9 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
             created.append(diet.add_entry(
                 identity=identity["id"], day=req.day, kind=s["kind"], name=s["name"], brand=s["brand"],
                 quantity_g=s["quantity_g"], macros={k: s.get(k) for k in MACRO_KEYS},
-                barcode=s.get("barcode"), image_url=image, meal=req.meal))
+                barcode=s.get("barcode"), image_url=image, meal=req.meal,
+                group_id=groups.setdefault(s["group_id"], uuid.uuid4().hex) if s.get("group_id") else None,
+                group_name=s.get("group_name")))
         # "created" (not "entries"): the day payload has its own "entries" (the whole day)
         return {**_day_payload(identity["id"], req.day), "created": [_present(e) for e in created]}
 
@@ -308,12 +350,13 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
         entry = diet.get_entry(identity["id"], entry_id)
         if entry is None or not diet.delete_entry(identity["id"], entry_id):
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
-        # Deleting a meal deletes its photo too (Undo restores the entry without it).
-        if photo_store and (entry.get("image_url") or "").startswith(KEY_PREFIX):
-            try:
-                photo_store.delete(entry["image_url"])
-            except Exception:
-                pass  # the entry is gone either way; an orphaned private object is harmless
+        # A dish of a grouped meal hands the meal's photo to a remaining dish; otherwise
+        # deleting an entry deletes its photo (Undo restores the entry without it).
+        rest = diet.group_entries(identity["id"], entry["group_id"]) if entry.get("group_id") else []
+        if rest and entry.get("image_url") and not any(e.get("image_url") for e in rest):
+            diet.set_image(identity["id"], rest[0]["id"], entry["image_url"])
+        else:
+            _drop_photo(entry)
         return {"ok": True, **_day_payload(identity["id"], entry["day"])}
 
     @app.get("/diet/history")

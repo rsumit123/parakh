@@ -13,7 +13,8 @@ class Base(DeclarativeBase):
 _ADDED_COLUMNS: dict[str, dict[str, str]] = {
     "products": {"category": "VARCHAR DEFAULT ''", "image_url": "VARCHAR DEFAULT ''",
                  "embedding": "JSON", "serving_size_g": "FLOAT"},
-    "food_log": {"meal": "VARCHAR", "carbs_g": "FLOAT", "fat_g": "FLOAT"},
+    "food_log": {"meal": "VARCHAR", "carbs_g": "FLOAT", "fat_g": "FLOAT",
+                 "group_id": "VARCHAR", "group_name": "VARCHAR"},
     "profiles": {"height_cm": "FLOAT"},
     "users": {
         "google_id": "VARCHAR",

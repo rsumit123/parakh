@@ -23,6 +23,7 @@ class DietRepository:
             "id": e.id, "day": e.day, "kind": e.kind, "barcode": e.barcode,
             "name": e.name, "brand": e.brand, "quantity_g": e.quantity_g,
             "image_url": e.image_url, "meal": e.meal,
+            "group_id": e.group_id, "group_name": e.group_name,
             # UTC, so the client can place un-slotted (older) entries by local time
             "created_at": e.created_at.isoformat() + "Z" if e.created_at else None,
             **{k: getattr(e, k) for k in MACRO_KEYS},
@@ -30,11 +31,13 @@ class DietRepository:
 
     def add_entry(self, *, identity: str, day: str, kind: str, name: str, brand: str,
                   quantity_g: float, macros: dict, barcode: str | None = None,
-                  image_url: str = "", meal: str | None = None) -> dict:
+                  image_url: str = "", meal: str | None = None,
+                  group_id: str | None = None, group_name: str | None = None) -> dict:
         with self._Session() as s:
             e = FoodLogEntry(
                 identity=identity, day=day, kind=kind, name=name, brand=brand,
                 quantity_g=float(quantity_g), barcode=barcode, image_url=image_url, meal=meal,
+                group_id=group_id, group_name=group_name,
                 **{k: _num(k, macros.get(k)) for k in MACRO_KEYS},
             )
             s.add(e)
@@ -188,3 +191,18 @@ class DietRepository:
         latest = self.weights(identity)[-1:]
         if latest:
             self.upsert_profile(identity, {"weight_kg": latest[0]["weight_kg"]})
+
+    # --- grouped meals ---
+    def group_entries(self, identity: str, group_id: str) -> list[dict]:
+        with self._Session() as s:
+            rows = s.scalars(select(FoodLogEntry).where(
+                FoodLogEntry.identity == identity, FoodLogEntry.group_id == group_id,
+            ).order_by(FoodLogEntry.id)).all()
+            return [self._entry_dict(e) for e in rows]
+
+    def set_image(self, identity: str, entry_id: int, image_url: str) -> None:
+        with self._Session() as s:
+            e = s.get(FoodLogEntry, entry_id)
+            if e is not None and e.identity == identity:
+                e.image_url = image_url
+                s.commit()

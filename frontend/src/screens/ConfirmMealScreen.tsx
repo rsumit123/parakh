@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MACRO_KEYS, type MealEstimate, type Macros, type MacroKey, type LogBody, type Meal } from "../api/diet";
+import { MACRO_KEYS, type MealEstimate, type Macros, type MacroKey, type LogBody, type Meal, type MealGroupBody } from "../api/diet";
 import { mealForTime } from "../diet/meals";
 import { MealChips } from "../components/MealChips";
 import { portionMacros, sumMacros, kcal, isLiquid } from "../diet/portion";
@@ -8,16 +8,20 @@ import styles from "./ConfirmMealScreen.module.css";
 
 const MK: MacroKey[] = MACRO_KEYS;
 
-interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; }
+// unitG: weight of one piece for counted dishes (roti, idli), so they're edited in pieces.
+interface Row { id: number; name: string; grams: number; per100g: Macros; base: number; unitG?: number; }
 
 export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUploadPhoto, addLabel = "Add to today" }: {
-  estimate: MealEstimate; imageUrl?: string; onConfirm: (body: LogBody) => void; onBack: () => void;
+  estimate: MealEstimate; imageUrl?: string; onBack: () => void;
+  /** One dish: a single entry. Several: the dishes, logged as one grouped meal. */
+  onConfirm: (body: LogBody | MealGroupBody) => void;
   /** Stores the photo and resolves to its key; the meal is still logged if this fails. */
   onUploadPhoto?: (photo: Blob) => Promise<string>;
   addLabel?: string;
 }) {
   const [rows, setRows] = useState<Row[]>(() => estimate.items.map((i, idx) => ({
     id: idx, name: i.name, grams: Math.round(i.portion_g), per100g: i.per100g, base: i.portion_g || 100,
+    unitG: i.count && i.portion_g ? i.portion_g / i.count : undefined,
   })));
   const multi = rows.length > 1;
   const [mealName, setMealName] = useState(() => defaultMealName(estimate.items.map((i) => i.name)));
@@ -56,6 +60,15 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUpl
     const photoKey = upload.current
       ? await Promise.race([upload.current, new Promise<null>((res) => setTimeout(() => res(null), 15000))])
       : null;
+    if (multi) {
+      // each dish its own entry (editable later), shown together as this meal
+      const pieces = (r: Row) => (r.unitG ? Math.max(1, Math.round(r.grams / r.unitG)) : 0);
+      onConfirm({ name, meal, ...(photoKey ? { photo_key: photoKey } : {}),
+        items: rows.filter((r) => r.grams > 0).map((r) => ({
+          name: pieces(r) ? `${r.name.trim() || "Dish"} ×${pieces(r)}` : r.name.trim() || "Dish",
+          quantity_g: r.grams, per100g: r.per100g })) });
+      return;
+    }
     onConfirm({ kind: "unpackaged", name, quantity_g: totalGrams, per100g: per100g as Macros, meal,
                 ...(photoKey ? { photo_key: photoKey } : {}) });
   };
@@ -123,10 +136,21 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUpl
               <div key={r.id} className={styles.row}>
                 <input className={styles.rowName} value={r.name} aria-label="Dish name"
                   onChange={(e) => setRow(idx, { name: e.target.value })} />
-                <input className={styles.rowGrams} type="number" min={0} value={r.grams}
-                  aria-label={`Portion in ${liquid ? "millilitres" : "grams"}`}
-                  onChange={(e) => setRow(idx, { grams: Math.max(0, Number(e.target.value) || 0) })} />
-                <span className={styles.unit}>{liquid ? "ml" : "g"}</span>
+                {r.unitG ? (
+                  <>
+                    <input className={styles.rowGrams} type="number" min={1} value={Math.round(r.grams / r.unitG)}
+                      aria-label={`${r.name} pieces`}
+                      onChange={(e) => setRow(idx, { grams: Math.max(1, Math.round(Number(e.target.value) || 1)) * r.unitG! })} />
+                    <span className={styles.unit}>pcs</span>
+                  </>
+                ) : (
+                  <>
+                    <input className={styles.rowGrams} type="number" min={0} value={r.grams}
+                      aria-label={`Portion in ${liquid ? "millilitres" : "grams"}`}
+                      onChange={(e) => setRow(idx, { grams: Math.max(0, Number(e.target.value) || 0) })} />
+                    <span className={styles.unit}>{liquid ? "ml" : "g"}</span>
+                  </>
+                )}
                 <button className={styles.rm} onClick={() => removeRow(idx)} aria-label="Remove dish" disabled={rows.length <= 1}>✕</button>
               </div>
             );

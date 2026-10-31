@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  getDay, getHistory, getGaps, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
+  getDay, getHistory, getGaps, logMealGroup, deleteMeal, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
   type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
   type Meal, type MealSuggestion, type RefFood, type Gaps, type GapIdea,
 } from "../api/diet";
@@ -15,6 +15,8 @@ import { TrendsSheet } from "../components/TrendsSheet";
 import { syncReminders } from "../diet/reminders";
 import { FoodPicker } from "../components/FoodPicker";
 import { GapIdeas } from "../components/GapIdeas";
+import { MealGroupSheet } from "../components/MealGroupSheet";
+import { defaultMealName } from "../diet/mealName";
 import { WeightCard } from "../components/WeightCard";
 import styles from "./TodayScreen.module.css";
 
@@ -39,7 +41,7 @@ function chartEnd(date: string, today: string): string {
 }
 
 type Sheet = { t: "choose" } | { t: "manual" } | { t: "again"; food: RecentFood } | { t: "food"; food: RefFood }
-  | { t: "edit"; entry: LogEntry } | null;
+  | { t: "edit"; entry: LogEntry; group?: string } | { t: "group"; id: string } | null;
 
 // Back to per-100 g (what /diet/log takes). Unknown carbs/fat stay unknown.
 const per100 = (m: Macros, grams: number): Macros => portionMacros(m, grams > 0 ? 10000 / grams : 0);
@@ -127,19 +129,38 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
     setRepeating(false);
   };
   // Deletes are instant (no "are you sure?"); the toast offers Undo instead.
-  const remove = async (entry: LogEntry) => {
+  // After editing or removing a dish of a grouped meal, go back to that meal's sheet.
+  const backTo = (group?: string) => setSheet(group ? { t: "group", id: group } : null);
+  const remove = async (entry: LogEntry, group?: string) => {
     setSheet(null);
     try {
-      apply(await deleteLog(token, entry.id));
+      const d = await deleteLog(token, entry.id);
+      apply(d);
+      if (group && d.entries.some((e) => e.group_id === group)) backTo(group);
       showToast(`Removed ${entry.name}`, async () => {
         try { const r = await addLog(token, restoreBody(entry)); if (r.date === date) apply(r); } catch { /* ignore */ }
       });
     } catch { /* ignore */ }
   };
-  const saveEdit = async (entry: LogEntry, v: FoodValues) => {
+  const saveEdit = async (entry: LogEntry, v: FoodValues, group?: string) => {
     setSheet(null);
-    try { apply(await editLog(token, entry.id, { name: v.name, quantity_g: v.grams, macros: v.macros, meal: v.meal })); }
+    try { apply(await editLog(token, entry.id, { name: v.name, quantity_g: v.grams, macros: v.macros, meal: v.meal })); backTo(group); }
     catch { /* ignore */ }
+  };
+  const groupName = (entries: LogEntry[]) => entries[0]?.group_name || defaultMealName(entries.map((e) => e.name));
+  const removeMeal = async (entries: LogEntry[]) => {
+    setSheet(null);
+    const name = groupName(entries);
+    try {
+      apply(await deleteMeal(token, entries[0].group_id!));
+      showToast(`Removed ${name}`, async () => {
+        try {
+          const r = await logMealGroup(token, { day: date, meal: entryMeal(entries[0]), name,
+            items: entries.map((e) => { const b = restoreBody(e); return { name: b.name, quantity_g: b.quantity_g, per100g: b.per100g! }; }) });
+          apply(r);
+        } catch { /* ignore */ }
+      });
+    } catch { /* ignore */ }
   };
   const log = async (body: LogBody, label: string) => {
     setSheet(null);
@@ -240,7 +261,27 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
             return (
               <section key={m.key} aria-label={m.label}>
                 <div className={styles.sec}><span>{m.icon} {m.label}</span><span>{total} kcal</span></div>
-                {items.map((e) => (
+                {items.filter((e) => !e.group_id || items.find((x) => x.group_id === e.group_id) === e).map((e) => {
+                  // a photo meal's dishes show as one row; the sheet edits them one by one
+                  const group = e.group_id ? items.filter((x) => x.group_id === e.group_id) : null;
+                  if (group) {
+                    const photo = group.find((x) => x.image_url)?.image_url;
+                    return (
+                      <div key={`g-${e.group_id}`} className={styles.item}>
+                        <button className={styles.itemMain} onClick={() => setSheet({ t: "group", id: e.group_id! })}
+                          aria-label={`Open ${groupName(group)}`}>
+                          {photo ? <img className={styles.thumbImg} src={photo} alt="" loading="lazy" /> : <span className={styles.thumb}>🍽</span>}
+                          <span className={styles.itext}>
+                            <span className={styles.iname}>{groupName(group)}</span>
+                            <span className={styles.imeta}>{group.length} dishes · tap to edit</span>
+                          </span>
+                          <span className={styles.ical}>{kcal(group.reduce((s, x) => s + x.energy_kj, 0))}</span>
+                        </button>
+                        <button className={styles.del} onClick={() => removeMeal(group)} aria-label={`Remove ${groupName(group)}`}>🗑</button>
+                      </div>
+                    );
+                  }
+                  return (
                   <div key={e.id} className={styles.item}>
                     <button className={styles.itemMain} onClick={() => setSheet({ t: "edit", entry: e })}
                       aria-label={`Edit ${e.name}`}>
@@ -255,7 +296,8 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
                     </button>
                     <button className={styles.del} onClick={() => remove(e)} aria-label={`Remove ${e.name}`}>🗑</button>
                   </div>
-                ))}
+                  );
+                })}
               </section>
             );
           })}
@@ -291,10 +333,21 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
         <FoodSheet mode="edit" photoUrl={sheet.entry.image_url || undefined}
           initial={{ name: sheet.entry.name, grams: sheet.entry.quantity_g, macros: sheet.entry,
                      meal: entryMeal(sheet.entry) }}
-          onSave={(v) => saveEdit(sheet.entry, v)}
-          onDelete={() => remove(sheet.entry)}
-          onCancel={() => setSheet(null)} />
+          onSave={(v) => saveEdit(sheet.entry, v, sheet.group)}
+          onDelete={() => remove(sheet.entry, sheet.group)}
+          onCancel={() => backTo(sheet.group)} />
       )}
+      {sheet?.t === "group" && day && (() => {
+        const entries = day.entries.filter((e) => e.group_id === sheet.id);
+        if (!entries.length) return null;
+        return (
+          <MealGroupSheet name={groupName(entries)} entries={entries}
+            onEditDish={(e) => setSheet({ t: "edit", entry: e, group: sheet.id })}
+            onRemoveDish={(e) => remove(e, sheet.id)}
+            onDeleteMeal={() => removeMeal(entries)}
+            onClose={() => setSheet(null)} />
+        );
+      })()}
       {toast && (
         <div className={styles.toast} role="status">
           <span>{toast.text}</span>

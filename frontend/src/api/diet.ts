@@ -16,6 +16,8 @@ export interface LogEntry {
   id: number; day: string; kind: string; barcode: string | null;
   name: string; brand: string; quantity_g: number; image_url: string;
   meal: Meal | null; created_at: string | null;
+  /** Dishes of one photo meal share a group: shown as one row, edited per dish. */
+  group_id?: string | null; group_name?: string | null;
   energy_kj: number; sugars_g: number; sat_fat_g: number; salt_g: number;
   fibre_g: number; protein_g: number; carbs_g: number | null; fat_g: number | null;
 }
@@ -26,7 +28,8 @@ export interface DietDay {
   /** Nutrients some of the day's items don't have (totals undercount them). */
   partial?: OptKey[];
 }
-export interface MealItem { name: string; portion_g: number; per100g: Macros; }
+/** count: pieces, for countable foods (roti, idli, egg). */
+export interface MealItem { name: string; portion_g: number; per100g: Macros; count?: number; }
 export interface MealEstimate { items: MealItem[]; }
 export interface LogBody {
   kind: "packaged" | "unpackaged" | "manual";
@@ -143,4 +146,16 @@ export function logWeight(token: string, day: string, weight_kg: number): Promis
 }
 export function deleteWeight(token: string, day: string): Promise<WeightData> {
   return fetchJson(`/diet/weight/${day}`, { token, method: "DELETE" });
+}
+
+/** A photo meal, logged as its dishes in one group. */
+export interface MealGroupBody {
+  day?: string; meal?: Meal; name: string; photo_key?: string;
+  items: { name: string; quantity_g: number; per100g: Macros }[];
+}
+export function logMealGroup(token: string, body: MealGroupBody): Promise<DietDay & { created: LogEntry[] }> {
+  return fetchJson(`/diet/meal`, { token, method: "POST", json: { day: localDay(), ...body } });
+}
+export function deleteMeal(token: string, groupId: string): Promise<{ ok: boolean } & DietDay> {
+  return fetchJson(`/diet/meal/${groupId}`, { token, method: "DELETE" });
 }

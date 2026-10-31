@@ -70,6 +70,10 @@ class FoodLogEntry(Base):
     fat_g: Mapped[float | None] = mapped_column(Float, nullable=True)    # None = unknown
     image_url: Mapped[str] = mapped_column(String, default="")
     meal: Mapped[str | None] = mapped_column(String, nullable=True)  # breakfast|lunch|snack|dinner
+    # Dishes logged together from one meal photo share a group (shown as one row,
+    # each dish editable); group_name is the meal's display name.
+    group_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    group_name: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 

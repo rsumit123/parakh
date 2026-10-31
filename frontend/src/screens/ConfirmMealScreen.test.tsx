@@ -15,7 +15,7 @@ describe("ConfirmMealScreen", () => {
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ name: "Dal Chawal", quantity_g: 350, kind: "unpackaged" }));
   });
 
-  it("multi item: logs ONE combined entry with summed grams + macros", () => {
+  it("multi item: logs the dishes as one grouped meal, named after them", () => {
     const est: MealEstimate = { items: [
       { name: "Dal", portion_g: 200, per100g: macro(9) },
       { name: "Jeera Rice", portion_g: 250, per100g: macro(4) },
@@ -27,10 +27,21 @@ describe("ConfirmMealScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
     const body = onConfirm.mock.calls[0][0];
     expect(body.name).toBe("Dal + Jeera Rice");          // named after its dishes, not "Thali"
-    expect(body.quantity_g).toBe(450);                    // 200 + 250
+    expect(body.items.map((i: { name: string; quantity_g: number }) => [i.name, i.quantity_g])).toEqual([["Dal", 200], ["Jeera Rice", 250]]);
+    expect(body.items[0].per100g.protein_g).toBe(9);      // each dish keeps its own nutrition
     expect(["breakfast", "lunch", "snack", "dinner"]).toContain(body.meal);
-    // summed protein = 9*2 + 4*2.5 = 28g; synthesized per100g must reproduce it
-    expect(Math.round(body.per100g.protein_g * body.quantity_g / 100)).toBe(28);
+  });
+
+  it("multi item: counted dishes are edited in pieces and named with the count", () => {
+    const est: MealEstimate = { items: [
+      { name: "Roti", portion_g: 160, per100g: macro(9), count: 4 },
+      { name: "Dal", portion_g: 200, per100g: macro(6) },
+    ] };
+    const onConfirm = vi.fn();
+    render(<ConfirmMealScreen estimate={est} onConfirm={onConfirm} onBack={() => {}} />);
+    fireEvent.change(screen.getByLabelText("Roti pieces"), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
+    expect(onConfirm.mock.calls[0][0].items[0]).toMatchObject({ name: "Roti ×3", quantity_g: 120 });
   });
 
   it("shows the captured photo when imageUrl is provided", () => {
@@ -48,7 +59,8 @@ describe("ConfirmMealScreen", () => {
     render(<ConfirmMealScreen estimate={est} onConfirm={onConfirm} onBack={() => {}} />);
     fireEvent.click(screen.getAllByRole("button", { name: /remove dish/i })[1]);  // remove Rice
     fireEvent.click(screen.getByRole("button", { name: /add to today/i }));
-    expect(onConfirm.mock.calls[0][0].quantity_g).toBe(200);
+    // one dish left: a plain single entry, not a group
+    expect(onConfirm.mock.calls[0][0]).toMatchObject({ name: "Dal", quantity_g: 200 });
   });
 
   it("uploads the photo on open and attaches its key when adding", async () => {

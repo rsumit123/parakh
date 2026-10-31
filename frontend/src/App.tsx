@@ -20,7 +20,7 @@ import {
 } from "./session/nav";
 import { addToHistory, loadHistory, clearHistory, type HistoryEntry } from "./session/history";
 import { defaultServingG, nutritionMacros } from "./diet/portion";
-import { addLog, uploadMealPhoto, localDay, type LogBody } from "./api/diet";
+import { addLog, logMealGroup, uploadMealPhoto, localDay, type LogBody, type MealGroupBody } from "./api/diet";
 import { dayTitle } from "./diet/dates";
 import { mealForTime } from "./diet/meals";
 import { ConfirmMealScreen } from "./screens/ConfirmMealScreen";
@@ -228,9 +228,13 @@ function Shell() {
     );
   }
   if (cur.t === "confirmMeal") {
-    const logMeal = async (body: LogBody) => {
+    const logMeal = async (body: LogBody | MealGroupBody) => {
       if (!token) return;
-      try { await addLog(token, { ...body, day: dietDate }); go(selectTab(stack, "today")); } catch { /* refetch shows truth */ }
+      try {
+        if ("items" in body) await logMealGroup(token, { ...body, day: dietDate });
+        else await addLog(token, { ...body, day: dietDate });
+        go(selectTab(stack, "today"));
+      } catch { /* refetch shows truth */ }
     };
     const isToday = dietDate === localDay();
     const uploadPhoto = async (photo: Blob) => (await uploadMealPhoto(token, photo)).photo_key;

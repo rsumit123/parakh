@@ -42,6 +42,21 @@ class DietLogRequest(BaseModel):
     photo_key: str | None = None         # from POST /diet/photo
 
 
+class MealDish(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    quantity_g: float = Field(gt=0, le=3000)
+    per100g: dict
+
+
+class MealLogRequest(BaseModel):
+    """A photo meal logged as its dishes: one group, each dish its own entry."""
+    day: str | None = None
+    meal: Meal | None = None
+    name: str = Field(default="", max_length=80)
+    photo_key: str | None = None
+    items: list[MealDish] = Field(min_length=1, max_length=20)
+
+
 class DietEditRequest(BaseModel):
     name: str | None = None
     meal: Meal | None = None

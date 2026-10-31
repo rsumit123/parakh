@@ -465,3 +465,54 @@ def test_weight_log_tracks_profile_weight(client_and_sf):
     assert c.get("/diet/profile", headers=h).json()["profile"]["weight_kg"] == 70.0
     assert c.delete("/diet/weight/2026-06-08", headers=h).status_code == 404
     assert c.put("/diet/weight", headers=h, json={"day": "2026-06-09", "weight_kg": 5}).status_code == 422
+
+
+# ---- grouped meals -----------------------------------------------------------
+
+def _photo_meal(c, h, key=None, day="2026-06-13"):
+    items = [{"name": "Roti ×4", "quantity_g": 160, "per100g": _PER},
+             {"name": "Dal Tadka", "quantity_g": 200, "per100g": _PER},
+             {"name": "Bhindi Fry", "quantity_g": 120, "per100g": _PER}]
+    body = {"day": day, "meal": "lunch", "name": "Roti, Dal + 1 more", "items": items, **({"photo_key": key} if key else {})}
+    return c.post("/diet/meal", headers=h, json=body)
+
+
+def test_photo_meal_is_logged_as_grouped_dishes(photo_client):
+    c, s3 = photo_client
+    h = _user_headers()
+    key = c.post("/diet/photo", headers=h, files={"image": ("m.jpg", _jpeg_with_gps(), "image/jpeg")}).json()["photo_key"]
+    r = _photo_meal(c, h, key).json()
+    dishes = r["created"]
+    assert [d["name"] for d in dishes] == ["Roti ×4", "Dal Tadka", "Bhindi Fry"]
+    assert len({d["group_id"] for d in dishes}) == 1 and dishes[0]["group_name"] == "Roti, Dal + 1 more"
+    assert dishes[0]["image_url"].startswith("https://signed/") and dishes[1]["image_url"] == ""
+    assert round(r["totals"]["protein_g"]) == round(_PER["protein_g"] * 480 / 100)
+    # each dish is editable on its own
+    e = c.patch(f"/diet/log/{dishes[0]['id']}", headers=h, json={"name": "Roti ×3", "quantity_g": 120}).json()["entry"]
+    assert e["name"] == "Roti ×3" and e["group_id"] == dishes[0]["group_id"]
+    # deleting the dish holding the photo hands the photo to another dish
+    c.delete(f"/diet/log/{dishes[0]['id']}", headers=h)
+    left = [x for x in c.get("/diet/day?date=2026-06-13", headers=h).json()["entries"] if x["group_id"]]
+    assert len(left) == 2 and left[0]["image_url"].startswith("https://signed/" + key) and s3.deleted == []
+    # deleting the meal removes every dish and the photo
+    gid = dishes[0]["group_id"]
+    assert c.delete(f"/diet/meal/{gid}", headers=h).json()["entries"] == []
+    assert s3.deleted == [key]
+    assert c.delete(f"/diet/meal/{gid}", headers=h).status_code == 404
+
+
+def test_meal_rejects_foreign_photo_and_empty_items(photo_client):
+    c, _ = photo_client
+    h = _user_headers()
+    assert _photo_meal(c, h, key="meals/user-99/x.jpg").status_code == 422
+    assert c.post("/diet/meal", headers=h, json={"items": []}).status_code == 422
+
+
+def test_repeating_a_grouped_meal_keeps_it_grouped(photo_client):
+    c, _ = photo_client
+    h = _user_headers()
+    dishes = _photo_meal(c, h, day="2026-06-12").json()["created"]
+    r = c.post("/diet/repeat", headers=h, json={"entry_ids": [d["id"] for d in dishes], "day": "2026-06-13", "meal": "dinner"}).json()
+    copies = r["created"]
+    assert len({d["group_id"] for d in copies}) == 1 and copies[0]["group_id"] != dishes[0]["group_id"]
+    assert copies[0]["group_name"] == "Roti, Dal + 1 more"
