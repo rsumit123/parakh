@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { plan, DEFAULT_PREFS, type ReminderPrefs } from "./reminders";
 
 const ON: ReminderPrefs = { ...DEFAULT_PREFS, enabled: true };
@@ -20,5 +20,23 @@ describe("plan reminders", () => {
     const p = plan(prefs, new Set(), new Date(2026, 9, 31, 22));
     expect(p.every((x) => x.meal !== "breakfast")).toBe(true);
     expect(at(p.find((x) => x.meal === "dinner")!.at)).toBe("1 20:15");
+  });
+});
+
+describe("syncReminders on Android", () => {
+  it("schedules inexact notifications, so Android never shows the exact-alarm screen", async () => {
+    vi.resetModules();
+    const schedule = vi.fn().mockResolvedValue({ notifications: [] });
+    vi.doMock("@capacitor/core", () => ({ Capacitor: { isNativePlatform: () => true } }));
+    vi.doMock("@capacitor/local-notifications", () => ({ LocalNotifications: {
+      getPending: vi.fn().mockResolvedValue({ notifications: [] }), cancel: vi.fn(),
+      checkPermissions: vi.fn().mockResolvedValue({ display: "granted" }), schedule } }));
+    const r = await import("./reminders");
+    r.savePrefs({ ...r.DEFAULT_PREFS, enabled: true });
+    await r.syncReminders(new Set());
+    const sent = schedule.mock.calls[0][0].notifications;
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.every((n: { isExactNotification: boolean }) => n.isExactNotification === false)).toBe(true);
+    vi.doUnmock("@capacitor/core"); vi.doUnmock("@capacitor/local-notifications");
   });
 });

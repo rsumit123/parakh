@@ -89,6 +89,10 @@ export async function syncReminders(loggedToday?: Set<Meal>): Promise<void> {
     if ((await LocalNotifications.checkPermissions()).display !== "granted") return;
     await LocalNotifications.schedule({ notifications: next.map((n) => ({
       id: n.id, title: n.title, body: n.body, schedule: { at: n.at, allowWhileIdle: true },
+      // Inexact on purpose: a nudge a few minutes late is fine, and the app doesn't
+      // hold the exact-alarm permission (removed from the manifest), so asking for
+      // exact would send the user to a greyed-out "Alarms & reminders" screen.
+      isExactNotification: false,
       extra: { open: "today" },
     })) });
   } catch { /* reminders are best-effort */ }
