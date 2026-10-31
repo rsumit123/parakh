@@ -15,7 +15,7 @@ LIMITS = ("sugars_g", "sat_fat_g", "salt_g")
 OWN_BONUS = 1.3   # a food you already eat beats a slightly better stranger
 # (food id, pieces, grams): easy top-ups you'd add to a day, not whole meals
 STAPLES = (
-    ("boiled_egg", 2, None), ("curd", None, 200), ("sprouts_salad", None, 150),
+    ("boiled_egg", 2, None), ("egg_white", 4, None), ("curd", None, 200), ("sprouts_salad", None, 150),
     ("soya_chunks_curry", None, 100), ("chhena", None, 100), ("peanuts", None, 30),
     ("guava", 1, None), ("apple", 1, None), ("makhana", None, 30), ("milk", None, 250),
 )

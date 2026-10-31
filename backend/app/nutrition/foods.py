@@ -92,6 +92,8 @@ FOODS: dict[str, Food] = {
     "chhena":          _f("Chhena", 200, 13.0, 4.0, 14.0, 0.0, 3.0, 9.0, 0.1, default=100, lo=30, hi=250),
     # --- eggs & non-veg ---
     "boiled_egg":      _f("Boiled Egg", 155, 12.6, 1.1, 10.6, 0.0, 1.1, 3.3, 0.31, unit=50, default=100),
+    # one large egg's white ~33 g: ~3.6 g protein, no cholesterol, essentially no fat
+    "egg_white":       _f("Egg White", 52, 10.9, 0.7, 0.2, 0.0, 0.7, 0.0, 0.42, unit=33, default=132, lo=30, hi=400),
     "omelette":        _f("Omelette", 180, 11.0, 2.0, 14.0, 0.3, 1.0, 4.0, 0.8, unit=60, default=120),
     "egg_curry":       _f("Egg Curry", 150, 8.0, 5.0, 11.0, 1.0, 2.0, 3.0, 0.9, default=200, lo=60, hi=400),
     "egg_bhurji":      _f("Egg Bhurji", 190, 11.0, 4.0, 14.5, 0.8, 2.0, 4.0, 0.8, default=120, lo=40, hi=300),
@@ -191,7 +193,7 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "baingan_bharta": ("brinjal", "eggplant"), "baingan_chokha": ("brinjal",),
     "palak_sabzi": ("spinach",), "cabbage_sabzi": ("patta gobi",), "beans_sabzi": ("french beans",),
     "paneer_sabzi": ("cottage cheese",), "chhena": ("chenna",),
-    "boiled_egg": ("egg", "anda", "eggs"), "omelette": ("omelet", "egg"), "egg_bhurji": ("scrambled egg",),
+    "boiled_egg": ("egg", "anda", "eggs"), "egg_white": ("whites", "anda safedi", "egg whites"), "omelette": ("omelet", "egg"), "egg_bhurji": ("scrambled egg",),
     "curd": ("dahi", "yogurt", "yoghurt"), "chaas": ("buttermilk", "mattha"),
     "sweet_lassi": ("lassi",), "masala_chai": ("chai", "tea"), "coffee_milk": ("coffee",),
     "plain_dosa": ("dosai",), "medu_vada": ("vada",), "maggi_noodles": ("maggi", "noodles"),

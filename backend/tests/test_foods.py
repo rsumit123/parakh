@@ -25,3 +25,9 @@ def test_aliases_point_at_real_foods():
     from app.nutrition.foods import ALIASES, catalog
     assert set(ALIASES) <= set(FOODS)
     assert [f["id"] for f in catalog()] == list(FOODS)
+
+
+def test_egg_white_is_lean_protein_by_the_piece():
+    w = FOODS["egg_white"]
+    assert w.unit_g == 33 and round(w.protein * w.unit_g / 100, 1) == 3.6   # per white
+    assert w.sat_fat == 0 and w.fat < 0.5
