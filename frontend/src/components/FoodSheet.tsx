@@ -3,6 +3,7 @@ import { OPT_KEYS, type Macros, type MacroKey, type Meal } from "../api/diet";
 import { mealForTime } from "../diet/meals";
 import { MealChips } from "./MealChips";
 import { isLiquid } from "../diet/portion";
+import { parseCount } from "../diet/foodSearch";
 import styles from "./FoodSheet.module.css";
 
 // Nutrient fields shown in the form, in the order the Today card lists them.
@@ -51,6 +52,19 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
   const [vals, setVals] = useState(() => toForm(initial?.macros));
   const [meal, setMeal] = useState<Meal>(initial?.meal ?? mealForTime());
   const [zoom, setZoom] = useState(false);
+  // Counted foods ("Boiled eggs ×2", "Roti ×4") are edited in pieces: the weight of
+  // one piece comes from the original entry, and the name follows the count.
+  const [piece] = useState(() => {
+    const pc = parseCount(initial?.name);
+    return pc && initial && initial.grams > 0 ? { base: pc.base, unitG: initial.grams / pc.count } : null;
+  });
+  const [count, setCount] = useState(() => parseCount(initial?.name)?.count ?? 0);
+  const changeCount = (n: number) => {
+    if (!piece || n < 1 || n > 30) return;
+    changeGrams(String(Math.round(n * piece.unitG)));
+    setCount(n);
+    if (parseCount(name)) setName(`${piece.base} ×${n}`);
+  };
 
   const changeGrams = (next: string) => {
     const oldG = Number(grams) || 0;
@@ -100,12 +114,24 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
           <input value={name} placeholder="e.g. Poha" aria-label="Food name"
             onChange={(e) => setName(e.target.value)} />
         </label>
-        <label className={styles.field}>
-          <span>Amount</span>
-          <input type="number" inputMode="decimal" min={0} value={grams} aria-label="Amount"
-            onChange={(e) => changeGrams(e.target.value)} />
-          <em>{unit}</em>
-        </label>
+        {piece ? (
+          <div className={styles.field}>
+            <span>Pieces</span>
+            <div className={styles.pieces}>
+              <button type="button" onClick={() => changeCount(count - 1)} disabled={count <= 1} aria-label="One fewer">−</button>
+              <b aria-live="polite">{count}</b>
+              <button type="button" onClick={() => changeCount(count + 1)} aria-label="One more">＋</button>
+            </div>
+            <em>~{Math.round(piece.unitG)} g each</em>
+          </div>
+        ) : (
+          <label className={styles.field}>
+            <span>Amount</span>
+            <input type="number" inputMode="decimal" min={0} value={grams} aria-label="Amount"
+              onChange={(e) => changeGrams(e.target.value)} />
+            <em>{unit}</em>
+          </label>
+        )}
         <div className={styles.sub}>Nutrients for this amount{mode === "add" ? " — leave blank if unknown" : ""}</div>
         <div className={styles.grid}>
           {FIELDS.map((f) => (

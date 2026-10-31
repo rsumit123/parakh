@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { searchFoods, portionName } from "./foodSearch";
+import { searchFoods, portionName, parseCount } from "./foodSearch";
 import type { RefFood } from "../api/diet";
 
 const M = { energy_kj: 0, sugars_g: 0, sat_fat_g: 0, salt_g: 0, fibre_g: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
@@ -26,5 +26,11 @@ describe("searchFoods", () => {
   it("names pieces with a count", () => {
     expect(portionName(FOODS[5], 2)).toBe("Idli ×2");
     expect(portionName(FOODS[3], null)).toBe("Curd");
+  });
+  it("reads a piece count from a name", () => {
+    expect(parseCount("Roti ×4")).toEqual({ base: "Roti", count: 4 });
+    expect(parseCount("Boiled eggs x2")).toEqual({ base: "Boiled eggs", count: 2 });
+    expect(parseCount("Dal Tadka (katori)")).toBeNull();
+    expect(parseCount("Roti ×0")).toBeNull();
   });
 });

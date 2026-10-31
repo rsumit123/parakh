@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFoods, getRecent, type RecentFood, type RefFood } from "../api/diet";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
-import { searchFoods } from "../diet/foodSearch";
+import { parseCount, searchFoods } from "../diet/foodSearch";
 import styles from "./AddFoodSheet.module.css";
 
 /** "Add food" chooser: search common foods, snap or type a new one, or re-log one
@@ -35,7 +35,9 @@ export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFo
       <div key={`${f.barcode ?? ""}|${f.name}`} className={styles.row}>
         <button className={styles.rowMain} onClick={() => onPick(f)} aria-label={`Adjust and add ${f.name}`}>
           <span className={styles.name}>{f.name}</span>
-          <span className={styles.meta}>{Math.round(f.quantity_g)}{unit} · {k} kcal{showUses ? ` · ${f.uses}×` : ""}</span>
+          <span className={styles.meta}>
+            {parseCount(f.name) ? `${parseCount(f.name)!.count} pcs` : `${Math.round(f.quantity_g)}${unit}`} · {k} kcal{showUses ? ` · ${f.uses}×` : ""}
+          </span>
         </button>
         <button className={styles.plus} onClick={() => onQuickAdd(f)} aria-label={`Add ${f.name} again`}>＋</button>
       </div>

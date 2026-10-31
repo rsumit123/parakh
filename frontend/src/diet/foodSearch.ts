@@ -26,3 +26,9 @@ export function searchFoods(foods: RefFood[], query: string, limit = 12): RefFoo
 export function portionName(f: RefFood, count: number | null): string {
   return f.unit_g && count ? `${f.name} ×${count}` : f.name;
 }
+
+/** "Roti ×4" -> { base: "Roti", count: 4 }; null when the name isn't a piece count. */
+export function parseCount(name: string | undefined): { base: string; count: number } | null {
+  const m = /^(.*\S)\s*[×x]\s*(\d{1,2})$/.exec((name ?? "").trim());
+  return m && Number(m[2]) > 0 ? { base: m[1], count: Number(m[2]) } : null;
+}

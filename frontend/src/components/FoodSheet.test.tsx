@@ -50,3 +50,19 @@ describe("FoodSheet", () => {
   });
 });
 
+
+describe("FoodSheet pieces", () => {
+  it("edits counted foods in pieces, rescaling grams, nutrients and the name", () => {
+    const onSave = vi.fn();
+    const macros = { energy_kj: 648.5, protein_g: 12.6, carbs_g: 1.1, fat_g: 10.6, fibre_g: 0, sugars_g: 1.1, sat_fat_g: 3.3, salt_g: 0.3 };
+    render(<FoodSheet mode="edit" initial={{ name: "Boiled eggs ×2", grams: 100, macros, meal: "breakfast" }}
+      onSave={onSave} onCancel={() => {}} />);
+    expect(screen.queryByLabelText("Amount")).not.toBeInTheDocument();
+    expect(screen.getByText("~50 g each")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "One more" }));
+    expect(screen.getByLabelText("Food name")).toHaveValue("Boiled eggs ×3");
+    expect(screen.getByLabelText("Protein in g")).toHaveValue(18.9);
+    fireEvent.click(screen.getByRole("button", { name: /Save/ }));
+    expect(onSave.mock.calls[0][0]).toMatchObject({ name: "Boiled eggs ×3", grams: 150 });
+  });
+});
