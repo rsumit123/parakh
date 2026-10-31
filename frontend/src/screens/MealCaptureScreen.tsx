@@ -106,7 +106,7 @@ export function MealCaptureScreen({ token, onEstimated, onBack }: {
         {camReady && <div className={styles.hint}>Fit your plate in the frame</div>}
       </div>
       <div className={styles.actions}>
-        {error && <div className={styles.err}>Couldn't read that photo — try another.</div>}
+        {error && <div className={styles.err}>Couldn't spot food in that photo. Try another, or add it by search.</div>}
         <button className={styles.shutter} onClick={capture} disabled={!camReady} data-testid="meal-capture">
           Capture meal
         </button>

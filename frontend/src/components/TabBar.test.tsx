@@ -6,7 +6,7 @@ import { TabBar } from "./TabBar";
 describe("TabBar", () => {
   it("renders three tabs and marks the active one", () => {
     render(<TabBar active="explore" onSelect={() => {}} />);
-    for (const t of ["Home", "Explore", "History"]) expect(screen.getByText(t)).toBeInTheDocument();
+    for (const t of ["Today", "Scan", "Explore", "History"]) expect(screen.getByText(t)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /explore/i })).toHaveAttribute("aria-current", "page");
   });
   it("calls onSelect", async () => {

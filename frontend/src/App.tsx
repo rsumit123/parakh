@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { SessionProvider, useSession } from "./session/SessionContext";
 import { AuthScreen } from "./screens/AuthScreen";
@@ -30,7 +30,10 @@ import type { Product, ScanResult } from "./api/types";
 
 function Shell() {
   const { token, isGuest, email, guest, loginGoogle, signOut } = useSession();
-  const [stack, setStack] = useState<Stack>([{ t: "home" }]);
+  // Signed-in people open on their diary (Today); guests, who can't keep one, on the scanner.
+  const rootFor = (signedIn: boolean): Stack => [{ t: signedIn ? "today" : "home" }];
+  const signedIn = !!token && !isGuest;
+  const [stack, setStack] = useState<Stack>(() => rootFor(signedIn));
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory());
   const [portionFor, setPortionFor] = useState<Product | null>(null);
@@ -39,7 +42,7 @@ function Shell() {
   const [dietDate, setDietDate] = useState(localDay);
   // Mirror the screen stack into browser history so the device Back button restores it.
   useEffect(() => {
-    window.history.replaceState({ stack: [{ t: "home" }] }, "");
+    window.history.replaceState({ stack: rootFor(signedIn) }, "");
     const onPop = (e: PopStateEvent) => {
       const s = e.state?.stack as Stack | undefined;
       setStack(s && s.length ? s : [{ t: "home" }]);
@@ -47,6 +50,15 @@ function Shell() {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  // Signing in (or out) starts over at the right root screen.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return; }
+    const root = rootFor(signedIn);
+    setStack(root);
+    window.history.replaceState({ stack: root }, "");
+  }, [signedIn]);
 
   // Android hardware back: unwind the screen stack via history, exit at the root.
   useEffect(() => {
