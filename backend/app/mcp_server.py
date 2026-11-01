@@ -31,6 +31,10 @@ def india_today() -> str:
     return datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
 
 
+LABEL = {"energy_kj": "kcal", "sugars_g": "sugar", "sat_fat_g": "satfat", "salt_g": "salt",
+         "fibre_g": "fibre", "protein_g": "protein", "carbs_g": "carbs", "fat_g": "fat"}
+
+
 def _kcal(kj) -> int:
     return round((kj or 0) / KJ)
 
@@ -96,7 +100,7 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
                 f"sugar {_g(e['sugars_g'])} satfat {_g(e['sat_fat_g'])} salt {_g(e['salt_g'])}{grp}")
 
     def _totals_line(totals: dict, targets: dict) -> str:
-        return " · ".join(f"{k.split('_')[0] if k != 'energy_kj' else 'kcal'} "
+        return " · ".join(f"{LABEL[k]} "
                           f"{_kcal(totals[k]) if k == 'energy_kj' else _g(totals[k])}/"
                           f"{_kcal(targets[k]) if k == 'energy_kj' else _g(targets[k])}" for k in MACRO_KEYS)
 
@@ -167,8 +171,8 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
         if n:
             avg = {k: v / n for k, v in sums.items()}
             head.append(f"Average per logged day vs target: {_totals_line(avg, targets)}")
-            head.append("Over the limit on: " + ", ".join(f"{k.split('_')[0] if k != 'energy_kj' else 'kcal'} {v}/{n} days" for k, v in over.items()))
-            head.append("Short of the goal on: " + ", ".join(f"{k.split('_')[0]} {v}/{n} days" for k, v in under.items()))
+            head.append("Over the limit on: " + ", ".join(f"{LABEL[k]} {v}/{n} days" for k, v in over.items()))
+            head.append("Short of the goal on: " + ", ".join(f"{LABEL[k]} {v}/{n} days" for k, v in under.items()))
         return "\n".join(head + ["Per day:"] + rows)
 
     @mcp.tool()
