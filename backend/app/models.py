@@ -98,3 +98,11 @@ class WeightEntry(Base):
     day: Mapped[str] = mapped_column(String, primary_key=True)     # local 'YYYY-MM-DD'
     weight_kg: Mapped[float] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class ConnectorToken(Base):
+    """A user's Claude connector secret (hashed); see app/connector.py."""
+    __tablename__ = "connector_tokens"
+    token_hash: Mapped[str] = mapped_column(String, primary_key=True)
+    identity: Mapped[str] = mapped_column(String, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

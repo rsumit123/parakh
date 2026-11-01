@@ -16,7 +16,8 @@ RUN pip install --no-cache-dir \
     "google-auth>=2.27.0" \
     "requests>=2.31.0" \
     "boto3>=1.34" \
-    "Pillow>=10.3"
+    "Pillow>=10.3" \
+    "mcp==2.3.0"
 
 # Copy application source. Tests, venv, db, env are excluded via .dockerignore.
 COPY app ./app

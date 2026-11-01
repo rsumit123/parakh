@@ -1,4 +1,7 @@
+import logging
+import re
 import uuid
+from contextlib import asynccontextmanager
 from datetime import date as Date, datetime, timedelta, timezone
 
 from fastapi import FastAPI, Depends, Header, HTTPException, Form, UploadFile, File
@@ -21,8 +24,23 @@ from app.repositories.diet import DietRepository
 from app.nutrition.suggest import suggest_meals
 from app.nutrition.foods import catalog as food_catalog
 from app.nutrition.gaps import close_gaps
+from app.connector import ConnectorApp
+from app.mcp_server import build_mcp, mcp_asgi_app
 from app.nutrition.targets import (compute_targets, summarize_day, is_personalised, targets_basis,
                                    MACRO_KEYS, OPTIONAL_KEYS)
+
+
+class _RedactConnectorSecret(logging.Filter):
+    """Access logs would otherwise record /mcp/<secret>/mcp; the secret is a credential."""
+    _pat = re.compile(r"/mcp/[^/\s\"?]+")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(self._pat.sub("/mcp/<redacted>", a) if isinstance(a, str) else a for a in record.args)
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(_RedactConnectorSecret())
 
 
 def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
@@ -30,7 +48,18 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
                photo_store=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
-    app = FastAPI(title="Parakh API")
+    diet_for_mcp = DietRepository(session_factory)
+    mcp = build_mcp(diet=diet_for_mcp, photo_store=photo_store,
+                    **({"today": (lambda: today)} if today is not None else {}))
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        # A mounted sub-app's lifespan never runs, so the host app enters the MCP
+        # session manager itself (else: "Task group is not initialized").
+        async with mcp.session_manager.run():
+            yield
+
+    app = FastAPI(title="Parakh API", lifespan=lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                        allow_headers=["*"])
 
@@ -392,6 +421,9 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
             g = ""
         return catalog.list_products(category=category, grade=g, q=q,
                                      limit=limit, offset=offset)
+
+    # Claude connector: /mcp/<secret>/mcp, the secret decides whose diary (app/connector.py)
+    app.mount("/mcp/{token}", ConnectorApp(mcp_asgi_app(mcp), session_factory))
 
     @app.get("/health")
     def health():
