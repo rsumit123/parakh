@@ -45,7 +45,7 @@ logging.getLogger("uvicorn.access").addFilter(_RedactConnectorSecret())
 
 def create_app(*, session_factory, off_client, label_extractor, meal_estimator=None,
                secret, guest_limit, free_limit, google_client_id="", today=None,
-               photo_store=None):
+               photo_store=None, on_startup=None):
     """Build the app from injected dependencies. `today` (ISO date) is injectable
     for deterministic tests; in production it is computed per-request."""
     diet_for_mcp = DietRepository(session_factory)
@@ -54,8 +54,11 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
 
     @asynccontextmanager
     async def lifespan(_app):
-        # A mounted sub-app's lifespan never runs, so the host app enters the MCP
-        # session manager itself (else: "Task group is not initialized").
+        # With a lifespan, @app.on_event("startup") handlers never run: startup work
+        # (DB init) goes through on_startup. A mounted sub-app's lifespan never runs
+        # either, so the host app enters the MCP session manager itself.
+        if on_startup:
+            on_startup()
         async with mcp.session_manager.run():
             yield
 
@@ -453,11 +456,8 @@ def app_from_settings() -> FastAPI:
         google_client_id=settings.google_client_id,
         guest_limit=settings.guest_daily_limit,
         free_limit=settings.free_daily_limit,
+        on_startup=lambda: init_db(engine),
     )
-
-    @app.on_event("startup")
-    def _init_db_on_startup():
-        init_db(engine)
 
     return app
 

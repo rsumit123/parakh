@@ -130,3 +130,14 @@ def test_access_log_hides_the_secret():
                             ("1.2.3.4", "POST", "/mcp/s3cr3t-Tok_en/mcp", "1.1", 200), None)
     _RedactConnectorSecret().filter(rec)
     assert rec.getMessage() == '1.2.3.4 - "POST /mcp/<redacted>/mcp HTTP/1.1" 200'
+
+
+def test_startup_hook_runs_with_the_lifespan():
+    # regression: a lifespan silences @app.on_event("startup"), which skipped DB init in production
+    ran = []
+    engine = make_engine("sqlite://")
+    app = create_app(session_factory=make_session_factory(engine), off_client=_OFF(), label_extractor=_Extractor(),
+                     secret="s", guest_limit=3, free_limit=10, on_startup=lambda: ran.append(1))
+    with TestClient(app):
+        pass
+    assert ran == [1]
