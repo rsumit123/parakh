@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { HomeScreen } from "./HomeScreen";
 import type { Product } from "../api/types";
 import type { HistoryEntry } from "../session/history";
+import * as catalog from "../api/catalog";
+
+vi.mock("../api/catalog", () => ({ fetchCatalogProducts: vi.fn() }));
 
 const PRODUCT: Product = {
   barcode: "x", name: "Chips", brand: "Lays", ingredients: ["potato"], source: "photo",
@@ -16,7 +19,9 @@ function entry(barcode: string, name: string): HistoryEntry {
 }
 
 function setup(overrides = {}) {
+  vi.mocked(catalog.fetchCatalogProducts).mockResolvedValue({ items: [], total: 0 });
   const props = {
+    token: "t",
     isGuest: true,
     history: [] as HistoryEntry[],
     onOpenCamera: vi.fn(),
@@ -68,11 +73,6 @@ describe("HomeScreen", () => {
     expect(props.onSignIn).toHaveBeenCalledOnce();
   });
 
-  it("renders an empty recent-scans state when there's no history", () => {
-    setup({ history: [] });
-    expect(screen.getByText(/scanned products will appear here/i)).toBeInTheDocument();
-  });
-
   it("lists recent scans and opens one when tapped", async () => {
     const props = setup({ history: [entry("1", "Kurkure"), entry("2", "Lays")] });
     expect(screen.getByText("Recent scans")).toBeInTheDocument();
@@ -84,5 +84,19 @@ describe("HomeScreen", () => {
     const props = setup();
     await userEvent.click(screen.getByRole("button", { name: /snap a meal/i }));
     expect(props.onSnapMeal).toHaveBeenCalledOnce();
+  });
+
+  it("shows graded better picks instead of an empty page, and switches category", async () => {
+    vi.mocked(catalog.fetchCatalogProducts).mockResolvedValue({ items: [{ ...PRODUCT, barcode: "b1", name: "Ragi Cookies", brand: "Early Foods",
+      score: { ...PRODUCT.score, grade: "A", overall: 82 } }], total: 1 });
+    const onOpenProduct = vi.fn();
+    render(<HomeScreen token="t" isGuest={false} history={[]} onOpenCamera={vi.fn()} onOpenProduct={onOpenProduct}
+      onSeeHistory={vi.fn()} onSignIn={vi.fn()} onSnapMeal={vi.fn()} />);
+    expect(screen.queryByText(/will appear here/i)).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Ragi Cookies, grade A" }));
+    expect(onOpenProduct).toHaveBeenCalledWith(expect.objectContaining({ barcode: "b1" }));
+    expect(catalog.fetchCatalogProducts).toHaveBeenLastCalledWith("t", { category: "biscuits", limit: 8 });
+    await userEvent.click(screen.getByRole("tab", { name: "Namkeen" }));
+    expect(catalog.fetchCatalogProducts).toHaveBeenLastCalledWith("t", { category: "namkeen", limit: 8 });
   });
 });

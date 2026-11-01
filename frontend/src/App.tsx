@@ -248,7 +248,7 @@ function Shell() {
     return <TargetsScreen token={token} onBack={back} />;
   }
   return tabbed(
-    <HomeScreen remaining={remaining} isGuest={isGuest} history={history}
+    <HomeScreen token={token} remaining={remaining} isGuest={isGuest} history={history}
       onOpenCamera={() => go(push(stack, { t: "scan" }))}
       onOpenProduct={showProduct} onSeeHistory={() => go(selectTab(stack, "history"))}
       onSignIn={signOut}

@@ -2,10 +2,12 @@ import { useState } from "react";
 import type { Product } from "../api/types";
 import { LimitModal } from "../components/LimitModal";
 import { RecentScans } from "../components/RecentScans";
+import { BetterPicks } from "../components/BetterPicks";
 import type { HistoryEntry } from "../session/history";
 import styles from "./HomeScreen.module.css";
 
 interface Props {
+  token: string;
   remaining?: number;
   isGuest: boolean;
   history: HistoryEntry[];
@@ -17,7 +19,7 @@ interface Props {
 }
 
 export function HomeScreen({
-  remaining, isGuest, history, onOpenCamera, onOpenProduct, onSeeHistory, onSignIn, onSnapMeal,
+  token, remaining, isGuest, history, onOpenCamera, onOpenProduct, onSeeHistory, onSignIn, onSnapMeal,
 }: Props) {
   const [showLimit, setShowLimit] = useState(false);
   const atLimit = remaining === 0;
@@ -62,7 +64,9 @@ export function HomeScreen({
         </button>
       </div>
 
-      <RecentScans entries={history} onOpen={onOpenProduct} onSeeAll={onSeeHistory} />
+      {/* your scans first once you have some; graded picks either way, never an empty page */}
+      {history.length > 0 && <RecentScans entries={history} onOpen={onOpenProduct} onSeeAll={onSeeHistory} />}
+      <BetterPicks token={token} onOpen={onOpenProduct} />
 
       <LimitModal
         open={showLimit}
