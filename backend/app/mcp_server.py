@@ -148,14 +148,22 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
         by_day: dict[str, list] = {}
         for e in diet.range_entries(ident, start, end_d.isoformat()):
             by_day.setdefault(e["day"], []).append(e)
-        rows, sums = [], {k: 0.0 for k in MACRO_KEYS}
+        rows, sums, empty = [], {k: 0.0 for k in MACRO_KEYS}, []
+
+        def flush_empty():
+            # runs of unlogged days fold into one line, so a month doesn't drown in blanks
+            if empty:
+                rows.append(f"  {empty[0]}: nothing logged" if len(empty) == 1
+                            else f"  {empty[0]} to {empty[-1]}: nothing logged ({len(empty)} days)")
+                empty.clear()
         over = {k: 0 for k in ("energy_kj", "sugars_g", "sat_fat_g", "salt_g")}
         under = {k: 0 for k in ("protein_g", "fibre_g")}
         for i in range(days):
             d = (end_d - timedelta(days=days - 1 - i)).isoformat()
             if d not in by_day:
-                rows.append(f"  {d}: nothing logged")
+                empty.append(d)
                 continue
+            flush_empty()
             t = summarize_day(by_day[d], targets)["totals"]
             for k in MACRO_KEYS:
                 sums[k] += t[k]
@@ -166,6 +174,7 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
             rows.append(f"  {d}: kcal {_kcal(t['energy_kj'])} · protein {_g(t['protein_g'])} · carbs {_g(t['carbs_g'])} · "
                         f"fat {_g(t['fat_g'])} · fibre {_g(t['fibre_g'])} · sugar {_g(t['sugars_g'])} · "
                         f"satfat {_g(t['sat_fat_g'])} · salt {_g(t['salt_g'])} ({len(by_day[d])} entries)")
+        flush_empty()
         n = len(by_day)
         head = [f"{start} to {end_d.isoformat()}: {n} of {days} days logged."]
         if n:

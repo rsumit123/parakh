@@ -94,7 +94,7 @@ def test_summary_and_targets(env):
     _call(c, tok, "log_food", meal="lunch", food_id="paneer_sabzi", grams=150)
     text, _ = _call(c, tok, "get_summary", days=7)
     assert "2026-06-07 to 2026-06-13: 2 of 7 days logged." in text
-    assert "2026-06-11: nothing logged" in text and "satfat 1/2 days" not in text
+    assert "2026-06-07 to 2026-06-11: nothing logged (5 days)" in text and "satfat 1/2 days" not in text
     text, _ = _call(c, tok, "get_profile_targets")
     assert "Targets basis: default" in text
     _call(c, tok, "log_weight", weight_kg=67.4)
