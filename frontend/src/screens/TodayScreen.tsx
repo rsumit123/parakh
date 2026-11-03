@@ -85,22 +85,30 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   useEffect(() => () => clearTimeout(toastTimer.current), []);
   const end = chartEnd(date, today);
 
+  // Coming back to the app refreshes everything: entries may have been added
+  // elsewhere (another device, a Claude chat) while it sat in the background.
+  const [resumed, setResumed] = useState(0);
   useEffect(() => {
-    setDay(null);
-    getDay(token, date).then(setDay).catch(() => setDay(null));
-  }, [token, date]);
+    const onShow = () => { if (document.visibilityState === "visible") setResumed((n) => n + 1); };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, []);
+  useEffect(() => {
+    if (!resumed) setDay(null);  // a fresh day shows the skeleton; a refresh keeps what's there
+    getDay(token, date).then(setDay).catch(() => { if (!resumed) setDay(null); });
+  }, [token, date, resumed]);
   // Tell the reminders what's logged today, so a logged meal isn't nudged.
   useEffect(() => {
     if (day && day.date === today) void syncReminders(new Set(day.entries.map(entryMeal)));
   }, [day, today]);
   useEffect(() => {
     getHistory(token, CHART_DAYS, end).then(setWeek).catch(() => setWeek(null));
-  }, [token, end, version]);
+  }, [token, end, version, resumed]);
   const [suggest, setSuggest] = useState<Record<Meal, MealSuggestion[]> | null>(null);
   const [repeating, setRepeating] = useState(false);
   useEffect(() => {
     getSuggestions(token, date).then((r) => setSuggest(r.slots)).catch(() => setSuggest(null));
-  }, [token, date]);
+  }, [token, date, resumed]);
 
   const apply = (d: DietDay) => { setDay(d); setVersion((v) => v + 1); };
   // Close-the-gap ideas: today only, once the day is mostly in (from 4 pm, or once
@@ -111,7 +119,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   useEffect(() => {
     if (!wantGaps) { setGaps(null); return; }
     getGaps(token, date).then(setGaps).catch(() => setGaps(null));
-  }, [token, date, wantGaps, version]);
+  }, [token, date, wantGaps, version, resumed]);
   const addIdea = (i: GapIdea) =>
     log({ kind: i.kind, name: i.name, quantity_g: i.quantity_g, per100g: i.per100g, meal: mealForTime() }, i.name);
   const addSuggestion = async (meal: Meal, s: MealSuggestion) => {

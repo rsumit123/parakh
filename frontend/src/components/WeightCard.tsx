@@ -4,6 +4,7 @@ import { dayTitle, shortDate } from "../diet/dates";
 import { weightChange } from "../diet/weight";
 import { LineChart } from "./LineChart";
 import styles from "./WeightCard.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 /** Weight on Today: the latest weigh-in, the week's change and a small trend line.
  * "Log" opens a sheet to save today's weight (which also keeps the targets current)
@@ -57,6 +58,7 @@ export function WeightCard({ token, today }: { token: string; today: string }) {
 function WeightSheet({ token, today, data, onSaved, onClose }: {
   token: string; today: string; data: WeightData; onSaved: (d: WeightData) => void; onClose: () => void;
 }) {
+  useBackHandler(onClose);
   const todays = data.entries.find((e) => e.day === today);
   const [kg, setKg] = useState((todays ?? data.latest)?.weight_kg.toFixed(1) ?? "");
   const [saving, setSaving] = useState(false);

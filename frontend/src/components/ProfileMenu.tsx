@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ProfileMenu.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 interface Props {
   label: string;          // e.g. "Guest" or an email
@@ -13,6 +14,7 @@ interface Props {
 
 export function ProfileMenu({ label, isGuest, onHistory, onTargets, onReminders, onSignOut, variant = "light" }: Props) {
   const [open, setOpen] = useState(false);
+  useBackHandler(() => setOpen(false), open);
   const ref = useRef<HTMLDivElement>(null);
   const initial = (isGuest ? "G" : label.trim()[0] || "U").toUpperCase();
 

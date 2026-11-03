@@ -70,3 +70,13 @@ describe("AddFoodSheet finds an older regular food", () => {
     expect(screen.getByText("Dry fruits (almonds, cashews, walnuts, raisins)")).toBeInTheDocument();
   });
 });
+
+describe("AddFoodSheet while loading", () => {
+  it("opens at full size with placeholders instead of growing when foods arrive", () => {
+    vi.mocked(api.getFoods).mockReturnValue(new Promise(() => {}));
+    vi.mocked(api.getRecent).mockReturnValue(new Promise(() => {}));
+    render(<AddFoodSheet token="t" onSnap={() => {}} onManual={() => {}} onQuickAdd={() => {}} onPick={() => {}}
+      onFood={() => {}} onClose={() => {}} />);
+    expect(document.querySelector('[aria-busy="true"]')?.children.length).toBe(4);
+  });
+});

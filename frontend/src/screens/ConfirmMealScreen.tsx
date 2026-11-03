@@ -5,6 +5,7 @@ import { MealChips } from "../components/MealChips";
 import { portionMacros, sumMacros, kcal, isLiquid } from "../diet/portion";
 import { defaultMealName } from "../diet/mealName";
 import styles from "./ConfirmMealScreen.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 const MK: MacroKey[] = MACRO_KEYS;
 
@@ -26,6 +27,7 @@ export function ConfirmMealScreen({ estimate, imageUrl, onConfirm, onBack, onUpl
   const multi = rows.length > 1;
   const [mealName, setMealName] = useState(() => defaultMealName(estimate.items.map((i) => i.name)));
   const [zoom, setZoom] = useState(false);
+  useBackHandler(() => setZoom(false), zoom);
   const [meal, setMeal] = useState<Meal>(() => mealForTime());
   const [saving, setSaving] = useState(false);
   // Upload starts as soon as the screen opens, so it's usually done before "Add".

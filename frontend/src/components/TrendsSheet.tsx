@@ -4,6 +4,7 @@ import { dayTitle, weekdayLetter } from "../diet/dates";
 import { LineChart } from "./LineChart";
 import { METRICS, series, show } from "./WeekChart";
 import styles from "./TrendsSheet.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 const RANGES = [7, 14, 30];
 
@@ -18,6 +19,7 @@ function ticks(days: HistoryDay[]) {
  * (kcal and grams never share an axis). Touching any chart moves one crosshair
  * across all of them, so a single day can be read top to bottom. */
 export function TrendsSheet({ token, today, onClose }: { token: string; today: string; onClose: () => void }) {
+  useBackHandler(onClose);
   const [range, setRange] = useState(7);
   const [data, setData] = useState<{ targets: Totals; days: HistoryDay[] } | null>(null);
   const [active, setActive] = useState<number | null>(null);

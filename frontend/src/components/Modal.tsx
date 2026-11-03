@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import styles from "./Modal.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 interface Props {
   open: boolean;
@@ -14,6 +15,7 @@ interface Props {
 
 /** Lightweight centered modal with a scrim. Closes on scrim click / Escape. */
 export function Modal({ open, onClose, icon, title, body, primaryLabel, onPrimary, secondaryLabel }: Props) {
+  useBackHandler(onClose, open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };

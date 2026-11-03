@@ -5,6 +5,7 @@ import { mealForTime } from "../diet/meals";
 import { portionName } from "../diet/foodSearch";
 import { MealChips } from "./MealChips";
 import styles from "./FoodPicker.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 const SERVINGS = [0.5, 1, 1.5, 2];
 
@@ -15,6 +16,7 @@ export function FoodPicker({ food, meal: initialMeal, onAdd, onCancel }: {
   onAdd: (v: { name: string; grams: number; per100g: Macros; meal: Meal }) => void;
   onCancel: () => void;
 }) {
+  useBackHandler(onCancel);
   const unit = food.unit_g;
   const [count, setCount] = useState(unit ? Math.max(1, Math.round(food.default_g / unit)) : 0);
   const [grams, setGrams] = useState(Math.round(food.default_g));

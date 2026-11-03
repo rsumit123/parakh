@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Macros } from "../api/diet";
 import { portionMacros, kcal } from "../diet/portion";
 import styles from "./PortionSheet.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 export function PortionSheet({
   title, per100g, defaultGrams, onCancel, onConfirm,
@@ -9,6 +10,7 @@ export function PortionSheet({
   title: string; per100g: Macros; defaultGrams: number;
   onCancel: () => void; onConfirm: (grams: number) => void;
 }) {
+  useBackHandler(onCancel);
   const [grams, setGrams] = useState(Math.round(defaultGrams));
   const m = portionMacros(per100g, grams);
   const mult = (factor: number) => setGrams(Math.round(defaultGrams * factor));

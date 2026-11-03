@@ -5,6 +5,7 @@ import { MealChips } from "./MealChips";
 import { isLiquid } from "../diet/portion";
 import { parseCount } from "../diet/foodSearch";
 import styles from "./FoodSheet.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 // Nutrient fields shown in the form, in the order the Today card lists them.
 // Energy is entered in kcal and stored in kJ.
@@ -52,6 +53,8 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
   const [vals, setVals] = useState(() => toForm(initial?.macros));
   const [meal, setMeal] = useState<Meal>(initial?.meal ?? mealForTime());
   const [zoom, setZoom] = useState(false);
+  useBackHandler(onCancel);
+  useBackHandler(() => setZoom(false), zoom);   // a full-size photo closes first
   // Counted foods ("Boiled eggs ×2", "Roti ×4") are edited in pieces: the weight of
   // one piece comes from the original entry, and the name follows the count.
   const [piece] = useState(() => {

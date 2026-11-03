@@ -3,6 +3,7 @@ import { getFoods, getRecent, type RecentFood, type RefFood } from "../api/diet"
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { parseCount, searchFoods } from "../diet/foodSearch";
 import styles from "./AddFoodSheet.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 /** "Add food" chooser: search common foods, snap or type a new one, or re-log one
  * eaten before. Recent = latest first; Frequent = foods logged at least twice.
@@ -15,6 +16,7 @@ export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFo
   onFood: (f: RefFood) => void;
   onClose: () => void;
 }) {
+  useBackHandler(onClose);
   const [items, setItems] = useState<RecentFood[] | null>(null);
   const [tab, setTab] = useState<"recent" | "frequent">("recent");
   const [q, setQ] = useState("");
@@ -86,6 +88,11 @@ export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFo
           </div>
         )}
 
+        {!searching && items === null && (
+          <div className={styles.list} aria-busy="true">
+            {[0, 1, 2, 3].map((i) => <div key={i} className={`skeleton ${styles.skel}`} />)}
+          </div>
+        )}
         {!searching && items && items.length > 0 && (
           <>
             <div className={styles.tabs} role="tablist">

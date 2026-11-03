@@ -2,6 +2,7 @@ import type { LogEntry } from "../api/diet";
 import { kcal, isLiquid } from "../diet/portion";
 import { parseCount } from "../diet/foodSearch";
 import styles from "./MealGroupSheet.module.css";
+import { useBackHandler } from "../session/backHandlers";
 
 /** A photo meal's dishes: shown as one row on Today, edited here dish by dish. */
 export function MealGroupSheet({ name, entries, onEditDish, onRemoveDish, onDeleteMeal, onClose }: {
@@ -9,6 +10,7 @@ export function MealGroupSheet({ name, entries, onEditDish, onRemoveDish, onDele
   onEditDish: (e: LogEntry) => void; onRemoveDish: (e: LogEntry) => void;
   onDeleteMeal: () => void; onClose: () => void;
 }) {
+  useBackHandler(onClose);
   const photo = entries.find((e) => e.image_url)?.image_url;
   const total = entries.reduce((s, e) => s + e.energy_kj, 0);
   const protein = entries.reduce((s, e) => s + e.protein_g, 0);

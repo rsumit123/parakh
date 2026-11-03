@@ -14,6 +14,7 @@ import { TabBar } from "./components/TabBar";
 import { ProfileMenu } from "./components/ProfileMenu";
 import { RemindersScreen } from "./screens/RemindersScreen";
 import { syncReminders } from "./diet/reminders";
+import { handleBack } from "./session/backHandlers";
 import { PortionSheet } from "./components/PortionSheet";
 import {
   push, selectTab, pushResultFromScan, top, activeTab, type Stack, type Tab,
@@ -60,14 +61,43 @@ function Shell() {
     window.history.replaceState({ stack: root }, "");
   }, [signedIn]);
 
-  // Android hardware back: unwind the screen stack via history, exit at the root.
+  // Left open on "today" and reopened the next morning: move to the new today.
+  const shownToday = useRef(localDay());
+  useEffect(() => {
+    const onShow = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = localDay();
+      if (now !== shownToday.current) {
+        setDietDate((d) => (d === shownToday.current ? now : d));
+        shownToday.current = now;
+      }
+    };
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, []);
+
+  const stackRef = useRef(stack);
+  stackRef.current = stack;
+  const signedInRef = useRef(signedIn);
+  signedInRef.current = signedIn;
+  // Android hardware back: close an open overlay, else unwind the screen stack via
+  // history, else (other tab's root) go to Today, else exit.
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     let remove: (() => void) | undefined;
     void import("@capacitor/app").then(({ App: CapApp }) => {
       CapApp.addListener("backButton", ({ canGoBack }) => {
-        if (canGoBack) window.history.back();
-        else void CapApp.exitApp();
+        if (handleBack()) return;                 // an open sheet / viewer / menu closes first
+        if (canGoBack) { window.history.back(); return; }
+        // at the root of another tab, Back goes to Today before it leaves the app
+        const root = stackRef.current[0]?.t;
+        if (signedInRef.current && stackRef.current.length === 1 && root !== "today") {
+          const next: Stack = [{ t: "today" }];
+          setStack(next);
+          window.history.pushState({ stack: next }, "");
+          return;
+        }
+        void CapApp.exitApp();
       }).then((handle) => {
         remove = () => void handle.remove();
       });
