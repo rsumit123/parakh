@@ -72,6 +72,9 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   const [day, setDay] = useState<DietDay | null>(null);
   const [week, setWeek] = useState<{ targets: DietDay["targets"]; days: HistoryDay[] } | null>(null);
   const [sheet, setSheet] = useState<Sheet>(null);
+  // Meal chosen by tapping ＋ on a meal header; null = guess from the time of day.
+  const [addMeal, setAddMeal] = useState<Meal | null>(null);
+  const openAdd = (meal: Meal | null) => { setAddMeal(meal); setSheet({ t: "choose" }); };
   const [metric, setMetric] = useState<MacroKey>("energy_kj");  // which nutrient the chart shows
   const [trends, setTrends] = useState(false);  // full-screen chart of every nutrient
   const [version, setVersion] = useState(0);  // bumps after any change, to refresh the chart
@@ -182,11 +185,16 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   };
   const addManual = (v: FoodValues) =>
     log({ kind: "manual", name: v.name, quantity_g: v.grams, per100g: per100(v.macros, v.grams), meal: v.meal }, v.name);
-  const quickAdd = (f: RecentFood) => log({ ...relogBody(f, f.quantity_g), meal: mealForTime() }, f.name);
+  const quickAdd = (f: RecentFood) => log({ ...relogBody(f, f.quantity_g), meal: addMeal ?? mealForTime() }, f.name);
   const addAgain = (f: RecentFood, v: FoodValues) =>
     log({ ...relogBody({ ...f, name: v.name }, v.grams, v.macros), meal: v.meal }, v.name);
 
   const isToday = date === today;
+  // The meal the suggestion goes to: the first unlogged meal that has one, from the
+  // current meal onwards today (earlier meals aren't nagged), from breakfast on other days.
+  const logged = new Set(day?.entries.map(entryMeal) ?? []);
+  const fromIdx = isToday ? MEALS.findIndex((m) => m.key === mealForTime()) : 0;
+  const nextMeal = MEALS.slice(fromIdx).find((m) => !logged.has(m.key) && (suggest?.[m.key]?.length ?? 0) > 0)?.key;
   return (
     <div className={styles.screen}>
       <div className={styles.top}>
@@ -255,13 +263,18 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
           {MEALS.map((m) => {
             const items = day.entries.filter((e) => entryMeal(e) === m.key);
             if (items.length === 0) {
-              const options = suggest?.[m.key] ?? [];
-              if (options.length === 0) return null;
+              // only the meal that's coming up gets a suggestion; the rest are a header + ＋
+              const options = m.key === nextMeal ? suggest?.[m.key] ?? [] : [];
               return (
                 <section key={m.key} aria-label={m.label}>
-                  <div className={styles.sec}><span>{m.icon} {m.label}</span><span>not logged</span></div>
-                  <MealSuggestions slotLabel={m.label} suggestions={options} busy={repeating}
-                    onAdd={(s) => addSuggestion(m.key, s)} />
+                  <div className={styles.sec}>
+                    <span>{m.icon} {m.label}</span>
+                    <button className={styles.secAdd} onClick={() => openAdd(m.key)} aria-label={`Add to ${m.label}`}>＋</button>
+                  </div>
+                  {options.length > 0 && (
+                    <MealSuggestions slotLabel={m.label} suggestions={options} busy={repeating}
+                      onAdd={(s) => addSuggestion(m.key, s)} />
+                  )}
                 </section>
               );
             }
@@ -309,8 +322,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
               </section>
             );
           })}
-          {day.entries.length === 0 && <div className={styles.empty}>Nothing logged {isToday ? "yet" : "that day"}.</div>}
-          <button className={styles.add} onClick={() => setSheet({ t: "choose" })}>＋ Add food</button>
+          <button className={styles.add} onClick={() => openAdd(null)}>＋ Add food</button>
           {isToday && <WeightCard token={token} today={today} />}
         </>
       )}
@@ -325,17 +337,17 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
           onClose={() => setSheet(null)} />
       )}
       {sheet?.t === "food" && (
-        <FoodPicker food={sheet.food} onCancel={() => setSheet(null)}
+        <FoodPicker food={sheet.food} meal={addMeal ?? undefined} onCancel={() => setSheet(null)}
           onAdd={(v) => log({ kind: "unpackaged", name: v.name, quantity_g: v.grams, per100g: v.per100g, meal: v.meal }, v.name)} />
       )}
       {sheet?.t === "again" && (
         <FoodSheet mode="add" title="Add again"
           initial={{ name: sheet.food.name, grams: sheet.food.quantity_g,
-                     macros: portionMacros(sheet.food.per100g, sheet.food.quantity_g) }}
+                     macros: portionMacros(sheet.food.per100g, sheet.food.quantity_g), meal: addMeal ?? undefined }}
           onSave={(v) => addAgain(sheet.food, v)} onCancel={() => setSheet(null)} />
       )}
       {sheet?.t === "manual" && (
-        <FoodSheet mode="add" onSave={addManual} onCancel={() => setSheet(null)} />
+        <FoodSheet mode="add" defaultMeal={addMeal ?? undefined} onSave={addManual} onCancel={() => setSheet(null)} />
       )}
       {sheet?.t === "edit" && (
         <FoodSheet mode="edit" photoUrl={sheet.entry.image_url || undefined}

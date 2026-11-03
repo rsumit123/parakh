@@ -39,8 +39,9 @@ const toForm = (m?: Macros): Record<MacroKey, string> => {
 /** Bottom sheet to enter a food by hand (mode "add") or correct a logged one
  * (mode "edit"). Nutrients are for the whole amount eaten, not per 100 g; changing
  * the amount rescales them so a portion fix is a single edit. */
-export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, onCancel }: {
+export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onSave, onDelete, onCancel }: {
   mode: "add" | "edit";
+  defaultMeal?: Meal;   // meal to preselect when `initial` has none
   title?: string;
   photoUrl?: string;
   initial?: FoodValues;
@@ -51,7 +52,7 @@ export function FoodSheet({ mode, initial, title, photoUrl, onSave, onDelete, on
   const [name, setName] = useState(initial?.name ?? "");
   const [grams, setGrams] = useState(String(Math.round(initial?.grams ?? 100)));
   const [vals, setVals] = useState(() => toForm(initial?.macros));
-  const [meal, setMeal] = useState<Meal>(initial?.meal ?? mealForTime());
+  const [meal, setMeal] = useState<Meal>(initial?.meal ?? defaultMeal ?? mealForTime());
   const [zoom, setZoom] = useState(false);
   useBackHandler(onCancel);
   useBackHandler(() => setZoom(false), zoom);   // a full-size photo closes first

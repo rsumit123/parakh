@@ -24,3 +24,20 @@ describe("MealGroupSheet", () => {
     expect(onDeleteMeal).toHaveBeenCalled();
   });
 });
+
+import { MealSuggestions } from "./MealSuggestions";
+import type { MealSuggestion } from "../api/diet";
+
+describe("MealSuggestions", () => {
+  const s = (name: string, kcal: number, times = 1): MealSuggestion => ({ source_day: "2026-11-02", times, entry_ids: [kcal],
+    items: [{ name, quantity_g: 100, kcal }], kcal, protein_g: 10 });
+  it("shows one compact line and keeps other options behind More", () => {
+    const onAdd = vi.fn();
+    render(<MealSuggestions slotLabel="Breakfast" suggestions={[s("Idli ×2", 484, 2), s("Poha", 400)]} busy={false} onAdd={onAdd} />);
+    expect(screen.getByText("↻ Usual breakfast")).toBeInTheDocument();
+    expect(screen.queryByText("Poha")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Breakfast: Poha" }));
+    expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ kcal: 400 }));
+  });
+});

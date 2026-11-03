@@ -150,9 +150,11 @@ describe("TodayScreen", () => {
   it("suggests the usual meal in an empty slot and adds it in one tap, with Undo", async () => {
     renderToday();
     const dinner = await screen.findByRole("region", { name: "Dinner" });
-    expect(dinner).toHaveTextContent("Usual dinner · 3×");
+    expect(dinner).toHaveTextContent("↻ Usual dinner");
     expect(dinner).toHaveTextContent("Roti · Paneer Sabzi");
-    expect(screen.queryByRole("region", { name: "Lunch" })).not.toBeInTheDocument();  // nothing to suggest
+    // other unlogged meals are just a header with ＋ (no suggestion card)
+    expect(screen.getByRole("region", { name: "Lunch" })).not.toHaveTextContent("↻");
+    expect(screen.getByRole("button", { name: "Add to Lunch" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /add usual dinner/i }));
     await waitFor(() => expect(api.repeatMeal).toHaveBeenCalledWith("t", [41, 42], "2026-06-13", "dinner"));
     fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
@@ -161,7 +163,8 @@ describe("TodayScreen", () => {
 
   it("offers the runner-up meal too", async () => {
     renderToday();
-    fireEvent.click(await screen.findByRole("button", { name: /add dinner: roti \+ palak paneer/i }));
+    fireEvent.click(await screen.findByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("button", { name: /add dinner: roti \+ palak paneer/i }));
     await waitFor(() => expect(api.repeatMeal).toHaveBeenCalledWith("t", [30], "2026-06-13", "dinner"));
   });
 });
