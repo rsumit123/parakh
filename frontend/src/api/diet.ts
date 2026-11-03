@@ -106,8 +106,10 @@ export function getSuggestions(token: string, date: string): Promise<{ date: str
 export function repeatMeal(token: string, entryIds: number[], day: string, meal: Meal): Promise<{ created: LogEntry[] } & DietDay> {
   return fetchJson(`/diet/repeat`, { token, method: "POST", json: { entry_ids: entryIds, day, meal } });
 }
-export function getRecent(token: string): Promise<{ items: RecentFood[] }> {
-  return fetchJson(`/diet/recent`, { token });
+/** The user's distinct foods, newest first. Fetched deep (not just the last few) so
+ * Frequent and search find a regular food even after many newer ones. */
+export function getRecent(token: string, limit = 200): Promise<{ items: RecentFood[] }> {
+  return fetchJson(`/diet/recent?limit=${limit}`, { token });
 }
 export { localDay };
 

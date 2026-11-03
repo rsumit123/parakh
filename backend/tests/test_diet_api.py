@@ -516,3 +516,14 @@ def test_repeating_a_grouped_meal_keeps_it_grouped(photo_client):
     copies = r["created"]
     assert len({d["group_id"] for d in copies}) == 1 and copies[0]["group_id"] != dishes[0]["group_id"]
     assert copies[0]["group_name"] == "Roti, Dal + 1 more"
+
+
+def test_recent_foods_reach_past_the_last_twenty(client_and_sf):
+    c, _ = client_and_sf
+    h = _user_headers()
+    _log(c, h, name="Dry fruits", quantity_g=21, day="2026-06-01")
+    _log(c, h, name="Dry fruits", quantity_g=21, day="2026-06-02")
+    for i in range(25):
+        _log(c, h, name=f"Food {i}", day="2026-06-03")
+    names = [i["name"] for i in c.get("/diet/recent?limit=200", headers=h).json()["items"]]
+    assert len(names) == 26 and "Dry fruits" in names

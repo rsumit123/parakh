@@ -348,7 +348,7 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
 
     @app.get("/diet/recent")
     def diet_recent(limit: int = 20, identity: dict = Depends(current_user)):
-        return {"items": diet.recent_foods(identity["id"], limit=max(1, min(limit, 50)))}
+        return {"items": diet.recent_foods(identity["id"], limit=max(1, min(limit, 200)))}
 
     @app.get("/diet/gaps")
     def diet_gaps(date: str = "", identity: dict = Depends(current_user)):

@@ -52,3 +52,21 @@ describe("AddFoodSheet search", () => {
     expect(screen.getByText(/No match for/)).toBeInTheDocument();
   });
 });
+
+describe("AddFoodSheet finds an older regular food", () => {
+  it("shows dry fruits in Frequent and search even after 20+ newer foods", async () => {
+    const mk = (name: string, uses: number) => ({ name, brand: "", barcode: null, kind: "manual", quantity_g: 21,
+      per100g: per(573, 16), uses } as unknown as api.RecentFood);
+    const newer = Array.from({ length: 25 }, (_, i) => mk(`Food ${i}`, 1));
+    vi.mocked(api.getFoods).mockResolvedValue([]);
+    vi.mocked(api.getRecent).mockResolvedValue({ items: [...newer, mk("Dry fruits (almonds, cashews, walnuts, raisins)", 5)] });
+    render(<AddFoodSheet token="t" onSnap={() => {}} onManual={() => {}} onQuickAdd={() => {}} onPick={() => {}}
+      onFood={() => {}} onClose={() => {}} />);
+    await waitFor(() => expect(api.getRecent).toHaveBeenCalledWith("t"));
+    fireEvent.click(await screen.findByRole("tab", { name: "Frequent" }));
+    expect(screen.getByText("Dry fruits (almonds, cashews, walnuts, raisins)")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search foods"), { target: { value: "dry-fruits" } });
+    expect(await screen.findByText("Your foods")).toBeInTheDocument();
+    expect(screen.getByText("Dry fruits (almonds, cashews, walnuts, raisins)")).toBeInTheDocument();
+  });
+});

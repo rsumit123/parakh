@@ -22,11 +22,13 @@ export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFo
   useEffect(() => { getRecent(token).then((r) => setItems(r.items)).catch(() => setItems([])); }, [token]);
   useEffect(() => { getFoods(token).then(setFoods).catch(() => setFoods([])); }, [token]);
 
+  // Frequent and search use the whole history; Recent shows just the latest few.
   const frequent = (items ?? []).filter((f) => f.uses >= 2).sort((a, b) => b.uses - a.uses);
   const searching = q.trim().length > 0;
-  const mine = searching ? (items ?? []).filter((f) => f.name.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 4) : [];
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const mine = searching ? (items ?? []).filter((f) => norm(f.name).includes(norm(q))).slice(0, 6) : [];
   const found = searching ? searchFoods(foods, q) : [];
-  const list = tab === "recent" ? items ?? [] : frequent;
+  const list = tab === "recent" ? (items ?? []).slice(0, 30) : frequent;
 
   const recentRow = (f: RecentFood, showUses: boolean) => {
     const k = kcal(portionMacros(f.per100g, f.quantity_g).energy_kj);

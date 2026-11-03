@@ -64,7 +64,7 @@ class DietRepository:
             ).all()
             return [self._entry_dict(e) for e in rows]
 
-    def recent_foods(self, identity: str, limit: int = 20, scan: int = 300) -> list[dict]:
+    def recent_foods(self, identity: str, limit: int = 20, scan: int = 2000) -> list[dict]:
         """Distinct foods from the user's latest `scan` entries, newest first. Same food =
         same barcode, else same name (case/space-insensitive). Each carries its latest
         amount, per-100 g macros (so it can be re-logged at any amount) and use count."""
