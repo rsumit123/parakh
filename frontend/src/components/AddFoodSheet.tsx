@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getFoods, getRecent, type RecentFood, type RefFood } from "../api/diet";
+import { getFoods, getRecent, type Meal, type RecentFood, type RefFood } from "../api/diet";
+import { MealChips } from "./MealChips";
 import { kcal, isLiquid, portionMacros } from "../diet/portion";
 import { parseCount, searchFoods } from "../diet/foodSearch";
 import styles from "./AddFoodSheet.module.css";
@@ -9,8 +10,9 @@ import { useBackHandler } from "../session/backHandlers";
  * eaten before. Recent = latest first; Frequent = foods logged at least twice.
  * ＋ re-logs at the last amount in one tap; tapping the row opens it for tweaking.
  * Typing searches your own foods first, then the reference table of Indian foods. */
-export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFood, onClose }: {
+export function AddFoodSheet({ token, meal, onMeal, onSnap, onManual, onQuickAdd, onPick, onFood, onClose }: {
   token: string;
+  meal?: Meal; onMeal?: (m: Meal) => void;   // where adds go; shown so it's never a surprise
   onSnap: () => void; onManual: () => void;
   onQuickAdd: (f: RecentFood) => void; onPick: (f: RecentFood) => void;
   onFood: (f: RefFood) => void;
@@ -53,6 +55,7 @@ export function AddFoodSheet({ token, onSnap, onManual, onQuickAdd, onPick, onFo
       <div className={styles.scrim} onClick={onClose} />
       <div className={styles.sheet}>
         <div className={styles.grab} />
+        {meal && onMeal && <div className={styles.meal}><MealChips value={meal} onChange={onMeal} /></div>}
         <label className={styles.search}>
           <span aria-hidden>🔍</span>
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search"

@@ -74,7 +74,16 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   const [sheet, setSheet] = useState<Sheet>(null);
   // Meal chosen by tapping ＋ on a meal header; null = guess from the time of day.
   const [addMeal, setAddMeal] = useState<Meal | null>(null);
-  const openAdd = (meal: Meal | null) => { setAddMeal(meal); setSheet({ t: "choose" }); };
+  // Which meal Add food logs to: the one tapped, else the meal you're in the middle of
+  // (something logged in the last 2 hours), else a guess from the clock. A late
+  // breakfast stays breakfast instead of flipping to lunch at 11.
+  const currentMeal = (): Meal => {
+    const recent = (day?.entries ?? []).filter((e) => e.created_at && e.meal &&
+      Date.now() - new Date(e.created_at).getTime() < 2 * 3600e3);
+    const last = recent.sort((a, b) => (a.created_at! < b.created_at! ? 1 : -1))[0];
+    return date === today && last ? entryMeal(last) : mealForTime();
+  };
+  const openAdd = (meal: Meal | null) => { setAddMeal(meal ?? currentMeal()); setSheet({ t: "choose" }); };
   const [metric, setMetric] = useState<MacroKey>("energy_kj");  // which nutrient the chart shows
   const [trends, setTrends] = useState(false);  // full-screen chart of every nutrient
   const [version, setVersion] = useState(0);  // bumps after any change, to refresh the chart
@@ -185,7 +194,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
   };
   const addManual = (v: FoodValues) =>
     log({ kind: "manual", name: v.name, quantity_g: v.grams, per100g: per100(v.macros, v.grams), meal: v.meal }, v.name);
-  const quickAdd = (f: RecentFood) => log({ ...relogBody(f, f.quantity_g), meal: addMeal ?? mealForTime() }, f.name);
+  const quickAdd = (f: RecentFood) => log({ ...relogBody(f, f.quantity_g), meal: addMeal ?? currentMeal() }, f.name);
   const addAgain = (f: RecentFood, v: FoodValues) =>
     log({ ...relogBody({ ...f, name: v.name }, v.grams, v.macros), meal: v.meal }, v.name);
 
@@ -328,7 +337,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
       )}
 
       {sheet?.t === "choose" && (
-        <AddFoodSheet token={token}
+        <AddFoodSheet token={token} meal={addMeal ?? currentMeal()} onMeal={setAddMeal}
           onSnap={() => { setSheet(null); onSnapMeal(); }}
           onManual={() => setSheet({ t: "manual" })}
           onQuickAdd={quickAdd}
