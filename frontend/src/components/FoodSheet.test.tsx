@@ -66,3 +66,17 @@ describe("FoodSheet pieces", () => {
     expect(onSave.mock.calls[0][0]).toMatchObject({ name: "Boiled eggs ×3", grams: 150 });
   });
 });
+
+describe("FoodSheet add photo", () => {
+  it("attaches a photo to an entry that had none, and shows it", async () => {
+    const onPhoto = vi.fn().mockResolvedValue("https://signed/meals/user-1/x.jpg");
+    const macros = { energy_kj: 1000, protein_g: 10, carbs_g: 20, fat_g: 5, fibre_g: 2, sugars_g: 1, sat_fat_g: 1, salt_g: 0.5 };
+    render(<FoodSheet mode="edit" initial={{ name: "Dal", grams: 200, macros, meal: "lunch" }}
+      onPhoto={onPhoto} onSave={() => {}} onCancel={() => {}} />);
+    const file = new File(["img"], "dal.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText("Add photo"), { target: { files: [file] } });
+    await screen.findByAltText("Your meal");
+    expect(onPhoto).toHaveBeenCalledWith(file);
+    expect(screen.getByLabelText("Change photo")).toBeInTheDocument();
+  });
+});

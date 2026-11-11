@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  getDay, getHistory, getGaps, logMealGroup, deleteMeal, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
+  getDay, getHistory, getGaps, logMealGroup, deleteMeal, uploadMealPhoto, deleteLog, editLog, addLog, getSuggestions, repeatMeal, MACRO_KEYS,
   type DietDay, type HistoryDay, type LogEntry, type LogBody, type MacroKey, type Macros, type OptKey, type RecentFood,
   type Meal, type MealSuggestion, type RefFood, type Gaps, type GapIdea,
 } from "../api/diet";
@@ -166,6 +166,13 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
     setSheet(null);
     try { apply(await editLog(token, entry.id, { name: v.name, quantity_g: v.grams, macros: v.macros, meal: v.meal })); backTo(group); }
     catch { /* ignore */ }
+  };
+  // Attach a photo to something already logged (e.g. logged from a Claude chat).
+  const attachPhoto = async (entry: LogEntry, f: File) => {
+    const { photo_key } = await uploadMealPhoto(token, f);
+    const r = await editLog(token, entry.id, { photo_key });
+    apply(r);
+    return r.entry.image_url || undefined;
   };
   const groupName = (entries: LogEntry[]) => entries[0]?.group_name || defaultMealName(entries.map((e) => e.name));
   const removeMeal = async (entries: LogEntry[]) => {
@@ -360,6 +367,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
       )}
       {sheet?.t === "edit" && (
         <FoodSheet mode="edit" photoUrl={sheet.entry.image_url || undefined}
+          onPhoto={sheet.group ? undefined : (f) => attachPhoto(sheet.entry, f)}
           initial={{ name: sheet.entry.name, grams: sheet.entry.quantity_g, macros: sheet.entry,
                      meal: entryMeal(sheet.entry) }}
           onSave={(v) => saveEdit(sheet.entry, v, sheet.group)}
@@ -374,6 +382,7 @@ export function TodayScreen({ token, date, today, onChangeDate, onSnapMeal, onOp
             onEditDish={(e) => setSheet({ t: "edit", entry: e, group: sheet.id })}
             onRemoveDish={(e) => remove(e, sheet.id)}
             onDeleteMeal={() => removeMeal(entries)}
+            onPhoto={(f) => attachPhoto(entries.find((e) => e.image_url) ?? entries[0], f)}
             onClose={() => setSheet(null)} />
         );
       })()}

@@ -6,6 +6,7 @@ import { isLiquid } from "../diet/portion";
 import { parseCount } from "../diet/foodSearch";
 import styles from "./FoodSheet.module.css";
 import { useBackHandler } from "../session/backHandlers";
+import { PhotoPicker } from "./PhotoPicker";
 
 // Nutrient fields shown in the form, in the order the Today card lists them.
 // Energy is entered in kcal and stored in kJ.
@@ -39,11 +40,13 @@ const toForm = (m?: Macros): Record<MacroKey, string> => {
 /** Bottom sheet to enter a food by hand (mode "add") or correct a logged one
  * (mode "edit"). Nutrients are for the whole amount eaten, not per 100 g; changing
  * the amount rescales them so a portion fix is a single edit. */
-export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onSave, onDelete, onCancel }: {
+export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onPhoto, onSave, onDelete, onCancel }: {
   mode: "add" | "edit";
   defaultMeal?: Meal;   // meal to preselect when `initial` has none
   title?: string;
   photoUrl?: string;
+  /** Edit mode: attach or replace the entry's photo; resolves to the new photo URL. */
+  onPhoto?: (f: File) => Promise<string | undefined>;
   initial?: FoodValues;
   onSave: (v: FoodValues) => void;
   onDelete?: () => void;
@@ -54,6 +57,7 @@ export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onSave,
   const [vals, setVals] = useState(() => toForm(initial?.macros));
   const [meal, setMeal] = useState<Meal>(initial?.meal ?? defaultMeal ?? mealForTime());
   const [zoom, setZoom] = useState(false);
+  const [shownPhoto, setShownPhoto] = useState(photoUrl);
   useBackHandler(onCancel);
   useBackHandler(() => setZoom(false), zoom);   // a full-size photo closes first
   // Counted foods ("Boiled eggs ×2", "Roti ×4") are edited in pieces: the weight of
@@ -106,11 +110,12 @@ export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onSave,
       <div className={styles.scrim} onClick={onCancel} />
       <div className={styles.sheet}>
         <div className={styles.grab} />
-        {photoUrl && (
+        {shownPhoto && (
           <button className={styles.photoBtn} onClick={() => setZoom(true)} aria-label="View photo full size">
-            <img className={styles.photo} src={photoUrl} alt="Your meal" />
+            <img className={styles.photo} src={shownPhoto} alt="Your meal" />
           </button>
         )}
+        {onPhoto && <PhotoPicker hasPhoto={!!shownPhoto} onPick={async (f) => setShownPhoto(await onPhoto(f) ?? shownPhoto)} />}
         <h3 className={styles.h}>{title ?? (mode === "add" ? "Add food manually" : "Edit food")}</h3>
         <div className={styles.meal}><MealChips value={meal} onChange={setMeal} /></div>
         <label className={styles.field}>
@@ -158,9 +163,9 @@ export function FoodSheet({ mode, initial, defaultMeal, title, photoUrl, onSave,
           </button>
         </div>
       </div>
-      {zoom && photoUrl && (
+      {zoom && shownPhoto && (
         <button className={styles.viewer} onClick={() => setZoom(false)} aria-label="Close photo">
-          <img src={photoUrl} alt="Your meal, full size" />
+          <img src={shownPhoto} alt="Your meal, full size" />
         </button>
       )}
     </div>

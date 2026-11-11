@@ -50,7 +50,15 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
         "The user's Parakh food diary (Indian food tracker). Read tools are safe. Before any write "
         "(log_food, log_meal, edit_entry, delete_entry, log_weight), state the foods, portions and meal "
         "you will log and get the user's OK, unless they already gave exact amounts. Dates are "
-        "YYYY-MM-DD in India time; omit for today. Energy is shown in kcal."))
+        "YYYY-MM-DD in India time; omit for today. Energy is shown in kcal.\n"
+        "Meal photos: when the user shares a photo of a meal, identify every dish yourself and "
+        "estimate portions from what is visible (a steel katori ~150-200 g of dal/curd/sabzi, one "
+        "roti ~40 g, a mound of rice covering a quarter of a thali ~200 g; count rotis, idlis and "
+        "eggs as pieces), using what the user says they ate as the truth over what you see "
+        "(half-eaten plates, dishes they skipped). Map dishes to food_ids with search_foods, log "
+        "them together with log_meal, and mention anything visible that they didn't name so they "
+        "can confirm it. The photo itself isn't attached by these tools; the user can add it to "
+        "the meal in the Parakh app."))
 
     def _day(d: str) -> str:
         d = d or today()
@@ -285,6 +293,7 @@ def build_mcp(*, diet, photo_store=None, today=india_today) -> MCPServer:
         """Log several dishes eaten together as one grouped meal (shown as one row in the app, each
         dish still editable). Each dish is {"food_id", "count" or "grams"} or a custom
         {"name", "grams", "nutrition_per_100g"}. Confirm dishes and portions with the user first.
+        This is the tool for a meal photo the user shares: read the dishes and portions from it.
 
         Args:
             meal: breakfast, lunch, snack or dinner.

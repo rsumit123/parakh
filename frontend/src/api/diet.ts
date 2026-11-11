@@ -53,7 +53,7 @@ export function deleteLog(token: string, id: number): Promise<{ ok: boolean } & 
   // The server answers with the deleted entry's own day.
   return fetchJson(`/diet/log/${id}`, { token, method: "DELETE" });
 }
-export interface LogEdit { name?: string; quantity_g?: number; macros?: Macros; meal?: Meal; }
+export interface LogEdit { name?: string; quantity_g?: number; macros?: Macros; meal?: Meal; photo_key?: string; }
 export function editLog(token: string, id: number, edit: LogEdit): Promise<{ entry: LogEntry } & DietDay> {
   return fetchJson(`/diet/log/${id}`, { token, method: "PATCH", json: edit });
 }

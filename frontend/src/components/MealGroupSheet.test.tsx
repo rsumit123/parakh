@@ -22,6 +22,7 @@ describe("MealGroupSheet", () => {
     expect(onEditDish).toHaveBeenCalledWith(DISHES[0]);
     fireEvent.click(screen.getByRole("button", { name: "Delete meal" }));
     expect(onDeleteMeal).toHaveBeenCalled();
+    expect(screen.queryByLabelText("Change photo")).not.toBeInTheDocument();   // no onPhoto passed
   });
 });
 
@@ -39,5 +40,16 @@ describe("MealSuggestions", () => {
     fireEvent.click(screen.getByRole("button", { name: "More options" }));
     fireEvent.click(screen.getByRole("button", { name: "Add Breakfast: Poha" }));
     expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ kcal: 400 }));
+  });
+});
+
+describe("MealGroupSheet photo", () => {
+  it("offers to change the meal's photo", () => {
+    const onPhoto = vi.fn().mockResolvedValue(undefined);
+    render(<MealGroupSheet name="Roti, Dal + 1 more" entries={DISHES} onEditDish={() => {}} onRemoveDish={() => {}}
+      onDeleteMeal={() => {}} onPhoto={onPhoto} onClose={() => {}} />);
+    const file = new File(["img"], "m.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText("Change photo"), { target: { files: [file] } });
+    expect(onPhoto).toHaveBeenCalledWith(file);
   });
 });

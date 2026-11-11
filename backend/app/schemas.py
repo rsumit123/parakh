@@ -62,6 +62,7 @@ class DietEditRequest(BaseModel):
     meal: Meal | None = None
     quantity_g: float | None = None
     macros: dict | None = None           # absolute amounts for the whole portion
+    photo_key: str | None = None         # from POST /diet/photo: attach (or replace) the entry's photo
 
 
 class RepeatRequest(BaseModel):

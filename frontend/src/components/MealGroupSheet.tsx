@@ -3,12 +3,14 @@ import { kcal, isLiquid } from "../diet/portion";
 import { parseCount } from "../diet/foodSearch";
 import styles from "./MealGroupSheet.module.css";
 import { useBackHandler } from "../session/backHandlers";
+import { PhotoPicker } from "./PhotoPicker";
 
 /** A photo meal's dishes: shown as one row on Today, edited here dish by dish. */
-export function MealGroupSheet({ name, entries, onEditDish, onRemoveDish, onDeleteMeal, onClose }: {
+export function MealGroupSheet({ name, entries, onEditDish, onRemoveDish, onDeleteMeal, onPhoto, onClose }: {
   name: string; entries: LogEntry[];
   onEditDish: (e: LogEntry) => void; onRemoveDish: (e: LogEntry) => void;
   onDeleteMeal: () => void; onClose: () => void;
+  onPhoto?: (f: File) => Promise<unknown>;   // attach / replace the meal's photo
 }) {
   useBackHandler(onClose);
   const photo = entries.find((e) => e.image_url)?.image_url;
@@ -20,6 +22,7 @@ export function MealGroupSheet({ name, entries, onEditDish, onRemoveDish, onDele
       <div className={styles.sheet}>
         <div className={styles.grab} />
         {photo && <img className={styles.photo} src={photo} alt="Your meal" />}
+        {onPhoto && <PhotoPicker hasPhoto={!!photo} onPick={onPhoto} />}
         <h3 className={styles.h}>{name}</h3>
         <p className={styles.sub}>{kcal(total)} kcal · {Math.round(protein)} g protein · tap a dish to fix it</p>
         <ul className={styles.list}>

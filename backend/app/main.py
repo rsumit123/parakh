@@ -371,10 +371,19 @@ def create_app(*, session_factory, off_client, label_extractor, meal_estimator=N
     def diet_edit(entry_id: int, req: DietEditRequest, identity: dict = Depends(current_user)):
         if req.quantity_g is not None and req.quantity_g < 0:
             raise HTTPException(status_code=422, detail={"error": "quantity must be >= 0"})
+        photo = _own_photo(identity, req.photo_key)
+        before = diet.get_entry(identity["id"], entry_id) if photo else None
         entry = diet.update_entry(identity["id"], entry_id, name=req.name,
                                   quantity_g=req.quantity_g, macros=req.macros, meal=req.meal)
         if entry is None:
             raise HTTPException(status_code=404, detail={"error": "entry not found"})
+        if photo:
+            # a photo added after logging (e.g. a meal logged from a Claude chat); a replaced
+            # photo is deleted so nothing is orphaned
+            diet.set_image(identity["id"], entry_id, photo)
+            if before and before.get("image_url") and before["image_url"] != photo:
+                _drop_photo(before)
+            entry = diet.get_entry(identity["id"], entry_id)
         return {"entry": _present(entry), **_day_payload(identity["id"], entry["day"])}
 
     @app.delete("/diet/log/{entry_id}")

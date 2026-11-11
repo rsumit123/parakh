@@ -527,3 +527,18 @@ def test_recent_foods_reach_past_the_last_twenty(client_and_sf):
         _log(c, h, name=f"Food {i}", day="2026-06-03")
     names = [i["name"] for i in c.get("/diet/recent?limit=200", headers=h).json()["items"]]
     assert len(names) == 26 and "Dry fruits" in names
+
+
+def test_attach_a_photo_after_logging(photo_client):
+    c, s3 = photo_client
+    h = _user_headers()
+    e = c.post("/diet/log", headers=h, json={"kind": "manual", "name": "Dal", "quantity_g": 200, "per100g": _PER}).json()["entry"]
+    assert e["image_url"] == ""
+    up = lambda: c.post("/diet/photo", headers=h, files={"image": ("m.jpg", _jpeg_with_gps(), "image/jpeg")}).json()["photo_key"]
+    k1 = up()
+    r = c.patch(f"/diet/log/{e['id']}", headers=h, json={"photo_key": k1}).json()
+    assert r["entry"]["image_url"].startswith("https://signed/" + k1) and r["entry"]["quantity_g"] == 200
+    k2 = up()   # replacing deletes the old photo
+    c.patch(f"/diet/log/{e['id']}", headers=h, json={"photo_key": k2})
+    assert s3.deleted == [k1]
+    assert c.patch(f"/diet/log/{e['id']}", headers=h, json={"photo_key": "meals/user-9/x.jpg"}).status_code == 422
